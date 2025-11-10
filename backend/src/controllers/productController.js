@@ -66,9 +66,8 @@ async function listProducts(req, res) {
     if (min) filter.price = { ...(filter.price || {}), $gte: Number(min) };
     if (max) filter.price = { ...(filter.price || {}), $lte: Number(max) };
 
-    const skip = (Number(page) - 1) * Number(limit);
-
-    let query = Product.find(filter).populate("category", "name slug");
+    const skip = (Number(page) - 1) * Number(limit);``
+    let query = Product.find(filter).populate("Category", "name slug");
     if (sort) query = query.sort(sort);
     query = query.skip(skip).limit(Number(limit));
 
@@ -85,7 +84,7 @@ async function listProducts(req, res) {
 // Get single product
 async function getProduct(req, res) {
   try {
-    const product = await Product.findById(req.params.id).populate("category", "name slug");
+    const product = await Product.findById(req.params.id).populate("Category", "name slug");
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
   } catch (err) {

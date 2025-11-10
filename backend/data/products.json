@@ -1,0 +1,513 @@
+[
+  {
+    
+    "name": "LED Tube Light 20W",
+    "description": "Bright 4-foot LED tube light, 20W. Cool day light.",
+    "category": "Lighting",
+    "price": 250,
+    "retailer_price": 220,
+    "price_bulk": 200,
+    "min_bulk_qty": 20,
+    "stock": 150,
+    "tags": ["led", "tube light", "lighting", "20w"],
+    "images": [
+      {
+        "url": "https://example.com/led-tube-20w.jpg",
+        "public_id": "sample-led-tube-20w"
+      }
+    ]
+  },
+  {
+    "name": "Exhaust Fan 8-inch",
+    "description": "High-speed ventilation fan for kitchens and bathrooms.",
+    "category": "Fans",
+    "price": 1150,
+    "retailer_price": 1000,
+    "price_bulk": 950,
+    "min_bulk_qty": 10,
+    "stock": 60,
+    "tags": ["fan", "exhaust", "ventilation", "8-inch"],
+    "images": [
+      {
+        "url": "https://example.com/exhaust-fan-8.jpg",
+        "public_id": "sample-exhaust-fan-8"
+      }
+    ]
+  },
+  {
+    "name": "1.5mm Copper Wire (Red)",
+    "description": "90m coil of 1.5mm FR PVC insulated copper wire (Red)",
+    "category": "Wiring",
+    "price": 1800,
+    "retailer_price": 1650,
+    "price_bulk": 1600,
+    "min_bulk_qty": 10,
+    "stock": 40,
+    "tags": ["wire", "copper", "1.5mm", "electrical", "red"],
+    "images": [
+      {
+        "url": "https://example.com/wire-red-1.5.jpg",
+        "public_id": "sample-wire-red-1.5"
+      }
+    ]
+  },
+  {
+    "name": "2.5mm Copper Wire (Black)",
+    "description": "90m coil of 2.5mm FR PVC insulated copper wire (Black)",
+    "category": "Wiring",
+    "price": 2700,
+    "retailer_price": 2500,
+    "price_bulk": 2400,
+    "min_bulk_qty": 10,
+    "stock": 35,
+    "tags": ["wire", "copper", "2.5mm", "electrical", "black"],
+    "images": [
+      {
+        "url": "https://example.com/wire-black-2.5.jpg",
+        "public_id": "sample-wire-black-2.5"
+      }
+    ]
+  },
+  {
+    "name": "1-Way Switch (Modular)",
+    "description": "16A modular switch, 1-way. White.",
+    "category": "Switches",
+    "price": 45,
+    "retailer_price": 38,
+    "price_bulk": 35,
+    "min_bulk_qty": 50,
+    "stock": 500,
+    "tags": ["switch", "modular", "1-way", "16a"],
+    "images": [
+      {
+        "url": "https://example.com/switch-1way.jpg",
+        "public_id": "sample-switch-1way"
+      }
+    ]
+  },
+  {
+    "name": "5-Pin Socket (Modular)",
+    "description": "16A modular 5-pin socket with shutter. White.",
+    "category": "Switches",
+    "price": 110,
+    "retailer_price": 95,
+    "price_bulk": 90,
+    "min_bulk_qty": 50,
+    "stock": 450,
+    "tags": ["socket", "modular", "5-pin", "16a"],
+    "images": [
+      {
+        "url": "https://example.com/socket-5pin.jpg",
+        "public_id": "sample-socket-5pin"
+      }
+    ]
+  },
+  {
+    "name": "Fan Regulator (Modular)",
+    "description": "Electronic step-type fan regulator. White.",
+    "category": "Switches",
+    "price": 220,
+    "retailer_price": 190,
+    "price_bulk": 180,
+    "min_bulk_qty": 30,
+    "stock": 200,
+    "tags": ["fan", "regulator", "modular", "switch"],
+    "images": [
+      {
+        "url": "https://example.com/fan-regulator.jpg",
+        "public_id": "sample-fan-regulator"
+      }
+    ]
+  },
+  {
+    "name": "MCB 16 Amp",
+    "description": "Miniature Circuit Breaker, C-Curve, 16A.",
+    "category": "Safety",
+    "price": 180,
+    "retailer_price": 160,
+    "price_bulk": 150,
+    "min_bulk_qty": 20,
+    "stock": 300,
+    "tags": ["mcb", "circuit breaker", "safety", "16a"],
+    "images": [
+      {
+        "url": "https://example.com/mcb-16a.jpg",
+        "public_id": "sample-mcb-16a"
+      }
+    ]
+  },
+  {
+    "name": "Wall-mounted Fan",
+    "description": "16-inch high-speed wall-mounted fan with pull cord.",
+    "category": "Fans",
+    "price": 2100,
+    "retailer_price": 1900,
+    "price_bulk": 1800,
+    "min_bulk_qty": 5,
+    "stock": 50,
+    "tags": ["fan", "wall fan", "16-inch"],
+    "images": [
+      {
+        "url": "https://example.com/wall-fan.jpg",
+        "public_id": "sample-wall-fan"
+      }
+    ]
+  },
+  {
+    "name": "Pedestal Fan",
+    "description": "18-inch pedestal fan with adjustable height.",
+    "category": "Fans",
+    "price": 2800,
+    "retailer_price": 2500,
+    "price_bulk": 2400,
+    "min_bulk_qty": 5,
+    "stock": 40,
+    "tags": ["fan", "pedestal fan", "18-inch"],
+    "images": [
+      {
+        "url": "https://example.com/pedestal-fan.jpg",
+        "public_id": "sample-pedestal-fan"
+      }
+    ]
+  },
+  {
+    "name": "Digital Multimeter",
+    "description": "Basic digital multimeter for AC/DC voltage, current, and resistance.",
+    "category": "Tools",
+    "price": 600,
+    "retailer_price": 550,
+    "price_bulk": 500,
+    "min_bulk_qty": 10,
+    "stock": 80,
+    "tags": ["tool", "multimeter", "electronics", "testing"],
+    "images": [
+      {
+        "url": "https://example.com/multimeter.jpg",
+        "public_id": "sample-multimeter"
+      }
+    ]
+  },
+  {
+    "name": "Wire Stripper Tool",
+    "description": "Manual wire stripper and cutter tool.",
+    "category": "Tools",
+    "price": 350,
+    "retailer_price": 300,
+    "price_bulk": 280,
+    "min_bulk_qty": 15,
+    "stock": 120,
+    "tags": ["tool", "wire stripper", "cutter", "hand tool"],
+    "images": [
+      {
+        "url": "https://example.com/wire-stripper.jpg",
+        "public_id": "sample-wire-stripper"
+      }
+    ]
+  },
+  {
+    "name": "Electrical Tape (Black)",
+    "description": "Pack of 5 black PVC electrical insulation tape.",
+    "category": "Wiring",
+    "price": 100,
+    "retailer_price": 80,
+    "price_bulk": 70,
+    "min_bulk_qty": 50,
+    "stock": 600,
+    "tags": ["tape", "electrical", "insulation", "pvc"],
+    "images": [
+      {
+        "url": "https://example.com/electrical-tape.jpg",
+        "public_id": "sample-electrical-tape"
+      }
+    ]
+  },
+  {
+    "name": "Soldering Iron 25W",
+    "description": "25-watt soldering iron with stand.",
+    "category": "Tools",
+    "price": 300,
+    "retailer_price": 270,
+    "price_bulk": 250,
+    "min_bulk_qty": 10,
+    "stock": 90,
+    "tags": ["tool", "soldering", "electronics", "25w"],
+    "images": [
+      {
+        "url": "https://example.com/soldering-iron.jpg",
+        "public_id": "sample-soldering-iron"
+      }
+    ]
+  },
+  {
+    "name": "Coaxial Cable (10m)",
+    "description": "10-meter RG6 coaxial cable for TV and satellite.",
+    "category": "Wiring",
+    "price": 200,
+    "retailer_price": 180,
+    "price_bulk": 160,
+    "min_bulk_qty": 20,
+    "stock": 150,
+    "tags": ["cable", "coaxial", "rg6", "tv"],
+    "images": [
+      {
+        "url": "https://example.com/coaxial-cable.jpg",
+        "public_id": "sample-coaxial-cable"
+      }
+    ]
+  },
+  {
+    "name": "Ethernet Cable Cat6 (20m)",
+    "description": "20-meter Cat6 LAN Ethernet patch cable.",
+    "category": "Wiring",
+    "price": 550,
+    "retailer_price": 500,
+    "price_bulk": 450,
+    "min_bulk_qty": 15,
+    "stock": 100,
+    "tags": ["cable", "ethernet", "cat6", "lan", "internet"],
+    "images": [
+      {
+        "url": "https://example.com/ethernet-cable.jpg",
+        "public_id": "sample-ethernet-cable"
+      }
+    ]
+  },
+  {
+    "name": "Smart Bulb (RGB)",
+    "description": "9W Wi-Fi enabled RGB smart LED bulb. Works with Alexa & Google.",
+    "category": "Lighting",
+    "price": 700,
+    "retailer_price": 650,
+    "price_bulk": 600,
+    "min_bulk_qty": 10,
+    "stock": 75,
+    "tags": ["bulb", "led", "smart", "rgb", "wifi"],
+    "images": [
+      {
+        "url": "https://example.com/smart-bulb-rgb.jpg",
+        "public_id": "sample-smart-bulb-rgb"
+      }
+    ]
+  },
+  {
+    "name": "Downlight 7W (Warm White)",
+    "description": "7W LED round panel downlight for false ceilings.",
+    "category": "Lighting",
+    "price": 320,
+    "retailer_price": 280,
+    "price_bulk": 260,
+    "min_bulk_qty": 20,
+    "stock": 130,
+    "tags": ["led", "downlight", "panel", "lighting", "7w"],
+    "images": [
+      {
+        "url": "https://example.com/downlight-7w.jpg",
+        "public_id": "sample-downlight-7w"
+      }
+    ]
+  },
+  {
+    "name": "Outdoor Flood Light 50W",
+    "description": "50W IP66 waterproof LED flood light for outdoor use.",
+    "category": "Lighting",
+    "price": 1200,
+    "retailer_price": 1050,
+    "price_bulk": 1000,
+    "min_bulk_qty": 10,
+    "stock": 55,
+    "tags": ["led", "flood light", "outdoor", "waterproof", "50w"],
+    "images": [
+      {
+        "url": "https://example.com/flood-light-50w.jpg",
+        "public_id": "sample-flood-light-50w"
+      }
+    ]
+  },
+  {
+    "name": "Distribution Board (8-Way)",
+    "description": "8-Way TPN Double Door Distribution Board.",
+    "category": "Safety",
+    "price": 2200,
+    "retailer_price": 2000,
+    "price_bulk": 1900,
+    "min_bulk_qty": 5,
+    "stock": 25,
+    "tags": ["db", "distribution board", "safety", "8-way"],
+    "images": [
+      {
+        "url": "https://example.com/dist-board-8.jpg",
+        "public_id": "sample-dist-board-8"
+      }
+    ]
+  },
+  {
+    "name": "ELCB 63 Amp",
+    "description": "Earth Leakage Circuit Breaker, 2-Pole, 63A.",
+    "category": "Safety",
+    "price": 1500,
+    "retailer_price": 1400,
+    "price_bulk": 1350,
+    "min_bulk_qty": 10,
+    "stock": 60,
+    "tags": ["elcb", "rccb", "circuit breaker", "safety", "63a"],
+    "images": [
+      {
+        "url": "https://example.com/elcb-63a.jpg",
+        "public_id": "sample-elcb-63a"
+      }
+    ]
+  },
+  {
+    "name": "HDMI Cable (3m)",
+    "description": "High-Speed 4K HDMI 2.0 Cable, 3 meters.",
+    "category": "Wiring",
+    "price": 400,
+    "retailer_price": 350,
+    "price_bulk": 300,
+    "min_bulk_qty": 15,
+    "stock": 110,
+    "tags": ["cable", "hdmi", "4k", "video"],
+    "images": [
+      {
+        "url": "https://example.com/hdmi-cable-3m.jpg",
+        "public_id": "sample-hdmi-cable-3m"
+      }
+    ]
+  },
+  {
+    "name": "Inverter 1KVA",
+    "description": "1000VA / 12V Sine Wave Inverter for home.",
+    "category": "Power",
+    "price": 6500,
+    "retailer_price": 6200,
+    "price_bulk": 6000,
+    "min_bulk_qty": 3,
+    "stock": 20,
+    "tags": ["inverter", "power", "backup", "1kva"],
+    "images": [
+      {
+        "url": "https://example.com/inverter-1kva.jpg",
+        "public_id": "sample-inverter-1kva"
+      }
+    ]
+  },
+  {
+    "name": "Inverter Battery 150Ah",
+    "description": "Tall tubular inverter battery, 150Ah capacity, 5-year warranty.",
+    "category": "Power",
+    "price": 14500,
+    "retailer_price": 13800,
+    "price_bulk": 13500,
+    "min_bulk_qty": 2,
+    "stock": 15,
+    "tags": ["battery", "inverter", "power", "150ah", "tubular"],
+    "images": [
+      {
+        "url": "https://example.com/battery-150ah.jpg",
+        "public_id": "sample-battery-150ah"
+      }
+    ]
+  },
+  {
+    "name": "Combination Pliers",
+    "description": "8-inch insulated combination pliers for cutting and gripping.",
+    "category": "Tools",
+    "price": 280,
+    "retailer_price": 250,
+    "price_bulk": 230,
+    "min_bulk_qty": 20,
+    "stock": 180,
+    "tags": ["tool", "pliers", "hand tool", "cutting"],
+    "images": [
+      {
+        "url": "https://example.com/pliers.jpg",
+        "public_id": "sample-pliers"
+      }
+    ]
+  },
+  {
+    "name": "Electric Drill (10mm)",
+    "description": "500W 10mm corded electric drill machine.",
+    "category": "Tools",
+    "price": 1900,
+    "retailer_price": 1750,
+    "price_bulk": 1700,
+    "min_bulk_qty": 5,
+    "stock": 30,
+    "tags": ["tool", "drill", "power tool", "500w"],
+    "images": [
+      {
+        "url": "https://example.com/electric-drill.jpg",
+        "public_id": "sample-electric-drill"
+      }
+    ]
+  },
+  {
+    "name": "Ceiling Fan (48-inch)",
+    "description": "High-speed 48-inch (1200mm) ceiling fan. Brown.",
+    "category": "Fans",
+    "price": 2400,
+    "retailer_price": 2200,
+    "price_bulk": 2100,
+    "min_bulk_qty": 5,
+    "stock": 65,
+    "tags": ["fan", "ceiling fan", "48-inch", "1200mm"],
+    "images": [
+      {
+        "url": "https://example.com/ceiling-fan-48.jpg",
+        "public_id": "sample-ceiling-fan-48"
+      }
+    ]
+  },
+  {
+    "name": "Switchboard Plate (4-Module)",
+    "description": "4-Module modular switch plate. White.",
+    "category": "Switches",
+    "price": 80,
+    "retailer_price": 70,
+    "price_bulk": 65,
+    "min_bulk_qty": 50,
+    "stock": 350,
+    "tags": ["switch", "modular", "plate", "cover", "4-module"],
+    "images": [
+      {
+        "url": "https://example.com/plate-4m.jpg",
+        "public_id": "sample-plate-4m"
+      }
+    ]
+  },
+  {
+    "name": "USB Charging Socket",
+    "description": "2.1A Dual USB charging socket, modular.",
+    "category": "Switches",
+    "price": 450,
+    "retailer_price": 400,
+    "price_bulk": 380,
+    "min_bulk_qty": 20,
+    "stock": 90,
+    "tags": ["socket", "modular", "usb", "charger"],
+    "images": [
+      {
+        "url": "https://example.com/usb-socket.jpg",
+        "public_id": "sample-usb-socket"
+      }
+    ]
+  },
+  {
+    "name": "0.75mm Copper Wire (Green)",
+    "description": "90m coil of 0.75mm FR PVC insulated copper wire (Green - Earthing)",
+    "category": "Wiring",
+    "price": 1100,
+    "retailer_price": 950,
+    "price_bulk": 900,
+    "min_bulk_qty": 10,
+    "stock": 50,
+    "tags": ["wire", "copper", "0.75mm", "electrical", "green", "earthing"],
+    "images": [
+      {
+        "url": "https://example.com/wire-green-0.75.jpg",
+        "public_id": "sample-wire-green-0.75"
+      }
+    ]
+  }
+]
