@@ -24,7 +24,7 @@ app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
-
+  
 
 // HEALTH CHECK
 app.get("/", (req, res) => res.send("Smart E-Commerce Backend Running ✅"));
