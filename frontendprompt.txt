@@ -4,7 +4,6 @@
 Connect existing frontend with backend functionality. Replace all dummy data and hardcoded features with working backend integrations.
 
 ---
-
 ## 1. Navigation Bar
 
 ### Requirements:
@@ -14,10 +13,7 @@ Connect existing frontend with backend functionality. Replace all dummy data and
 - **Cart**: Add items and proceed to checkout/payment
 - **Profile**: View user profile and account data
 
----
-
 ## 2. Home Page
-
 ### Hero Section:
 - Implement working search bar for product search
 - Connect all CTA buttons to respective pages
@@ -63,9 +59,7 @@ Connect existing frontend with backend functionality. Replace all dummy data and
 ### Actions:
 - Add items to cart
 - Mark products as favorite
-
 ---
-
 ## 5. Product Detail Page
 
 ### Display Information:

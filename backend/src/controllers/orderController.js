@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const User = require("../models/User");
 const { sendMail } = require("../services/emailService");
 
 // 🧾 Create order (customer checkout)
@@ -33,6 +34,15 @@ const createOrder = async (req, res) => {
       paymentStatus: paymentMethod === "COD" ? "pending" : "pending",
       shippingAddress,
     });
+
+    // Clear cart immediately for COD orders
+    if ((paymentMethod || "COD") === "COD") {
+      try {
+        await User.updateOne({ _id: req.user._id }, { $set: { cart: [] } });
+      } catch (e) {
+        console.warn("Failed to clear cart after COD order:", e.message);
+      }
+    }
 
     // send email confirmation (simple)
     try {

@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const xss = require("xss");
 const connectDB = require("./config/db");
@@ -33,6 +34,7 @@ app.use(cors({
 }));
 
 app.use(morgan("dev"));
+app.use(cookieParser());
 
 app.use(helmet());         // Protects headers
 app.use(apiLimiter);       // Rate limiter
@@ -51,6 +53,7 @@ app.use(sanitizeRequest);  // Prevent Mongo injection
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
+app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
@@ -58,6 +61,9 @@ app.use("/api/invoices", require("./routes/invoiceRoutes"));
 app.use("/api/analytics", require("./routes/analyticsRoutes"));
 // retailer routes for b2b 
 app.use("/api/retailer", require("./routes/retailerRoutes"));
+app.use("/api/favorites", require("./routes/favoriteRoutes"));
+app.use("/api/cart", require("./routes/cartRoutes"));
+app.use("/api/reviews", require("./routes/reviewRoutes"));
 
 
   

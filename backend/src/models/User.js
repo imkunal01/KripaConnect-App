@@ -19,7 +19,16 @@ const userSchema = new mongoose.Schema({
         enum: ['customer', 'retailer','admin' ],
         default: 'customer'
     },
-    isBlocked: { type: Boolean, default: false }
+    profilePhoto: { type: String },
+    isBlocked: { type: Boolean, default: false },
+    tokenVersion: { type: Number, default: 0 },
+    favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    cart: [
+        {
+            product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+            qty: { type: Number, required: true, min: 1 }
+        }
+    ]
 }, { timestamps: true });
 
 userSchema.pre('save',async function (next){

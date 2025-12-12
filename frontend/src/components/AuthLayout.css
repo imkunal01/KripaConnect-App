@@ -1,0 +1,242 @@
+.auth-container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fdfbff;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Background Blobs */
+.gradient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+  z-index: 0;
+}
+.blob-1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, #e0ffcd 0%, rgba(255,255,255,0) 70%);
+  top: -100px;
+  left: -100px;
+}
+.blob-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #ffe0f5 0%, rgba(255,255,255,0) 70%);
+  bottom: -50px;
+  right: -50px;
+}
+
+.auth-content-wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  padding: 20px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Left Side Styling */
+.auth-left {
+  flex: 1;
+  padding-right: 60px;
+  max-width: 500px;
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.brand-logo {
+  width: 48px;
+  height: 48px;
+  background: #38b000; /* Kripa Green */
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+.brand-text h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+.brand-text span {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.welcome-title {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 16px 0;
+  color: #111;
+}
+
+.welcome-subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 48px;
+}
+
+.features-grid {
+  display: flex;
+  gap: 32px;
+}
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+.icon-green { background: linear-gradient(135deg, #4ade80, #22c55e); }
+.icon-blue { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+.icon-red { background: linear-gradient(135deg, #f87171, #ef4444); }
+.feature-item span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #444;
+}
+
+/* Right Side - Glass Card */
+.auth-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.glass-card {
+  width: 100%;
+  max-width: 450px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+}
+
+.auth-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+.tab-btn {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+.tab-btn.active {
+  background: white;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Social Login */
+.social-login {
+  margin-top: 32px;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e2e8f0;
+}
+.divider span {
+  padding: 0 12px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+.social-buttons {
+  display: flex;
+  gap: 16px;
+}
+.social-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: #333;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+.social-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .auth-content-wrapper {
+    flex-direction: column;
+    padding: 16px;
+  }
+  .auth-left {
+    padding-right: 0;
+    margin-bottom: 40px;
+    text-align: center;
+    max-width: 100%;
+  }
+  .brand-header {
+    justify-content: center;
+  }
+  .welcome-title {
+    font-size: 2.2rem;
+  }
+  .features-grid {
+    justify-content: center;
+    gap: 20px;
+  }
+  .auth-right {
+    width: 100%;
+    justify-content: center;
+  }
+  .glass-card {
+    padding: 24px;
+  }
+}

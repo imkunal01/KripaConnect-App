@@ -17,6 +17,9 @@ const protect = async (req, res, next) => {
             if (user.isBlocked) {
                 return res.status(403).json({message: "Account is blocked"});
             }
+            if (decoded.tokenVersion !== user.tokenVersion) {
+                return res.status(401).json({message: "Not authorized, token invalidated"});
+            }
             req.user = user;
             next();
         }

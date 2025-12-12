@@ -58,13 +58,48 @@ async function createProduct(req, res) {
 // Get list with pagination, search, filter, sort
 async function listProducts(req, res) {
   try {
-    const { page = 1, limit = 12, q, category, min, max, sort } = req.query;
+    const {
+      page = 1,
+      limit = 12,
+      q,
+      search,
+      category,
+      categories,
+      min,
+      max,
+      minPrice,
+      maxPrice,
+      brand,
+      availability,
+      sort
+    } = req.query;
+
     const filter = { active: true };
 
-    if (q) filter.$text = { $search: q };
-    if (category) filter.Category = category;
-    if (min) filter.price = { ...(filter.price || {}), $gte: Number(min) };
-    if (max) filter.price = { ...(filter.price || {}), $lte: Number(max) };
+    const searchText = search || q;
+    if (searchText) filter.$text = { $search: searchText };
+
+    const catParam = categories || category;
+    if (catParam) {
+      let ids = [];
+      if (Array.isArray(catParam)) ids = catParam;
+      else if (typeof catParam === 'string' && catParam.includes(',')) ids = catParam.split(',').map(s => s.trim());
+      else ids = [catParam];
+      filter.Category = ids.length > 1 ? { $in: ids } : ids[0];
+    }
+
+    const minVal = minPrice ?? min;
+    const maxVal = maxPrice ?? max;
+    if (minVal !== undefined) filter.price = { ...(filter.price || {}), $gte: Number(minVal) };
+    if (maxVal !== undefined) filter.price = { ...(filter.price || {}), $lte: Number(maxVal) };
+
+    if (availability === 'in') filter.stock = { $gt: 0 };
+    if (availability === 'out') filter.stock = { $lte: 0 };
+
+    if (brand) {
+      const brands = Array.isArray(brand) ? brand : String(brand).split(',').map(s => s.trim()).filter(Boolean);
+      if (brands.length > 0) filter.tags = { $in: brands };
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
     let query = Product.find(filter).populate("Category", "name slug");
@@ -72,10 +107,7 @@ async function listProducts(req, res) {
     query = query.skip(skip).limit(Number(limit));
 
     const [items, total] = await Promise.all([query.exec(), Product.countDocuments(filter)]);
-    res.json({
-      items,
-      meta: { page: Number(page), limit: Number(limit), total },
-    });
+    res.json({ items, meta: { page: Number(page), limit: Number(limit), total } });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

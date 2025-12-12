@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const Order = require("../models/Order");
 const Transaction = require("../models/Transaction");
+const User = require("../models/User");
 const { createRazorpayOrder } = require("../services/razorpayService");
 
 /**
@@ -125,6 +126,13 @@ const razorpayWebhook = async (req, res) => {
         order.razorpay.payment_id = razorpayPaymentId;
         order.razorpay.amount = amount;
         await order.save();
+
+        // Clear user's cart after successful payment
+        try {
+          await User.updateOne({ _id: order.user }, { $set: { cart: [] } });
+        } catch (e) {
+          console.warn("Failed to clear cart after Razorpay payment:", e.message);
+        }
       }
 
       // respond 200 quickly
@@ -199,6 +207,13 @@ const verifyPayment = async (req, res) => {
       order.razorpay = order.razorpay || {};
       order.razorpay.payment_id = razorpay_payment_id;
       await order.save();
+
+      // Clear user's cart after server-side verification success
+      try {
+        await User.updateOne({ _id: order.user }, { $set: { cart: [] } });
+      } catch (e) {
+        console.warn("Failed to clear cart after Razorpay verify:", e.message);
+      }
     }
 
     return res.json({ ok: true });

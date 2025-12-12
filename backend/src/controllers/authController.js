@@ -1,5 +1,8 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const generateRefreshToken = require('../utils/generateRefreshToken');
+const jwt = require('jsonwebtoken');
+const https = require('https');
 
 const registerUser = async (req, res)=>{
     try {
@@ -14,13 +17,21 @@ const registerUser = async (req, res)=>{
 
         const user = await User.create({ name, email, password, role })
         if (user) {
-            // respose 201 means user is created successfully
+            const access = generateToken(user._id, user.role, user.tokenVersion)
+            const refresh = generateRefreshToken(user._id, user.tokenVersion)
+            res.cookie('refreshToken', refresh, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            })
             res.status(201).json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                token: generateToken(user._id, user.role)
+                token: access
             });
         }
         else {
@@ -39,12 +50,21 @@ const loginUser = async (req, res)=>{
         // check karega if user exist or not
         const user = await User.findOne({ email });
         if (user && (await user.matchPassword(password))) {
+            const access = generateToken(user._id, user.role, user.tokenVersion)
+            const refresh = generateRefreshToken(user._id, user.tokenVersion)
+            res.cookie('refreshToken', refresh, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            })
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                token: generateToken(user._id, user.role),
+                token: access,
             });
         } else {
 
@@ -69,3 +89,82 @@ const getUserProfile = async (req, res) => {
 
 
 module.exports = { registerUser, loginUser, getUserProfile };
+const logoutUser = async (req, res) => {
+    try {
+        const token = req.cookies?.refreshToken
+        if (token) {
+            const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
+            const user = await User.findById(decoded.id)
+            if (user) {
+                user.tokenVersion += 1
+                await user.save()
+            }
+        }
+    } catch (_) {}
+    res.clearCookie('refreshToken', { path: '/' })
+    res.status(200).json({ message: 'Logged out' })
+}
+
+const refreshAccessToken = async (req, res) => {
+    try {
+        const token = req.cookies?.refreshToken
+        if (!token) return res.status(401).json({ message: 'Not authorized' })
+        const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
+        const user = await User.findById(decoded.id)
+        if (!user) return res.status(401).json({ message: 'Not authorized' })
+        if (decoded.tokenVersion !== user.tokenVersion) return res.status(401).json({ message: 'Not authorized' })
+        const access = generateToken(user._id, user.role, user.tokenVersion)
+        res.json({ token: access })
+    } catch (e) {
+        res.status(401).json({ message: 'Not authorized' })
+    }
+}
+
+function tokeninfo(idToken) {
+    return new Promise((resolve, reject) => {
+        const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`
+        https.get(url, (resp) => {
+            let data = ''
+            resp.on('data', (chunk) => { data += chunk })
+            resp.on('end', () => {
+                try { resolve(JSON.parse(data)) } catch (e) { reject(e) }
+            })
+        }).on('error', reject)
+    })
+}
+
+const googleAuth = async (req, res) => {
+    try {
+        const { credential } = req.body
+        if (!credential) return res.status(400).json({ message: 'Invalid request' })
+        const info = await tokeninfo(credential)
+        if (!info || info.aud !== process.env.GOOGLE_CLIENT_ID || info.email_verified !== 'true') {
+            return res.status(401).json({ message: 'Invalid token' })
+        }
+        const email = info.email
+        let user = await User.findOne({ email })
+        if (!user) {
+            const pwd = Math.random().toString(36).slice(-12)
+            user = await User.create({ name: info.name || email.split('@')[0], email, password: pwd, role: 'customer', profilePhoto: info.picture })
+        } else {
+            if (!user.profilePhoto && info.picture) {
+                user.profilePhoto = info.picture
+                await user.save()
+            }
+        }
+        const access = generateToken(user._id, user.role, user.tokenVersion)
+        const refresh = generateRefreshToken(user._id, user.tokenVersion)
+        res.cookie('refreshToken', refresh, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        })
+        res.json({ _id: user._id, name: user.name, email: user.email, role: user.role, token: access })
+    } catch (e) {
+        res.status(500).json({ message: e.message })
+    }
+}
+
+module.exports = { registerUser, loginUser, getUserProfile, logoutUser, refreshAccessToken, googleAuth };
