@@ -7,6 +7,7 @@ import SortBar from '../components/SortBar.jsx'
 import ProductGrid from '../components/ProductGrid.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
+import './Products.css'
 
 export default function Products() {
   const [params, setParams] = useSearchParams()
@@ -53,33 +54,12 @@ export default function Products() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+    <div className="products-page">
       <Navbar />
-      <div style={{
-        maxWidth: '1280px',
-        margin: '0 auto',
-        padding: '1rem'
-      }} className="products-container">
+      <div className="products-container">
         {/* Mobile Filters Button */}
         <button
           onClick={() => setFiltersOpen(true)}
-          style={{
-            width: '100%',
-            padding: '0.875rem',
-            backgroundColor: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '0.5rem',
-            marginBottom: '1rem',
-            fontSize: '1rem',
-            fontWeight: '600',
-            color: '#374151',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            minHeight: '44px'
-          }}
           className="mobile-filters-btn"
         >
           <span>🔍</span> Filters
@@ -98,63 +78,18 @@ export default function Products() {
           {/* Mobile Filters Overlay */}
           {filtersOpen && (
             <div
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                zIndex: 1000,
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'flex-end',
-                padding: '1rem'
-              }}
               onClick={() => setFiltersOpen(false)}
               className="mobile-filters-overlay"
             >
               <div
-                style={{
-                  backgroundColor: 'white',
-                  width: '100%',
-                  maxWidth: '320px',
-                  maxHeight: '90vh',
-                  borderRadius: '0.75rem',
-                  padding: '1.5rem',
-                  overflowY: 'auto',
-                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-                }}
+                className="mobile-filters-panel"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '1.5rem'
-                }}>
-                  <h3 style={{
-                    fontSize: '1.25rem',
-                    fontWeight: '700',
-                    color: '#111827'
-                  }}>
-                    Filters
-                  </h3>
+                <div className="mobile-filters-header">
+                  <h3 className="mobile-filters-title">Filters</h3>
                   <button
                     onClick={() => setFiltersOpen(false)}
-                    style={{
-                      padding: '0.5rem',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      fontSize: '1.5rem',
-                      cursor: 'pointer',
-                      color: '#6b7280',
-                      minWidth: '44px',
-                      minHeight: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
+                    className="mobile-filters-close"
                   >
                     ✕
                   </button>
@@ -164,49 +99,23 @@ export default function Products() {
             </div>
           )}
 
-          <div>
-            <div style={{
-              display: 'flex',
-              gap: '0.75rem',
-              alignItems: 'center',
-              marginBottom: '1rem',
-              flexWrap: 'wrap'
-            }}>
-              <div style={{ flex: 1, minWidth: '200px' }}>
+          <div className="products-main">
+            <div className="products-controls">
+              <div className="products-search-wrapper">
                 <SearchBar value={search} onChange={(val) => updateParams({ search: val })} />
               </div>
               <SortBar value={sort} onChange={(val) => updateParams({ sort: val })} />
             </div>
             {loading ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '4rem 2rem',
-                backgroundColor: 'white',
-                borderRadius: '0.75rem',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+              <div className="products-loading">
+                <div className="products-loading-icon">⏳</div>
                 <p style={{ color: '#6b7280' }}>Loading products...</p>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '0.75rem',
-                padding: '4rem 2rem',
-                textAlign: 'center',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-                border: '1px solid #e5e7eb'
-              }}>
-                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔍</div>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  marginBottom: '0.5rem',
-                  color: '#111827',
-                  fontWeight: '600'
-                }}>
-                  No products found
-                </h2>
-                <p style={{ color: '#6b7280' }}>
+              <div className="products-empty-state">
+                <div className="products-empty-icon">🔍</div>
+                <h2 className="products-empty-title">No products found</h2>
+                <p className="products-empty-text">
                   Try adjusting your filters or search terms
                 </p>
               </div>
@@ -217,31 +126,6 @@ export default function Products() {
         </div>
       </div>
       <Footer />
-      
-      <style>{`
-        @media (min-width: 768px) {
-          .products-container {
-            padding: 2rem 1.5rem !important;
-          }
-          .products-layout {
-            grid-template-columns: 280px 1fr !important;
-          }
-          .desktop-filters {
-            display: block !important;
-          }
-          .mobile-filters-btn, .mobile-filters-overlay {
-            display: none !important;
-          }
-        }
-        @media (max-width: 767px) {
-          .desktop-filters {
-            display: none !important;
-          }
-          .mobile-filters-btn {
-            display: flex !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }

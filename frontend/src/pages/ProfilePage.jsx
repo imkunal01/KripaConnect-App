@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { profile, updateProfile, uploadProfilePhoto } from '../services/auth'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import './FormStyles.css'
+import './ProfilePage.css'
 
 export default function ProfilePage() {
   const { token, user: authUser, signOut } = useAuth()
@@ -136,82 +136,30 @@ export default function ProfilePage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f9fafb' }}>
+    <div className="profile-page">
       <Navbar />
       
-      <main style={{ flex: 1, padding: '1rem', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h1 style={{
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            marginBottom: '0.5rem',
-            color: '#111827'
-          }}>
-            My Profile
-          </h1>
-          <p style={{
-            color: '#6b7280',
-            fontSize: '0.875rem'
-          }}>
-            Manage your account settings and information
-          </p>
+      <main className="profile-main">
+        <div className="profile-header">
+          <h1 className="profile-title">My Profile</h1>
+          <p className="profile-subtitle">Manage your account settings and information</p>
         </div>
 
         {error && (
-          <div style={{ 
-            padding: '1rem 1.25rem', 
-            backgroundColor: '#fee2e2', 
-            color: '#991b1b', 
-            borderRadius: '0.5rem', 
-            marginBottom: '1.5rem',
-            border: '1px solid #fecaca'
-          }}>
-            {error}
-          </div>
+          <div className="profile-alert error">{error}</div>
         )}
 
         {success && (
-          <div style={{ 
-            padding: '1rem 1.25rem', 
-            backgroundColor: '#d1fae5', 
-            color: '#065f46', 
-            borderRadius: '0.5rem', 
-            marginBottom: '1.5rem',
-            border: '1px solid #bbf7d0'
-          }}>
-            {success}
-          </div>
+          <div className="profile-alert success">{success}</div>
         )}
 
-        <div style={{ 
-          backgroundColor: 'white', 
-          borderRadius: '0.75rem', 
-          padding: '1.5rem', 
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e5e7eb',
-          marginBottom: '1.5rem'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '2rem',
-            gap: '1.5rem',
-            flexWrap: 'wrap',
-            paddingBottom: '2rem',
-            borderBottom: '1px solid #e5e7eb'
-          }}>
-            <div style={{ position: 'relative' }}>
+        <div className="profile-card">
+          <div className="profile-header-section">
+            <div className="profile-avatar-wrapper">
               <img
                 src={photoPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&size=120&background=random`}
                 alt="Profile"
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '4px solid #e5e7eb',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
+                className="profile-avatar"
               />
               {editing && (
                 <div style={{ marginTop: '10px' }}>
@@ -241,75 +189,40 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <div style={{ flex: 1 }}>
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                marginBottom: '0.5rem',
-                color: '#111827'
-              }}>
-                {user.name}
-              </h2>
-              <p style={{
-                color: '#6b7280',
-                marginBottom: '0.75rem',
-                fontSize: '1rem'
-              }}>
-                {user.email}
-              </p>
-              <span style={{
-                display: 'inline-block',
-                padding: '0.375rem 0.75rem',
-                backgroundColor: user.role === 'retailer' ? '#dbeafe' : '#d1fae5',
-                color: user.role === 'retailer' ? '#1e40af' : '#065f46',
-                borderRadius: '0.5rem',
-                fontSize: '0.875rem',
-                fontWeight: '600'
-              }}>
+            <div className="profile-info">
+              <h2 className="profile-name">{user.name}</h2>
+              <p className="profile-email">{user.email}</p>
+              <span className={`profile-role-badge ${user.role === 'retailer' ? 'retailer' : 'customer'}`}>
                 {user.role === 'retailer' ? 'Retailer' : 'Customer'}
               </span>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: '20px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-                Name
-              </label>
+          <div className="profile-form-section">
+            <div className="profile-form-group">
+              <label className="profile-form-label">Name</label>
               {editing ? (
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '16px'
-                  }}
+                  className="profile-form-input"
                 />
               ) : (
-                <div style={{ padding: '10px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
-                  {user.name || 'Not set'}
-                </div>
+                <div className="profile-form-display">{user.name || 'Not set'}</div>
               )}
             </div>
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-                Email
-              </label>
-              <div style={{ padding: '10px', backgroundColor: '#f9fafb', borderRadius: '6px', color: '#6b7280' }}>
+            <div className="profile-form-group">
+              <label className="profile-form-label">Email</label>
+              <div className="profile-form-display" style={{ color: '#6b7280' }}>
                 {user.email} <span style={{ fontSize: '12px' }}>(read-only)</span>
               </div>
             </div>
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>
-                Phone Number
-              </label>
+            <div className="profile-form-group">
+              <label className="profile-form-label">Phone Number</label>
               {editing ? (
                 <input
                   type="tel"
@@ -317,18 +230,10 @@ export default function ProfilePage() {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Enter phone number"
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '16px'
-                  }}
+                  className="profile-form-input"
                 />
               ) : (
-                <div style={{ padding: '10px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
-                  {user.phone || 'Not set'}
-                </div>
+                <div className="profile-form-display">{user.phone || 'Not set'}</div>
               )}
             </div>
           </div>

@@ -7,6 +7,7 @@ import ShopContext from '../context/ShopContext.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import QuantitySelector from '../components/QuantitySelector.jsx'
+import './B2B.css'
 
 function RetailerProductCard({ product, onAddToCart }) {
   const [qty, setQty] = useState(product.min_bulk_qty || 1)
@@ -360,142 +361,49 @@ export default function B2B() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f9fafb' }}>
+    <div className="b2b-page">
       <Navbar />
       
-      <main style={{ flex: 1, padding: '1rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+      <main className="b2b-main">
         {/* Header Section */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '0.75rem',
-          padding: '1.5rem',
-          marginBottom: '1.5rem',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '1rem'
-          }}>
+        <div className="b2b-header">
+          <div className="b2b-header-content">
             <div>
-              <h1 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                marginBottom: '0.5rem',
-                color: '#111827'
-              }}>
-                B2B Wholesale Portal
-              </h1>
-              <p style={{
-                color: '#6b7280',
-                fontSize: '0.875rem'
-              }}>
+              <h1 className="b2b-title">B2B Wholesale Portal</h1>
+              <p className="b2b-subtitle">
                 Welcome, {user?.name}! Shop with bulk pricing and special wholesale rates.
               </p>
             </div>
-            <button
-              onClick={() => navigate('/cart')}
-              style={{
-                padding: '0.875rem 1.5rem',
-                backgroundColor: '#2563eb',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.5rem',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1e40af'
-                e.currentTarget.style.transform = 'translateY(-2px)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#2563eb'
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
-            >
+            <button onClick={() => navigate('/cart')} className="b2b-view-cart-btn">
               View Cart →
             </button>
           </div>
         </div>
 
         {error && (
-          <div style={{
-            padding: '1rem 1.25rem',
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            borderRadius: '0.5rem',
-            marginBottom: '1.5rem',
-            border: '1px solid #fecaca'
-          }}>
-            {error}
-          </div>
+          <div className="b2b-error">{error}</div>
         )}
 
         {loading ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '4rem 2rem',
-            backgroundColor: 'white',
-            borderRadius: '0.75rem',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-          }}>
+          <div className="b2b-loading">
             <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
             <p style={{ color: '#6b7280' }}>Loading products...</p>
           </div>
         ) : items.length === 0 ? (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '0.75rem',
-            padding: '4rem 2rem',
-            textAlign: 'center',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e5e7eb'
-          }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📦</div>
-            <h2 style={{
-              fontSize: '1.5rem',
-              marginBottom: '0.5rem',
-              color: '#111827',
-              fontWeight: '600'
-            }}>
-              No products available
-            </h2>
-            <p style={{ color: '#6b7280' }}>Check back later for wholesale products</p>
+          <div className="b2b-empty-state">
+            <div className="b2b-empty-icon">📦</div>
+            <h2 className="b2b-empty-title">No products available</h2>
+            <p className="b2b-empty-text">Check back later for wholesale products</p>
           </div>
         ) : (
           <>
-            <div style={{
-              marginBottom: '1.5rem',
-              padding: '1rem 1.5rem',
-              backgroundColor: 'white',
-              borderRadius: '0.75rem',
-              border: '1px solid #e5e7eb',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <div style={{
-                fontSize: '1rem',
-                color: '#6b7280',
-                fontWeight: '500'
-              }}>
+            <div className="b2b-products-header">
+              <div className="b2b-products-count">
                 {items.length} product{items.length !== 1 ? 's' : ''} available
               </div>
             </div>
             
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: '1rem'
-            }}>
+            <div className="b2b-grid">
               {items.map(product => (
                 <RetailerProductCard
                   key={product._id}
@@ -509,24 +417,6 @@ export default function B2B() {
       </main>
 
       <Footer />
-      
-      <style>{`
-        @media (min-width: 768px) {
-          main {
-            padding: 2rem 1.5rem !important;
-          }
-          h1 {
-            font-size: 2rem !important;
-          }
-          p {
-            font-size: 1rem !important;
-          }
-          .b2b-grid {
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
-            gap: 1.5rem !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }

@@ -1,0 +1,122 @@
+/* Categories Page Styles */
+
+.categories-page {
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.categories-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.categories-header {
+  margin-bottom: 2rem;
+}
+
+.categories-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+.categories-subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.categories-loading {
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.categories-loading-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.categories-empty-state {
+  background-color: white;
+  border-radius: 0.75rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.categories-empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.categories-empty-title {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #111827;
+  font-weight: 600;
+}
+
+.categories-empty-text {
+  color: #6b7280;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.category-card {
+  background-color: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  text-decoration: none;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+  text-align: center;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: #2563eb;
+}
+
+.category-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.category-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 1.125rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 767px) {
+  .categories-container {
+    padding: 1rem;
+  }
+
+  .categories-title {
+    font-size: 1.5rem;
+  }
+
+  .categories-subtitle {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .categories-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+}

@@ -9,6 +9,7 @@ import PaymentSelector from '../components/PaymentSelector.jsx'
 import OrderSummary from '../components/OrderSummary.jsx'
 import { createOrder } from '../services/orders'
 import { createRazorpayOrder, verifyPayment } from '../services/payments'
+import './CheckoutPage.css'
 
 function loadRazorpayScript() {
   return new Promise((resolve) => {
@@ -119,201 +120,70 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+    <div className="checkout-page">
       <Navbar />
-      <div style={{
-        maxWidth: '1280px',
-        margin: '0 auto',
-        padding: '1rem'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1.5rem',
-          flexWrap: 'wrap',
-          gap: '0.5rem'
-        }}>
-          <h1 style={{
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            color: '#111827',
-            margin: 0
-          }}>
-            Checkout
-          </h1>
+      <div className="checkout-container">
+        <div className="checkout-header">
+          <h1 className="checkout-title">Checkout</h1>
           {isRetailer && (
-            <span style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#dbeafe',
-              color: '#1e40af',
-              borderRadius: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '600'
-            }}>
-              B2B Bulk Order
-            </span>
+            <span className="checkout-badge">B2B Bulk Order</span>
           )}
         </div>
 
         {/* Progress Indicator */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          marginBottom: '2rem',
-          position: 'relative',
-          overflowX: 'auto',
-          paddingBottom: '0.5rem'
-        }} className="checkout-progress">
+        <div className="checkout-progress">
           {steps.map((step, idx) => (
-            <div key={step.number} style={{ flex: 1, position: 'relative' }}>
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                position: 'relative',
-                zIndex: 2
-              }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: currentStep >= step.number ? '#2563eb' : '#e5e7eb',
-                  color: currentStep >= step.number ? 'white' : '#9ca3af',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: '600',
-                  marginBottom: '0.5rem',
-                  transition: 'all 0.2s'
-                }}>
+            <div key={step.number} className="checkout-step">
+              <div className="checkout-step-content">
+                <div className={`checkout-step-circle ${currentStep >= step.number ? 'active' : 'inactive'}`}>
                   {currentStep > step.number ? '✓' : step.number}
                 </div>
-                <div style={{
-                  fontSize: '0.875rem',
-                  fontWeight: currentStep >= step.number ? '600' : '400',
-                  color: currentStep >= step.number ? '#2563eb' : '#9ca3af',
-                  textAlign: 'center'
-                }}>
+                <div className={`checkout-step-label ${currentStep >= step.number ? 'active' : 'inactive'}`}>
                   {step.label}
                 </div>
               </div>
               {idx < steps.length - 1 && (
-                <div style={{
-                  position: 'absolute',
-                  top: '20px',
-                  left: '50%',
-                  width: '100%',
-                  height: '2px',
-                  backgroundColor: currentStep > step.number ? '#2563eb' : '#e5e7eb',
-                  zIndex: 1
-                }} />
+                <div className={`checkout-step-line ${currentStep > step.number ? 'active' : 'inactive'}`} />
               )}
             </div>
           ))}
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gap: '1.5rem'
-        }} className="checkout-layout">
+        <div className="checkout-layout">
           {/* Main Content */}
-          <div>
+          <div className="checkout-main">
             {/* Step 1: Shipping Address */}
             {currentStep === 1 && (
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '0.75rem',
-                padding: '2rem',
-                border: '1px solid #e5e7eb',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '700',
-                  marginBottom: '1.5rem',
-                  color: '#111827'
-                }}>
-                  Delivery Address
-                </h2>
+              <div className="checkout-step-card">
+                <h2 className="checkout-step-card-title">Delivery Address</h2>
                 <AddressForm value={address} onChange={setAddress} disabled={placing} />
               </div>
             )}
 
             {/* Step 2: Payment Method */}
             {currentStep === 2 && (
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '0.75rem',
-                padding: '2rem',
-                border: '1px solid #e5e7eb',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '700',
-                  marginBottom: '1.5rem',
-                  color: '#111827'
-                }}>
-                  Payment Method
-                </h2>
+              <div className="checkout-step-card">
+                <h2 className="checkout-step-card-title">Payment Method</h2>
                 <PaymentSelector method={method} onChange={setMethod} />
               </div>
             )}
 
             {/* Step 3: Review */}
             {currentStep === 3 && (
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '0.75rem',
-                padding: '2rem',
-                border: '1px solid #e5e7eb',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-              }}>
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '700',
-                  marginBottom: '1.5rem',
-                  color: '#111827'
-                }}>
-                  Review Your Order
-                </h2>
-                <div style={{
-                  padding: '1.5rem',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '0.5rem',
-                  marginBottom: '1.5rem'
-                }}>
-                  <h3 style={{
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    marginBottom: '1rem',
-                    color: '#374151'
-                  }}>
-                    Delivery Address
-                  </h3>
-                  <p style={{ color: '#6b7280', lineHeight: '1.6' }}>
+              <div className="checkout-step-card">
+                <h2 className="checkout-step-card-title">Review Your Order</h2>
+                <div className="checkout-review-section">
+                  <h3 className="checkout-review-title">Delivery Address</h3>
+                  <p className="checkout-review-content">
                     {address.name}<br />
                     {address.addressLine}<br />
                     {address.city}, {address.state} {address.pincode}<br />
                     Phone: {address.phone}
                   </p>
                 </div>
-                <div style={{
-                  padding: '1.5rem',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '0.5rem'
-                }}>
-                  <h3 style={{
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    marginBottom: '1rem',
-                    color: '#374151'
-                  }}>
-                    Payment Method
-                  </h3>
-                  <p style={{ color: '#6b7280' }}>
+                <div className="checkout-review-section">
+                  <h3 className="checkout-review-title">Payment Method</h3>
+                  <p className="checkout-review-content">
                     {method === 'COD' ? 'Cash on Delivery' : 'UPI / Online Payment'}
                   </p>
                 </div>
@@ -321,62 +191,18 @@ export default function CheckoutPage() {
             )}
 
             {/* Navigation Buttons */}
-            <div style={{
-              display: 'flex',
-              gap: '1rem',
-              marginTop: '1.5rem',
-              justifyContent: 'space-between'
-            }}>
+            <div className="checkout-navigation">
               {currentStep > 1 && (
-                <button
-                  onClick={handleBack}
-                  style={{
-                    padding: '0.875rem 2rem',
-                    backgroundColor: 'white',
-                    color: '#374151',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '0.5rem',
-                    fontWeight: '600',
-                    fontSize: '1rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'white'
-                  }}
-                >
+                <button onClick={handleBack} className="checkout-nav-button back">
                   ← Back
                 </button>
               )}
-              <div style={{ flex: 1 }} />
+              <div className="checkout-nav-spacer" />
               {currentStep < 3 ? (
                 <button
                   onClick={handleNext}
                   disabled={(currentStep === 1 && !isAddressComplete) || (currentStep === 2 && !method)}
-                  style={{
-                    padding: '0.875rem 2rem',
-                    backgroundColor: ((currentStep === 1 && !isAddressComplete) || (currentStep === 2 && !method)) ? '#9ca3af' : '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    fontWeight: '600',
-                    fontSize: '1rem',
-                    cursor: ((currentStep === 1 && !isAddressComplete) || (currentStep === 2 && !method)) ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!((currentStep === 1 && !isAddressComplete) || (currentStep === 2 && !method))) {
-                      e.currentTarget.style.backgroundColor = '#1e40af'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!((currentStep === 1 && !isAddressComplete) || (currentStep === 2 && !method))) {
-                      e.currentTarget.style.backgroundColor = '#2563eb'
-                    }
-                  }}
+                  className={`checkout-nav-button continue ${((currentStep === 1 && !isAddressComplete) || (currentStep === 2 && !method)) ? 'disabled' : ''}`}
                 >
                   Continue →
                 </button>
@@ -384,29 +210,7 @@ export default function CheckoutPage() {
                 <button
                   onClick={onPlaceOrder}
                   disabled={placing || empty}
-                  style={{
-                    padding: '0.875rem 2rem',
-                    backgroundColor: (placing || empty) ? '#9ca3af' : '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    fontWeight: '600',
-                    fontSize: '1rem',
-                    cursor: (placing || empty) ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!(placing || empty)) {
-                      e.currentTarget.style.backgroundColor = '#059669'
-                      e.currentTarget.style.transform = 'scale(1.02)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!(placing || empty)) {
-                      e.currentTarget.style.backgroundColor = '#10b981'
-                      e.currentTarget.style.transform = 'scale(1)'
-                    }
-                  }}
+                  className={`checkout-nav-button place-order ${(placing || empty) ? 'disabled' : ''}`}
                 >
                   {placing ? 'Placing Order...' : 'Place Order'}
                 </button>
@@ -415,39 +219,12 @@ export default function CheckoutPage() {
           </div>
 
           {/* Order Summary Sidebar */}
-          <div style={{
-            position: 'relative',
-            height: 'fit-content'
-          }} className="checkout-summary-sticky">
+          <div className="checkout-summary-sticky">
             <OrderSummary items={cart} />
           </div>
         </div>
       </div>
       <Footer />
-      
-      <style>{`
-        @media (min-width: 768px) {
-          .checkout-layout {
-            grid-template-columns: 2fr 1fr !important;
-            gap: 2rem !important;
-          }
-          .checkout-summary-sticky {
-            position: sticky !important;
-            top: 80px !important;
-          }
-          .checkout-progress {
-            margin-bottom: 3rem !important;
-          }
-        }
-        @media (max-width: 767px) {
-          .checkout-progress {
-            font-size: 0.75rem;
-          }
-          .checkout-progress > div {
-            min-width: 80px;
-          }
-        }
-      `}</style>
     </div>
   )
 }

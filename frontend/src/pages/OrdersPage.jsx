@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { getMyOrders } from '../services/orders'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import './OrdersPage.css'
 
 function getStatusColor(status) {
   switch (status) {

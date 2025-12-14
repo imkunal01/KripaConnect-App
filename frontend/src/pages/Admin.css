@@ -1,16 +1,91 @@
-.admin { padding: 24px; }
+/* Admin Page Styles - Additional to existing Admin.css */
 
-/* Admin Panel Styles */
+.admin-layout {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.admin-mobile-toggle {
+  display: none;
+  padding: 0.75rem 1rem;
+  background-color: #1f2937;
+  color: white;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  min-height: 44px;
+}
+
 .admin-sidebar {
+  width: 100%;
+  max-width: 280px;
   background-color: #1f2937;
   color: #fff;
+  padding: 2rem 0;
+  min-height: calc(100vh - 64px);
+  position: sticky;
+  top: 64px;
+  align-self: flex-start;
+  z-index: 100;
 }
 
-.admin-nav-item {
-  transition: all 0.2s;
+.admin-sidebar.mobile-open {
+  left: 0;
 }
 
-.admin-nav-item:hover {
-  background-color: #374151;
+.admin-main {
+  flex: 1;
+  padding: 1rem;
+  background-color: #f9fafb;
+  overflow-y: auto;
+  min-height: calc(100vh - 64px);
+  width: 100%;
 }
 
+/* Responsive Styles */
+@media (max-width: 767px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .admin-mobile-toggle {
+    display: block;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    left: -100%;
+    top: 64px;
+    height: calc(100vh - 64px);
+    transition: left 0.3s ease;
+    z-index: 1000;
+  }
+
+  .admin-sidebar.mobile-open {
+    left: 0;
+  }
+
+  .admin-main {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .admin-layout {
+    flex-direction: row;
+  }
+
+  .admin-mobile-toggle {
+    display: none;
+  }
+
+  .admin-sidebar {
+    position: sticky;
+    left: auto;
+  }
+
+  .admin-main {
+    padding: 2rem;
+  }
+}
