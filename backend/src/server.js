@@ -17,7 +17,8 @@ const allowedOrigins = [
   "http://localhost:3000",      // React web
   "http://localhost:5173",      // Vite
   "http://localhost:5174",      // Vite
-  "https://yourdomain.com"      // Production
+  "https://kripa-connect-app.vercel.app/"      // Production\
+  ,"https://kripaconnect-app.onrender.com"
 ]
 
 // Normal body parser (JSON)
