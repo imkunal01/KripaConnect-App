@@ -9,11 +9,9 @@ import { listProducts } from '../services/products'
 
 export default function Dashboard() {
   const { user, role } = useAuth()
-  const location = useLocation()
   const navigate = useNavigate()
-  // We'll pass the current location to the login page so it knows where to return
-  const from = location.pathname || '/'
-
+  
+  // Auth Redirect Logic
   useEffect(() => {
     if (user && role === 'admin') {
       navigate('/admin', { replace: true })
@@ -22,108 +20,126 @@ export default function Dashboard() {
 
   const [categories, setCategories] = useState([])
   const [trending, setTrending] = useState([])
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
-    async function loadHome() {
-      const cats = await listCategories().catch(() => [])
-      setCategories(Array.isArray(cats) ? cats : [])
-      const prods = await listProducts({ sort: '-createdAt', limit: 8 }).catch(() => ({ items: [] }))
-      setTrending(prods.items || [])
+    async function loadData() {
+      try {
+        const [cats, prods] = await Promise.all([
+          listCategories().catch(() => []),
+          listProducts({ sort: '-createdAt', limit: 8 }).catch(() => ({ items: [] }))
+        ])
+        setCategories(Array.isArray(cats) ? cats : [])
+        setTrending(prods.items || [])
+      } catch (err) {
+        console.error("Dashboard load failed", err)
+      } finally {
+        setLoading(false)
+      }
     }
-    loadHome()
+    loadData()
   }, [])
 
+  const handleSearch = (e) => {
+    e.preventDefault()
+    const query = e.target.search.value.trim()
+    if (query) navigate(`/products?search=${encodeURIComponent(query)}`)
+  }
+
   return (
-    <div className="dashboard-page">
+    <div className="modern-dashboard">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-container">
-          <div className="hero-content">
-            <h1>Premium Electronics<br />At Your Doorstep</h1>
-            <p>Discover the latest gadgets, secure payments, and fast delivery. Shop with confidence.</p>
-            
-            {/* Search Bar - Hero Focus */}
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              const query = e.target.search.value.trim()
-              if (query) navigate(`/products?search=${encodeURIComponent(query)}`)
-            }}>
-              <div className="hero-search-container">
-                <input
-                  name="search"
-                  type="text"
-                  placeholder="Search for products..."
-                  className="hero-search-input"
+      <main className="main-content">
+        {/* Modern Split Hero */}
+        <header className="brand-hero">
+          <div className="hero-backdrop" />
+          <div className="container hero-layout">
+            <div className="hero-text">
+              <span className="badge-new">New Collection 2024</span>
+              <h1>Next Gen <span className="text-gradient">Tech</span></h1>
+              <p>Upgrade your setup with the world's most advanced electronics. Fast shipping, authenticated quality.</p>
+              
+              <form onSubmit={handleSearch} className="search-bar-wrapper">
+                <input 
+                  type="text" 
+                  name="search" 
+                  placeholder="What are you looking for?" 
+                  autoComplete="off"
                 />
-                <button type="submit" className="hero-search-button">
-                  Search
+                <button type="submit" aria-label="Search">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </button>
-              </div>
-            </form>
-
-            <div className="hero-cta-group">
-              <Link to="/products" className="hero-cta-primary">
-                Shop Products
-              </Link>
-              <Link to="/categories" className="hero-cta-secondary">
-                View Deals
-              </Link>
+              </form>
             </div>
+            
+            {/* Abstract visual decoration */}
+            <div className="hero-visual">
+              <div className="glass-card float-animation">
+                <div className="icon-box">⚡</div>
+                <div>
+                  <strong>Fast Delivery</strong>
+                  <small>Within 24 Hours</small>
+                </div>
+              </div>
+              <div className="circle-blur"></div>
+            </div>
+          </div>
+        </header>
+
+        {/* Horizontal Category Rail */}
+        <section className="section-container">
+          <div className="section-header">
+            <h3>Explore Categories</h3>
+            <Link to="/categories" className="link-subtle">View All &rarr;</Link>
           </div>
           
-          {/* Hero Image Placeholder */}
-          <div className="hero-image">
-            <div className="hero-image-placeholder">
-              <span style={{ fontSize: '4rem', opacity: 0.5 }}>📱</span>
-            </div>
+          <div className="category-rail">
+            {loading ? (
+              <div className="skeleton-pill"></div>
+            ) : (
+              categories.map(c => (
+                <Link key={c._id} to={`/products?category=${c._id}`} className="category-pill">
+                  <span className="cat-emoji">📦</span>
+                  <span>{c.name}</span>
+                </Link>
+              ))
+            )}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Categories Section */}
-      <section className="categories-section">
-        <h2>Shop by Category</h2>
-        <div className="categories-grid">
-          {categories.map(c => (
-            <Link
-              key={c._id}
-              to={`/products?category=${c._id}`}
-              className="category-card"
-            >
-              <div className="category-icon">📦</div>
-              <div className="category-name">{c.name}</div>
-            </Link>
-          ))}
-        </div>
-      </section>
+        {/* Masonry-style Product Grid */}
+        <section className="section-container bg-offset">
+          <div className="section-header">
+            <h3>Trending Now</h3>
+            <Link to="/products" className="btn-outline">Shop All</Link>
+          </div>
 
-      {/* Trending Products Section */}
-      <section className="trending-section">
-        <h2>Trending Products</h2>
-        <div className="trending-grid">
-          {trending.map(p => (
-            <Link
-              key={p._id}
-              to={`/product/${p._id}`}
-              className="trending-product-card"
-            >
-              <div className="trending-product-image">
-                {p.images?.[0]?.url ? (
-                  <img
-                    src={p.images[0].url}
-                    alt={p.name}
-                  />
-                ) : (
-                  <span style={{ fontSize: '3rem', opacity: 0.3 }}>📦</span>
-                )}
-              </div>
-              <div className="trending-product-name">{p.name}</div>
-              <div className="trending-product-price">₹{p.price?.toLocaleString('en-IN')}</div>
-            </Link>
-          ))}
-        </div>
-      </section>
+          <div className="product-grid-modern">
+            {loading ? <p>Loading deals...</p> : trending.map(p => (
+              <Link key={p._id} to={`/product/${p._id}`} className="modern-card">
+                <div className="card-image-container">
+                  {p.images?.[0]?.url ? (
+                    <img src={p.images[0].url} alt={p.name} loading="lazy" />
+                  ) : (
+                    <div className="placeholder-img">📷</div>
+                  )}
+                  <div className="card-overlay">
+                    <span className="btn-view">View Details</span>
+                  </div>
+                </div>
+                <div className="card-details">
+                  <div className="card-meta">
+                    <h4>{p.name}</h4>
+                    <span className="price">₹{p.price?.toLocaleString('en-IN')}</span>
+                  </div>
+                  <small className="category-tag">Electronics</small>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </main>
 
       <Footer />
     </div>
