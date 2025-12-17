@@ -8,14 +8,14 @@ import { ToastProvider } from './context/ToastContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <ShopProvider>
-          <ToastProvider>
+    <ToastProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <ShopProvider>
             <App />
-          </ToastProvider>
-        </ShopProvider>
-      </AuthProvider>
-    </BrowserRouter>
+          </ShopProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ToastProvider>
   </StrictMode>,
 )
