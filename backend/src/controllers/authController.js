@@ -4,6 +4,18 @@ const generateRefreshToken = require('../utils/generateRefreshToken');
 const jwt = require('jsonwebtoken');
 const https = require('https');
 
+// Helper for cookie options
+const getCookieOptions = () => {
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
+    return {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    };
+};
+
 const registerUser = async (req, res)=>{
     try {
         const { name, email, password, role } = req.body;
@@ -19,13 +31,7 @@ const registerUser = async (req, res)=>{
         if (user) {
             const access = generateToken(user._id, user.role, user.tokenVersion)
             const refresh = generateRefreshToken(user._id, user.tokenVersion)
-            res.cookie('refreshToken', refresh, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                path: '/',
-                maxAge: 7 * 24 * 60 * 60 * 1000
-            })
+            res.cookie('refreshToken', refresh, getCookieOptions())
             res.status(201).json({
                 _id: user._id,
                 name: user.name,
@@ -53,13 +59,7 @@ const loginUser = async (req, res)=>{
         if (user && (await user.matchPassword(password))) {
             const access = generateToken(user._id, user.role, user.tokenVersion)
             const refresh = generateRefreshToken(user._id, user.tokenVersion)
-            res.cookie('refreshToken', refresh, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                path: '/',
-                maxAge: 7 * 24 * 60 * 60 * 1000
-            })
+            res.cookie('refreshToken', refresh, getCookieOptions())
             res.json({
                 _id: user._id,
                 name: user.name,
@@ -144,11 +144,7 @@ const logoutUser = async (req, res) => {
             }
         }
     } catch (_) {}
-    res.clearCookie('refreshToken', {
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-    })
+    res.clearCookie('refreshToken', getCookieOptions())
     res.status(200).json({ message: 'Logged out' })
 }
 

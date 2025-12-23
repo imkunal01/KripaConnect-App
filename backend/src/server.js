@@ -22,6 +22,7 @@ app.set('trust proxy', 1);
 
 const corsOptions = {
   origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
     const allowedOrigins = [
@@ -32,19 +33,21 @@ const corsOptions = {
       "https://kripaconnect-app.onrender.com"
     ];
 
+    // Check if origin is allowed or is a Vercel preview deployment
     if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       return callback(null, true);
     }
 
-    console.log("Blocked by CORS:", origin); // Debug log
+    console.log("Blocked by CORS:", origin);
     return callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
 };
 
-app.use(cors(corsOptions)); // ✅ enough, no app.options("*")
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable preflight for all routes
 
 
 
