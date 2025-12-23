@@ -1,261 +1,246 @@
 const User = require('../models/User');
-const generateToken = require('../utils/generateToken');
-const generateRefreshToken = require('../utils/generateRefreshToken');
 const jwt = require('jsonwebtoken');
 const https = require('https');
+const generateToken = require('../utils/generateToken');
+const generateRefreshToken = require('../utils/generateRefreshToken');
 
-// Helper for cookie options
-const getCookieOptions = (req) => {
-    // If we are on Render, force secure/none
-    if (process.env.RENDER || process.env.NODE_ENV === 'production') {
-        return {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        };
-    }
-    
-    // Default to secure/none for cross-site (e.g. Vercel -> Render)
-    return {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        path: '/',
-        maxAge: 7 * 24 * 60 * 60 * 1000
-    };
+/* ===============================
+   COOKIE CONFIG (SINGLE SOURCE)
+================================ */
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: true,          // REQUIRED for Vercel
+  sameSite: 'none',      // REQUIRED for cross-site
+  path: '/',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
-const registerUser = async (req, res)=>{
-    try {
-        const { name, email, password, role } = req.body;
-        // check karega if user exist or not
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ message: "user already exists" })
-        }
+/* ===============================
+   REGISTER
+================================ */
+const registerUser = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
 
-        // ab ham ek naya user banayenge 
-
-        const user = await User.create({ name, email, password, role })
-        if (user) {
-            const access = generateToken(user._id, user.role, user.tokenVersion)
-            const refresh = generateRefreshToken(user._id, user.tokenVersion)
-            res.cookie('refreshToken', refresh, getCookieOptions(req))
-            res.status(201).json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                savedAddresses: user.savedAddresses,
-                token: access
-            });
-        }
-        else {
-
-            // 400 Bad Request: The server cannot process the request due to malformed syntax.
-            res.status(400).json({ message: "Invalid user data" })
-        }
-
-    } catch (error) {
-        res.status(500).json({ message: error.message })
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res.status(400).json({ message: 'User already exists' });
     }
-}
-const loginUser = async (req, res)=>{
-    try {
-        const { email, password } = req.body;
-        // check karega if user exist or not
-        const user = await User.findOne({ email });
-        if (user && (await user.matchPassword(password))) {
-            const access = generateToken(user._id, user.role, user.tokenVersion)
-            const refresh = generateRefreshToken(user._id, user.tokenVersion)
-            res.cookie('refreshToken', refresh, getCookieOptions(req))
-            res.json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                savedAddresses: user.savedAddresses,
-                token: access,
-            });
-        } else {
 
-            // 401 res is for unauthorized access
-            res.status(401).json({ message: "Invalid user data" })
-        }
+    const user = await User.create({ name, email, password, role });
 
-    } catch (error) {
-        res.status(500).json({ message: error.message })
-    }
+    const access = generateToken(user._id, user.role, user.tokenVersion);
+    const refresh = generateRefreshToken(user._id, user.tokenVersion);
+
+    res.cookie('refreshToken', refresh, COOKIE_OPTIONS);
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      savedAddresses: user.savedAddresses,
+      token: access,
+    });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
 };
 
+/* ===============================
+   LOGIN
+================================ */
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const access = generateToken(user._id, user.role, user.tokenVersion);
+    const refresh = generateRefreshToken(user._id, user.tokenVersion);
+
+    res.cookie('refreshToken', refresh, COOKIE_OPTIONS);
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      savedAddresses: user.savedAddresses,
+      token: access,
+    });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+};
+
+/* ===============================
+   REFRESH ACCESS TOKEN (SAFE)
+================================ */
+const refreshAccessToken = async (req, res) => {
+  const token = req.cookies?.refreshToken;
+
+  if (!token) {
+    return res.status(401).json({ message: 'NO_REFRESH_TOKEN' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: 'USER_NOT_FOUND' });
+    }
+
+    if (decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(401).json({ message: 'TOKEN_REVOKED' });
+    }
+
+    const access = generateToken(user._id, user.role, user.tokenVersion);
+    return res.json({ token: access });
+  } catch (e) {
+    console.error('[Refresh]', e.message);
+    return res.status(401).json({ message: 'INVALID_REFRESH_TOKEN' });
+  }
+};
+
+/* ===============================
+   LOGOUT (NON-DESTRUCTIVE)
+================================ */
+const logoutUser = async (req, res) => {
+  res.clearCookie('refreshToken', COOKIE_OPTIONS);
+  return res.status(200).json({ message: 'Logged out' });
+};
+
+/* ===============================
+   PROFILE
+================================ */
 const getUserProfile = async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).select("-password");
-        if (user) res.json(user);
-        else res.status(404).json({ message: "User not found" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
 };
 
 const updateProfile = async (req, res) => {
-    try {
-        const { name, phone } = req.body;
-        const user = await User.findById(req.user._id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        
-        if (name) user.name = name;
-        if (phone !== undefined) user.phone = phone;
-        
-        await user.save();
-        const updatedUser = await User.findById(user._id).select("-password");
-        res.json(updatedUser);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  try {
+    const { name, phone } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+
+    await user.save();
+    const updated = await User.findById(user._id).select('-password');
+    res.json(updated);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
 };
 
-const uploadProfilePhoto = async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No file uploaded" });
-        }
-        
-        const { uploadBuffer } = require('../services/cloudinaryService');
-        const { url } = await uploadBuffer(req.file.buffer, 'ecom_profiles');
-        
-        const user = await User.findById(req.user._id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        
-        user.profilePhoto = url;
-        await user.save();
-        
-        const updatedUser = await User.findById(user._id).select("-password");
-        res.json(updatedUser);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+/* ===============================
+   GOOGLE AUTH HELPERS
+================================ */
+const tokeninfo = (idToken) =>
+  new Promise((resolve, reject) => {
+    https
+      .get(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`, (r) => {
+        let data = '';
+        r.on('data', (c) => (data += c));
+        r.on('end', () => resolve(JSON.parse(data)));
+      })
+      .on('error', reject);
+  });
 
-const logoutUser = async (req, res) => {
-    try {
-        const token = req.cookies?.refreshToken
-        if (token) {
-            const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
-            const user = await User.findById(decoded.id)
-            if (user) {
-                user.tokenVersion += 1
-                await user.save()
-            }
-        }
-    } catch (_) {}
-    res.clearCookie('refreshToken', getCookieOptions(req))
-    res.status(200).json({ message: 'Logged out' })
-}
+const fetchUserInfo = (accessToken) =>
+  new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: 'www.googleapis.com',
+        path: '/oauth2/v3/userinfo',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+      (r) => {
+        let data = '';
+        r.on('data', (c) => (data += c));
+        r.on('end', () => resolve(JSON.parse(data)));
+      }
+    );
+    req.on('error', reject);
+    req.end();
+  });
 
-const refreshAccessToken = async (req, res) => {
-    try {
-        const token = req.cookies?.refreshToken
-        // Debug Log
-        console.log(`[Refresh] Origin: ${req.headers.origin}, Secure: ${req.secure}, Protocol: ${req.protocol}`);
-        console.log(`[Refresh] Token present: ${!!token}, Cookies:`, Object.keys(req.cookies || {}));
-        
-        if (!token) return res.status(401).json({ message: 'Not authorized' })
-        const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
-        const user = await User.findById(decoded.id)
-        if (!user) return res.status(401).json({ message: 'Not authorized' })
-        if (decoded.tokenVersion !== user.tokenVersion) return res.status(401).json({ message: 'Not authorized' })
-        const access = generateToken(user._id, user.role, user.tokenVersion)
-        res.json({ token: access })
-    } catch (e) {
-        console.error("[Refresh] Error:", e.message);
-        res.status(401).json({ message: 'Not authorized' })
-    }
-}
-
-function tokeninfo(idToken) {
-    return new Promise((resolve, reject) => {
-        const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`
-        https.get(url, (resp) => {
-            let data = ''
-            resp.on('data', (chunk) => { data += chunk })
-            resp.on('end', () => {
-                try { resolve(JSON.parse(data)) } catch (e) { reject(e) }
-            })
-        }).on('error', reject)
-    })
-}
-
-function fetchUserInfo(accessToken) {
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'www.googleapis.com',
-            path: '/oauth2/v3/userinfo',
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            }
-        };
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', (chunk) => { data += chunk; });
-            res.on('end', () => {
-                try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
-            });
-        });
-        req.on('error', reject);
-        req.end();
-    });
-}
-
+/* ===============================
+   GOOGLE AUTH
+================================ */
 const googleAuth = async (req, res) => {
-    try {
-        const { credential, accessToken, role } = req.body
-        if (!credential && !accessToken) return res.status(400).json({ message: 'Invalid request' })
-        
-        let info;
-        if (credential) {
-            info = await tokeninfo(credential)
-            if (!info || info.aud !== process.env.GOOGLE_CLIENT_ID || info.email_verified !== 'true') {
-                return res.status(401).json({ message: 'Invalid token' })
-            }
-        } else if (accessToken) {
-            info = await fetchUserInfo(accessToken)
-            if (!info || !info.email_verified) {
-                return res.status(401).json({ message: 'Invalid access token' })
-            }
-        }
-
-        const email = info.email
-        let user = await User.findOne({ email })
-        if (!user) {
-            const pwd = Math.random().toString(36).slice(-12)
-            user = await User.create({ name: info.name || email.split('@')[0], email, password: pwd, role: role || 'customer', profilePhoto: info.picture })
-        } else {
-            if (!user.profilePhoto && info.picture) {
-                user.profilePhoto = info.picture
-                await user.save()
-            }
-        }
-        const access = generateToken(user._id, user.role, user.tokenVersion)
-        const refresh = generateRefreshToken(user._id, user.tokenVersion)
-        res.cookie('refreshToken', refresh, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        })
-        res.json({ _id: user._id, name: user.name, email: user.email, role: user.role, token: access })
-    } catch (e) {
-        res.status(500).json({ message: e.message })
+  try {
+    const { credential, accessToken, role } = req.body;
+    if (!credential && !accessToken) {
+      return res.status(400).json({ message: 'Invalid request' });
     }
-}
 
-module.exports = { registerUser, loginUser, getUserProfile, updateProfile, uploadProfilePhoto, logoutUser, refreshAccessToken, googleAuth };
+    let info;
+    if (credential) {
+      info = await tokeninfo(credential);
+      if (
+        info.aud !== process.env.GOOGLE_CLIENT_ID ||
+        info.email_verified !== 'true'
+      ) {
+        return res.status(401).json({ message: 'Invalid Google token' });
+      }
+    } else {
+      info = await fetchUserInfo(accessToken);
+      if (!info.email_verified) {
+        return res.status(401).json({ message: 'Invalid Google access token' });
+      }
+    }
+
+    let user = await User.findOne({ email: info.email });
+    if (!user) {
+      const pwd = Math.random().toString(36).slice(-12);
+      user = await User.create({
+        name: info.name || info.email.split('@')[0],
+        email: info.email,
+        password: pwd,
+        role: role || 'customer',
+        profilePhoto: info.picture,
+      });
+    }
+
+    const access = generateToken(user._id, user.role, user.tokenVersion);
+    const refresh = generateRefreshToken(user._id, user.tokenVersion);
+
+    res.cookie('refreshToken', refresh, COOKIE_OPTIONS);
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: access,
+    });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+};
+
+/* ===============================
+   EXPORTS
+================================ */
+module.exports = {
+  registerUser,
+  loginUser,
+  refreshAccessToken,
+  logoutUser,
+  getUserProfile,
+  updateProfile,
+  googleAuth,
+};
