@@ -12,11 +12,12 @@ const Icons = {
   Heart: () => <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>,
   Cart: () => <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>,
   User: () => <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
+  Briefcase: () => <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>,
   X: () => <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
 }
 
 export default function Navbar() {
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   const { cart, favorites } = useContext(ShopContext)
   const [q, setQ] = useState('')
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
@@ -104,6 +105,12 @@ export default function Navbar() {
         <Link to={user ? "/profile" : "/login"} className={`dock-item ${isActive('/profile') ? 'active' : ''}`}>
           <Icons.User />
         </Link>
+
+        {role === 'retailer' && (
+          <Link to="/b2b" className={`dock-item ${isActive('/b2b') ? 'active' : ''}`}>
+            <Icons.Briefcase />
+          </Link>
+        )}
       </nav>
 
       {/* =======================
@@ -119,6 +126,9 @@ export default function Navbar() {
                <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
                <Link to="/products" className={`nav-link ${isActive('/products') ? 'active' : ''}`}>Products</Link>
                <Link to="/categories" className={`nav-link ${isActive('/categories') ? 'active' : ''}`}>Categories</Link>
+               {role === 'retailer' && (
+                 <Link to="/b2b" className={`nav-link ${isActive('/b2b') ? 'active' : ''}`}>B2B Portal</Link>
+               )}
              </div>
            </div>
            <form onSubmit={onSearch} className="desk-search-wrapper">
