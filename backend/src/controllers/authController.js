@@ -17,22 +17,6 @@ const getCookieOptions = (req) => {
         };
     }
     
-    // Dynamic fallback for mixed environments
-    const origin = req?.headers?.origin || '';
-    const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
-    
-    // If origin is localhost, use lax/insecure (or secure if https local)
-    // But usually localhost is http.
-    if (isLocal) {
-        return {
-            httpOnly: true,
-            secure: false, // http://localhost
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        };
-    }
-
     // Default to secure/none for cross-site (e.g. Vercel -> Render)
     return {
         httpOnly: true,
