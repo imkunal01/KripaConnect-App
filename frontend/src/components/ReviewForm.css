@@ -52,13 +52,13 @@
 }
 
 .review-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99,102,241,.2);
+  border-color: #FF3D3D;
+  box-shadow: 0 0 0 2px rgba(255, 61, 61, 0.2);
 }
 
 /* submit btn */
 .review-submit {
-  background: #2563eb;
+  background: #FF3D3D;
   color: white;
   border: none;
   font-weight: 600;
@@ -70,11 +70,11 @@
 }
 
 .review-submit:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #D32F2F;
   transform: translateY(-1px);
 }
 
 .review-submit:disabled {
-  background: #93c5fd;
+  background: #fca5a5;
   cursor: not-allowed;
 }

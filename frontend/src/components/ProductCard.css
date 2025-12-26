@@ -80,7 +80,7 @@
 }
 
 .product-card-link:hover .product-card-name {
-  color: #2563eb;
+  color: #FF3D3D;
 }
 
 .product-card-tag {
@@ -97,7 +97,7 @@
 }
 
 .product-card-price {
-  color: #2563eb;
+  color: #FF3D3D;
   font-weight: 700;
   font-size: 1.25rem;
 }
@@ -119,7 +119,7 @@
 .product-card-button {
   width: 100%;
   padding: 0.75rem;
-  background-color: #2563eb;
+  background-color: #FF3D3D;
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -131,7 +131,7 @@
 }
 
 .product-card-button:hover:not(:disabled) {
-  background-color: #1e40af;
+  background-color: #D32F2F;
   transform: scale(1.02);
 }
 

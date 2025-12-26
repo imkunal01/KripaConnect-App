@@ -1,7 +1,7 @@
 function getStatusInfo(status) {
   switch (status) {
     case 'pending':
-      return { label: 'Order Placed', icon: '📦', color: '#3b82f6', completed: true }
+      return { label: 'Order Placed', icon: '📦', color: '#FF3D3D', completed: true }
     case 'shipped':
       return { label: 'Shipped', icon: '🚚', color: '#8b5cf6', completed: true }
     case 'delivered':

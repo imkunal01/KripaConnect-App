@@ -111,7 +111,7 @@ export default function OrderDetailsPage() {
             style={{
               marginTop: '20px',
               padding: '12px 24px',
-              backgroundColor: '#3b82f6',
+              backgroundColor: '#FF3D3D',
               color: '#fff',
               border: 'none',
               borderRadius: '6px',

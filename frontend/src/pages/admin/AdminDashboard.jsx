@@ -1,26 +1,47 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
-import { getOverview, getRevenueStats, getLowStock, getOrderStats } from '../../services/admin'
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  getOverview,
+  getRevenueStats,
+  getLowStock,
+  getOrderStats
+} from '../../services/admin'
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
 } from 'recharts'
-import { FaUsers, FaShoppingCart, FaBoxOpen, FaExclamationTriangle } from 'react-icons/fa'
+import {
+  FaUsers,
+  FaShoppingCart,
+  FaExclamationTriangle
+} from 'react-icons/fa'
 import './AdminDashboard.css'
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']
+const COLORS = ['#FF3D3D', '#374151', '#9CA3AF', '#F87171', '#EF4444']
 
-function StatCard({ title, value, icon, color = '#3b82f6', loading }) {
+function StatCard({ title, value, icon, color = '#FF3D3D', loading }) {
   return (
     <div className="stat-card">
       <div className="stat-card-content">
         <div>
           <div className="stat-card-title">{title}</div>
-          <div className="stat-card-value">
-            {loading ? '...' : (typeof value === 'number' ? value.toLocaleString('en-IN') : value)}
+          <div className="stat-card-value" style={{ color: color }}>
+            {loading ? '...' : value}
           </div>
         </div>
-        <div className="stat-card-icon" style={{ color: color, backgroundColor: `${color}20` }}>
+        <div
+          className="stat-card-icon"
+          style={{ color: color, backgroundColor: `${color}15` }}
+        >
           {icon}
         </div>
       </div>
@@ -30,7 +51,8 @@ function StatCard({ title, value, icon, color = '#3b82f6', loading }) {
 
 export default function AdminDashboard() {
   const { token } = useAuth()
-  const [overview, setOverview] = useState(null)
+
+  const [overview, setOverview] = useState({})
   const [revenueData, setRevenueData] = useState([])
   const [lowStock, setLowStock] = useState([])
   const [orderStats, setOrderStats] = useState([])
@@ -40,36 +62,68 @@ export default function AdminDashboard() {
     async function fetchData() {
       try {
         setLoading(true)
-        const [ovData, revData, stockData, ordData] = await Promise.all([
+
+        const [ov, rev, stock, ord] = await Promise.all([
           getOverview(token),
           getRevenueStats(token),
           getLowStock(token),
           getOrderStats(token)
         ])
-        setOverview(ovData?.data || {})
-        setRevenueData(Array.isArray(revData) ? revData : [])
-        setLowStock(Array.isArray(stockData) ? stockData : [])
-        setOrderStats(Array.isArray(ordData) ? ordData : [])
-      } catch (error) {
-        console.error("Failed to load dashboard data", error)
+
+        setOverview(ov?.data || {})
+        setRevenueData(Array.isArray(rev) ? rev : [])
+        setLowStock(Array.isArray(stock) ? stock : [])
+        setOrderStats(Array.isArray(ord) ? ord : [])
+      } catch (err) {
+        console.error('Dashboard load failed:', err)
       } finally {
         setLoading(false)
       }
     }
+
     if (token) fetchData()
   }, [token])
 
-  // Format revenue data for chart
+  // ---------- Safe formatted data ----------
+
   const formattedRevenue = revenueData.map(item => ({
-    date: new Date(item._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    amount: item.total
+    date: item?._id
+      ? new Date(item._id).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        })
+      : 'N/A',
+    amount: typeof item?.total === 'number' ? item.total : 0
   }))
 
-  // Format order stats for pie chart
   const pieData = orderStats.map(item => ({
-    name: item._id.charAt(0).toUpperCase() + item._id.slice(1),
-    value: item.count
+    name: item?._id
+      ? item._id.charAt(0).toUpperCase() + item._id.slice(1)
+      : 'Unknown',
+    value: typeof item?.count === 'number' ? item.count : 0
   }))
+
+  const totalRevenue =
+    typeof overview?.totalRevenue === 'number'
+      ? `₹${overview.totalRevenue.toLocaleString('en-IN')}`
+      : '₹0'
+
+  const totalOrders =
+    typeof overview?.totalOrders === 'number'
+      ? overview.totalOrders.toLocaleString('en-IN')
+      : '0'
+
+  const totalUsers =
+    typeof overview?.totalUsers === 'number'
+      ? overview.totalUsers.toLocaleString('en-IN')
+      : '0'
+
+  const lowStockCount =
+    typeof overview?.lowStock === 'number'
+      ? overview.lowStock.toLocaleString('en-IN')
+      : '0'
+
+  // ---------- UI ----------
 
   return (
     <div className="dashboard-container">
@@ -81,30 +135,30 @@ export default function AdminDashboard() {
       <div className="stats-grid">
         <StatCard
           title="Total Revenue"
-          value={`₹${overview?.totalRevenue?.toLocaleString('en-IN') || 0}`}
-          icon={<div style={{ fontSize: '24px', fontWeight: 'bold' }}>₹</div>}
-          color="#10b981"
+          value={totalRevenue}
+          icon={<div style={{ fontSize: 22, fontWeight: 'bold' }}>₹</div>}
+          color="#FF3D3D"
           loading={loading}
         />
         <StatCard
           title="Total Orders"
-          value={overview?.totalOrders || 0}
+          value={totalOrders}
           icon={<FaShoppingCart />}
-          color="#3b82f6"
+          color="#374151"
           loading={loading}
         />
         <StatCard
           title="Total Users"
-          value={overview?.totalUsers || 0}
+          value={totalUsers}
           icon={<FaUsers />}
-          color="#8b5cf6"
+          color="#6B7280"
           loading={loading}
         />
         <StatCard
           title="Low Stock Items"
-          value={overview?.lowStock || 0}
+          value={lowStockCount}
           icon={<FaExclamationTriangle />}
-          color="#ef4444"
+          color="#EF4444"
           loading={loading}
         />
       </div>
@@ -113,47 +167,43 @@ export default function AdminDashboard() {
         <div className="chart-card">
           <h3>Revenue Analytics</h3>
           <div className="chart-wrapper">
-            {loading ? (
-              <div className="loading-chart">Loading...</div>
-            ) : formattedRevenue.length > 0 ? (
+            {!loading && formattedRevenue.length ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={formattedRevenue}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#FF3D3D" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#FF3D3D" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
-                    dy={10}
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#9ca3af', fontSize: 12}}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
-                    tickFormatter={(value) => `₹${value/1000}k`}
+                    tickFormatter={v => `₹${v / 1000}k`}
+                    tick={{fill: '#9ca3af', fontSize: 12}}
                   />
                   <Tooltip
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                    formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Revenue']}
+                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
+                    formatter={v => [`₹${v.toLocaleString('en-IN')}`, 'Revenue']}
                   />
                   <Area
                     type="monotone"
                     dataKey="amount"
-                    stroke="#10b981"
+                    stroke="#FF3D3D"
                     strokeWidth={2}
-                    fillOpacity={1}
                     fill="url(#colorRevenue)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="empty-chart">No revenue data available</div>
+              <div className="empty-chart">No revenue data</div>
             )}
           </div>
         </div>
@@ -161,33 +211,28 @@ export default function AdminDashboard() {
         <div className="chart-card">
           <h3>Order Status Distribution</h3>
           <div className="chart-wrapper">
-            {loading ? (
-              <div className="loading-chart">Loading...</div>
-            ) : pieData.length > 0 ? (
+            {!loading && pieData.length ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
+                    dataKey="value"
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
                     outerRadius={80}
-                    fill="#8884d8"
                     paddingAngle={5}
-                    dataKey="value"
                   >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    {pieData.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                  />
-                  <Legend verticalAlign="bottom" height={36}/>
+                  <Tooltip />
+                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="empty-chart">No order data available</div>
+              <div className="empty-chart">No order data</div>
             )}
           </div>
         </div>
@@ -195,9 +240,8 @@ export default function AdminDashboard() {
 
       <div className="dashboard-section">
         <h3>Low Stock Alert</h3>
-        {loading ? (
-          <div>Loading...</div>
-        ) : lowStock.length > 0 ? (
+
+        {!loading && lowStock.length ? (
           <div className="table-responsive">
             <table className="modern-table">
               <thead>
@@ -212,14 +256,22 @@ export default function AdminDashboard() {
                 {lowStock.map(item => (
                   <tr key={item._id}>
                     <td className="product-cell">
-                      {item.images?.[0]?.url && (
+                      {item?.images?.[0]?.url && (
                         <img src={item.images[0].url} alt={item.name} />
                       )}
-                      <span>{item.name}</span>
+                      <span>{item?.name || 'Unnamed Product'}</span>
                     </td>
-                    <td>₹{item.price.toLocaleString('en-IN')}</td>
-                    <td className="stock-danger">{item.stock}</td>
-                    <td><span className="badge badge-danger">Low Stock</span></td>
+                    <td>
+                      ₹{typeof item?.price === 'number'
+                        ? item.price.toLocaleString('en-IN')
+                        : '—'}
+                    </td>
+                    <td className="stock-danger">
+                      {typeof item?.stock === 'number' ? item.stock : '—'}
+                    </td>
+                    <td>
+                      <span className="badge badge-danger">Low Stock</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -232,4 +284,3 @@ export default function AdminDashboard() {
     </div>
   )
 }
-

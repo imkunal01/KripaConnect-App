@@ -114,34 +114,68 @@ export default function Navbar() {
       </nav>
 
       {/* =======================
-          DESKTOP (Unchanged)
+          DESKTOP (Redesigned)
       ======================== */}
-      <div className="desktop-nav-container">
-        {/* ... Keep your existing Desktop code here ... */}
-         <div className="floating-pill">
-           {/* Copy your Desktop code from previous step here, it remains valid */}
-           <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-             <Link to="/" className="desk-logo">KC<div className="brand-dot"/></Link>
-             <div className="nav-links">
+      <header className="desktop-header">
+        <div className="header-inner">
+          
+          {/* Left: Logo */}
+          <Link to="/" className="desk-logo">
+            BizLink<div className="brand-dot"/>
+          </Link>
+
+          {/* Center: Search */}
+          <form onSubmit={onSearch} className="desk-search-wrapper">
+             <div className="search-icon-wrapper">
+               <Icons.Search />
+             </div>
+             <input 
+               className="desk-search-input" 
+               placeholder="Search here..." 
+               value={q} 
+               onChange={e => setQ(e.target.value)} 
+             />
+             <button type="submit" className="search-btn-red">
+               <Icons.Search />
+             </button>
+          </form>
+
+          {/* Right: Actions */}
+          <div className="desk-actions">
+            
+            <nav className="nav-links">
                <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
                <Link to="/products" className={`nav-link ${isActive('/products') ? 'active' : ''}`}>Products</Link>
-               <Link to="/categories" className={`nav-link ${isActive('/categories') ? 'active' : ''}`}>Categories</Link>
                {role === 'retailer' && (
-                 <Link to="/b2b" className={`nav-link ${isActive('/b2b') ? 'active' : ''}`}>B2B Portal</Link>
+                 <Link to="/b2b" className={`nav-link ${isActive('/b2b') ? 'active' : ''}`}>B2B</Link>
                )}
-             </div>
-           </div>
-           <form onSubmit={onSearch} className="desk-search-wrapper">
-             <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}><Icons.Search /></span>
-             <input className="desk-search-input" placeholder="Search..." value={q} onChange={e => setQ(e.target.value)} />
-           </form>
-           <div className="desk-actions">
-             <Link to="/favorites" className="icon-btn"><Icons.Heart />{favoritesCount > 0 && <span className="badge-dot" />}</Link>
-             <Link to="/cart" className="icon-btn"><Icons.Cart />{cartCount > 0 && <span className="badge-dot" />}</Link>
-             {user ? <Link to="/profile" className="user-chip">{user.name.charAt(0)}</Link> : <Link to="/login" className="nav-link active">Login</Link>}
-           </div>
-         </div>
-      </div>
+            </nav>
+
+            <div className="action-divider"></div>
+
+            <Link to="/favorites" className="icon-btn" title="Favorites">
+              <Icons.Heart />
+              {favoritesCount > 0 && <span className="badge-dot" />}
+            </Link>
+
+            <Link to="/cart" className="icon-btn" title="Cart">
+              <Icons.Cart />
+              {cartCount > 0 && <span className="badge-dot" />}
+            </Link>
+            
+            {user ? (
+              <Link to={role === 'admin' ? '/admin' : '/profile'} className="btn-primary-red">
+                {role === 'admin' ? 'Admin Panel' : 'My Account'}
+              </Link>
+            ) : (
+              <div className="auth-buttons">
+                <Link to="/login" className="btn-text">Sign In</Link>
+                <Link to="/signup" className="btn-primary-red">Sign Up</Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
     </>
   )
 }

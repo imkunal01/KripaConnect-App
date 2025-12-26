@@ -113,7 +113,7 @@
 }
 
 .favorite-price {
-  color: #2563eb;
+  color: #FF3D3D;
   font-weight: 700;
   font-size: 1.25rem;
   margin-bottom: 1rem;
@@ -127,7 +127,7 @@
 .favorite-add-cart-btn {
   flex: 1;
   padding: 0.75rem;
-  background-color: #2563eb;
+  background-color: #FF3D3D;
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -139,7 +139,7 @@
 }
 
 .favorite-add-cart-btn:hover {
-  background-color: #1e40af;
+  background-color: #D32F2F;
   transform: scale(1.02);
 }
 

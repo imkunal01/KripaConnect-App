@@ -1,7 +1,7 @@
 :root {
   --profile-bg: #f8fafc;
   --profile-card-bg: #ffffff;
-  --profile-primary: #2563eb;
+  --profile-primary: #FF3D3D;
   --profile-text: #1e293b;
   --profile-text-muted: #64748b;
   --profile-border: #e2e8f0;
@@ -27,7 +27,7 @@
 /* --- Banner --- */
 .profile-banner {
   height: 200px;
-  background: linear-gradient(135deg, var(--profile-primary) 0%, #1e40af 100%);
+  background: linear-gradient(135deg, var(--profile-primary) 0%, #991b1b 100%);
   width: 100%;
   position: relative;
 }
@@ -143,7 +143,7 @@
 }
 
 .badge-gold { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
-.badge-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-blue { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
 /* Header Actions */
 .header-actions {
@@ -261,7 +261,7 @@
   outline: none;
   border-color: var(--profile-primary);
   background: white;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 61, 61, 0.1);
 }
 
 /* Action Cards */

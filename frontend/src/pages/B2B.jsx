@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../services/api'
 import { useAuth } from '../hooks/useAuth.js'
-import { useContext } from 'react'
 import ShopContext from '../context/ShopContext.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
@@ -39,251 +38,80 @@ function RetailerProductCard({ product, onAddToCart }) {
   }
 
   return (
-    <div style={{
-      border: '1px solid #e5e7eb',
-      borderRadius: '0.75rem',
-      padding: '1.5rem',
-      background: 'white',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'all 0.2s',
-      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-      e.currentTarget.style.transform = 'translateY(-4px)'
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-      e.currentTarget.style.transform = 'translateY(0)'
-    }}
-    >
-      <div style={{ 
-        height: '220px', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        background: '#f9fafb', 
-        borderRadius: '0.5rem',
-        marginBottom: '1rem',
-        border: '1px solid #e5e7eb',
-        overflow: 'hidden'
-      }}>
+    <div className="retailer-card">
+      <div className="retailer-card-img">
         {product.images?.[0]?.url ? (
-          <img 
-            src={product.images[0].url} 
-            alt={product.name} 
-            style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} 
-          />
+          <img src={product.images[0].url} alt={product.name} />
         ) : (
-          <div style={{ color: '#9ca3af', fontSize: '3rem' }}>📦</div>
+          <div className="placeholder-icon">📦</div>
         )}
       </div>
       
-      <h3 style={{
-        fontSize: '1.125rem',
-        fontWeight: '600',
-        marginBottom: '0.75rem',
-        color: '#111827',
-        lineHeight: '1.4'
-      }}>
-        {product.name}
-      </h3>
+      <div className="retailer-card-body">
+        <h3>{product.name}</h3>
+        {product.description && (
+          <p className="desc">
+            {product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description}
+          </p>
+        )}
 
-      {product.description && (
-        <p style={{
-          fontSize: '0.875rem',
-          color: '#6b7280',
-          marginBottom: '1rem',
-          lineHeight: '1.5'
-        }}>
-          {product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description}
-        </p>
-      )}
-
-      {/* Pricing Section */}
-      <div style={{
-        marginBottom: '1rem',
-        padding: '1rem',
-        backgroundColor: '#f9fafb',
-        borderRadius: '0.5rem',
-        border: '1px solid #e5e7eb'
-      }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.5rem'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Retail Price:</span>
-            <span style={{
-              fontSize: '0.875rem',
-              textDecoration: 'line-through',
-              color: '#9ca3af'
-            }}>
-              ₹{product.price?.toLocaleString('en-IN')}
-            </span>
+        <div className="pricing-box">
+          <div className="price-row">
+            <span className="label">Retail Price:</span>
+            <span className="val strike">₹{product.price?.toLocaleString('en-IN')}</span>
           </div>
           
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Retailer Price:</span>
-            <span style={{
-              fontSize: '1rem',
-              fontWeight: '600',
-              color: '#374151'
-            }}>
+          <div className="price-row highlight">
+            <span className="label">Retailer Price:</span>
+            <span className="val primary">
               ₹{product.retailer_price?.toLocaleString('en-IN') || product.price?.toLocaleString('en-IN')}
             </span>
           </div>
 
           {product.price_bulk && (
             <>
-              <div style={{
-                height: '1px',
-                backgroundColor: '#e5e7eb',
-                margin: '0.5rem 0'
-              }} />
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{
-                  fontSize: '0.75rem',
-                  color: '#10b981',
-                  fontWeight: '600'
-                }}>
-                  Bulk Price:
-                </span>
-                <span style={{ 
-                  fontSize: '1.25rem', 
-                  fontWeight: '700', 
-                  color: isBulkPrice ? '#10b981' : '#6b7280'
-                }}>
+              <div className="divider" />
+              <div className="price-row bulk">
+                <span className="label bulk-label">Bulk Price:</span>
+                <span className={`val bulk-val ${isBulkPrice ? 'active' : ''}`}>
                   ₹{product.price_bulk?.toLocaleString('en-IN')}
                 </span>
               </div>
-              <div style={{
-                fontSize: '0.75rem',
-                color: '#f59e0b',
-                fontWeight: '500',
-                textAlign: 'right'
-              }}>
-                Min Qty: {minQty} units
-              </div>
+              <div className="min-qty-hint">Min Qty: {minQty} units</div>
             </>
           )}
         </div>
-      </div>
 
-      {/* Stock Status */}
-      <div style={{
-        marginBottom: '1rem',
-        padding: '0.5rem 0.75rem',
-        backgroundColor: product.stock > 0 ? '#d1fae5' : '#fee2e2',
-        color: product.stock > 0 ? '#065f46' : '#991b1b',
-        borderRadius: '0.375rem',
-        fontSize: '0.875rem',
-        fontWeight: '500',
-        textAlign: 'center'
-      }}>
-        {product.stock > 0 ? `In Stock (${product.stock} units)` : 'Out of Stock'}
-      </div>
-
-      {/* Quantity Selector */}
-      <div style={{ marginBottom: '1rem' }}>
-        <label style={{
-          fontSize: '0.875rem',
-          fontWeight: '500',
-          marginBottom: '0.5rem',
-          display: 'block',
-          color: '#374151'
-        }}>
-          Quantity:
-        </label>
-        <QuantitySelector
-          value={qty}
-          onChange={handleQtyChange}
-          min={minQty}
-          max={product.stock || 999}
-        />
-        {qty >= minQty && product.price_bulk && (
-          <div style={{
-            fontSize: '0.75rem',
-            color: '#10b981',
-            marginTop: '0.5rem',
-            fontWeight: '500'
-          }}>
-            ✓ Bulk pricing applied
-          </div>
-        )}
-      </div>
-
-      {/* Subtotal */}
-      <div style={{
-        marginBottom: '1rem',
-        padding: '1rem',
-        background: '#f0fdf4',
-        borderRadius: '0.5rem',
-        border: '1px solid #bbf7d0'
-      }}>
-        <div style={{
-          fontSize: '0.75rem',
-          color: '#166534',
-          marginBottom: '0.25rem',
-          fontWeight: '500'
-        }}>
-          Subtotal:
+        <div className={`stock-badge ${product.stock > 0 ? 'in-stock' : 'out-stock'}`}>
+          {product.stock > 0 ? `In Stock (${product.stock} units)` : 'Out of Stock'}
         </div>
-        <div style={{
-          fontSize: '1.5rem',
-          fontWeight: '700',
-          color: '#166534'
-        }}>
-          ₹{(effectivePrice * qty).toLocaleString('en-IN')}
-        </div>
-      </div>
 
-      {/* Add to Cart Button */}
-      <button
-        onClick={handleAddToCart}
-        disabled={adding || product.stock <= 0 || qty < minQty}
-        style={{
-          width: '100%',
-          padding: '0.875rem',
-          backgroundColor: (product.stock > 0 && qty >= minQty) ? '#2563eb' : '#9ca3af',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '0.5rem',
-          fontSize: '1rem',
-          fontWeight: '600',
-          cursor: (product.stock > 0 && qty >= minQty) ? 'pointer' : 'not-allowed',
-          opacity: adding ? 0.7 : 1,
-          transition: 'all 0.2s'
-        }}
-        onMouseEnter={(e) => {
-          if (product.stock > 0 && qty >= minQty && !adding) {
-            e.currentTarget.style.backgroundColor = '#1e40af'
-            e.currentTarget.style.transform = 'scale(1.02)'
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (product.stock > 0 && qty >= minQty) {
-            e.currentTarget.style.backgroundColor = '#2563eb'
-            e.currentTarget.style.transform = 'scale(1)'
-          }
-        }}
-      >
-        {adding ? 'Adding...' : qty < minQty ? `Min ${minQty} required` : 'Add to Cart'}
-      </button>
+        <div className="qty-section">
+          <label>Quantity:</label>
+          <QuantitySelector
+            value={qty}
+            onChange={handleQtyChange}
+            min={minQty}
+            max={product.stock || 999}
+          />
+          {qty >= minQty && product.price_bulk && (
+            <div className="bulk-applied">✓ Bulk pricing applied</div>
+          )}
+        </div>
+
+        <div className="subtotal-box">
+          <div className="sub-label">Subtotal:</div>
+          <div className="sub-val">₹{(effectivePrice * qty).toLocaleString('en-IN')}</div>
+        </div>
+
+        <button
+          className="btn-add-retail"
+          onClick={handleAddToCart}
+          disabled={adding || product.stock <= 0 || qty < minQty}
+        >
+          {adding ? 'Adding...' : qty < minQty ? `Min ${minQty} required` : 'Add to Cart'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -297,15 +125,8 @@ export default function B2B() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // Check access control
-    if (!token) {
-      navigate('/login')
-      return
-    }
-    if (role !== 'retailer') {
-      navigate('/')
-      return
-    }
+    if (!token) { navigate('/login'); return }
+    if (role !== 'retailer') { navigate('/'); return }
     loadProducts()
   }, [token, role, navigate])
 
@@ -318,7 +139,6 @@ export default function B2B() {
       setItems(data)
     } catch (err) {
       setError(err.message || 'Failed to load products')
-      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -327,79 +147,48 @@ export default function B2B() {
   async function handleAddToCart(product, qty) {
     try {
       await addToCart(product, qty)
-      // Show success feedback
       alert(`Added ${qty} ${product.name} to cart`)
     } catch (err) {
       alert(err.message || 'Failed to add to cart')
-      throw err
     }
   }
 
-  // Access control UI
-  if (role !== 'retailer') {
-    return (
-      <div>
-        <Navbar />
-        <div style={{ padding: '40px', textAlign: 'center' }}>
-          <h2>Access Denied</h2>
-          <p>This portal is only accessible to retailer accounts.</p>
-          <button onClick={() => navigate('/')} style={{
-            marginTop: '20px',
-            padding: '12px 24px',
-            backgroundColor: '#3b82f6',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}>
-            Go to Home
-          </button>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
+  if (role !== 'retailer') return null 
 
   return (
     <div className="b2b-page">
       <Navbar />
       
       <main className="b2b-main">
-        {/* Header Section */}
-        <div className="b2b-header">
-          <div className="b2b-header-content">
-            <div>
-              <h1 className="b2b-title">B2B Wholesale Portal</h1>
-              <p className="b2b-subtitle">
-                Welcome, {user?.name}! Shop with bulk pricing and special wholesale rates.
-              </p>
-            </div>
-            <button onClick={() => navigate('/cart')} className="b2b-view-cart-btn">
+        {/* Hero Section */}
+        <section className="b2b-hero">
+          <div className="b2b-hero-content">
+            <h1>Wholesale Portal</h1>
+            <p>Welcome, {user?.name}! Access exclusive bulk pricing and special rates.</p>
+            <button onClick={() => navigate('/cart')} className="btn-hero-red">
               View Cart →
             </button>
           </div>
-        </div>
+        </section>
 
-        {error && (
-          <div className="b2b-error">{error}</div>
-        )}
+        {error && <div className="b2b-error">{error}</div>}
 
         {loading ? (
           <div className="b2b-loading">
-            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-            <p style={{ color: '#6b7280' }}>Loading products...</p>
+            <div className="spinner">⏳</div>
+            <p>Loading catalog...</p>
           </div>
         ) : items.length === 0 ? (
-          <div className="b2b-empty-state">
-            <div className="b2b-empty-icon">📦</div>
-            <h2 className="b2b-empty-title">No products available</h2>
-            <p className="b2b-empty-text">Check back later for wholesale products</p>
+          <div className="b2b-empty">
+            <div className="icon">📦</div>
+            <h2>No products available</h2>
+            <p>Check back later for wholesale opportunities.</p>
           </div>
         ) : (
-          <>
-            <div className="b2b-products-header">
-              <div className="b2b-products-count">
-                {items.length} product{items.length !== 1 ? 's' : ''} available
+          <section className="b2b-content">
+            <div className="b2b-toolbar">
+              <div className="count-badge">
+                {items.length} Product{items.length !== 1 ? 's' : ''} Available
               </div>
             </div>
             
@@ -412,7 +201,7 @@ export default function B2B() {
                 />
               ))}
             </div>
-          </>
+          </section>
         )}
       </main>
 

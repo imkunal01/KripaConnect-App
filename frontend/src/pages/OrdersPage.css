@@ -118,8 +118,8 @@
 }
 
 .orders-status-pending {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .orders-status-shipped {
@@ -176,8 +176,8 @@
 }
 
 .orders-btn-blue {
-  background: #e0f2fe;
-  color: #0284c7;
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .orders-btn-danger {
@@ -186,6 +186,6 @@
 }
 
 .orders-btn-primary {
-  background: #3b82f6;
+  background: #FF3D3D;
   color: white;
 }

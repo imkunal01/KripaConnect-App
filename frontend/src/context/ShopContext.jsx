@@ -141,7 +141,32 @@ export function ShopProvider({ children }) {
     })()
   }, [token])
 
-  const value = useMemo(() => ({ cart, favorites, addToCart, removeFromCart, updateQty, toggleFavorite }), [cart, favorites, addToCart, removeFromCart, updateQty, toggleFavorite])
+  const clearCart = useCallback(async () => {
+    if (token) {
+      // For COD orders, backend clears the cart. 
+      // For others, we might need an endpoint or just refresh.
+      // Ideally we call an endpoint DELETE /api/cart, but since we don't have it,
+      // we'll just fetch the empty cart or set it to empty if we know it's cleared.
+      // Let's just fetch to be safe and consistent.
+      const items = await getCart(token)
+      setCart(items.map(i => ({ 
+        productId: i.product, 
+        name: i.name, 
+        price: i.price, 
+        image: i.image, 
+        qty: i.qty,
+        regularPrice: i.regularPrice,
+        retailerPrice: i.retailerPrice,
+        bulkPrice: i.bulkPrice,
+        minBulkQty: i.minBulkQty,
+        isBulkPrice: i.isBulkPrice
+      })))
+    } else {
+      setCart([])
+    }
+  }, [token])
+
+  const value = useMemo(() => ({ cart, favorites, addToCart, removeFromCart, updateQty, toggleFavorite, clearCart }), [cart, favorites, addToCart, removeFromCart, updateQty, toggleFavorite, clearCart])
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>
 }
 

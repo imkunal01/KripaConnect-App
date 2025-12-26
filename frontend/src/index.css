@@ -1,9 +1,9 @@
 /* Global CSS - Minimal Styles Only */
 
 :root {
-  /* Core Design Tokens - Keep minimal */
-  --primary: #2563eb;
-  --primary-dark: #1e40af;
+  /* Core Design Tokens - Red Accent Redesign */
+  --primary: #FF3D3D;
+  --primary-dark: #D32F2F;
   --secondary: #10b981;
   --danger: #ef4444;
   

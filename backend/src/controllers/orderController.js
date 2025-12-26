@@ -17,9 +17,16 @@ const createOrder = async (req, res) => {
     // calculate total
     let total = 0;
     const orderItems = [];
+
+    // Optimization: Fetch all products in one query
+    const productIds = items.map(i => i.product);
+    const products = await Product.find({ _id: { $in: productIds } });
+    const productMap = new Map(products.map(p => [p._id.toString(), p]));
+
     for (let item of items) {
-      const product = await Product.findById(item.product);
-      if (!product) return res.status(404).json({ message: "Product not found" });
+      const product = productMap.get(item.product);
+      
+      if (!product) return res.status(404).json({ message: `Product ${item.product} not found` });
       if (product.stock < item.qty) return res.status(400).json({ message: `${product.name} is out of stock` });
 
       // Pricing logic: use bulk price for retailers if quantity meets minimum
@@ -42,7 +49,7 @@ const createOrder = async (req, res) => {
       total += item.qty * unitPrice;
       orderItems.push({ product: product._id, name: product.name, qty: item.qty, price: unitPrice });
       product.stock -= item.qty;
-      await product.save();
+      await product.save(); // Still saving individually to handle concurrency versions, but that's acceptable for now.
     }
 
     const order = await Order.create({

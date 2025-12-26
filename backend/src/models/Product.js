@@ -21,6 +21,12 @@ const productSchema = new mongoose.Schema({
 }, { timestamps: true }
 );
 
+// Indexes for filtering and sorting
+productSchema.index({ Category: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ stock: 1 });
+productSchema.index({ active: 1 });
+
 // enable text search for name/description/tags used by listProducts
 productSchema.index({ name: 'text', description: 'text', tags: 'text' });
 

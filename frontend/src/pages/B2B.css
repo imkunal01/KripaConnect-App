@@ -1,151 +1,373 @@
-/* B2B Portal Page Styles */
+/* B2B Portal (Retailer Dashboard) Styles */
 
 .b2b-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f9fafb;
+  background-color: #f3f4f6; /* Neutral light background */
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 .b2b-main {
   flex: 1;
-  padding: 1rem;
+  padding: 0;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
 }
 
-.b2b-header {
-  background-color: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+/* --- Hero Section --- */
+.b2b-hero {
+  background: white;
+  padding: 3rem 2rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
 }
 
-.b2b-header-content {
+.b2b-hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 1rem;
 }
 
-.b2b-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: #111827;
+.b2b-hero-content h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
-.b2b-subtitle {
-  color: #6b7280;
-  font-size: 0.875rem;
+.b2b-hero-content p {
+  font-size: 1.1rem;
+  color: var(--text-soft);
+  max-width: 600px;
+  margin: 0;
 }
 
-.b2b-view-cart-btn {
-  padding: 0.875rem 1.5rem;
-  background-color: #2563eb;
+.btn-hero-red {
+  margin-top: 1rem;
+  background-color: var(--primary);
   color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
+  padding: 0.8rem 1.8rem;
+  border-radius: 8px;
   font-weight: 600;
+  font-size: 1rem;
+  border: none;
   cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 44px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 61, 61, 0.2);
 }
 
-.b2b-view-cart-btn:hover {
-  background-color: #1e40af;
+.btn-hero-red:hover {
+  background-color: var(--primary-dark);
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 61, 61, 0.3);
 }
 
-.b2b-error {
-  padding: 1rem 1.25rem;
-  background-color: #fee2e2;
-  color: #991b1b;
-  border-radius: 0.5rem;
+/* --- Toolbar --- */
+.b2b-content {
+  padding: 0 2rem 4rem 2rem;
+}
+
+.b2b-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1.5rem;
-  border: 1px solid #fecaca;
 }
 
-.b2b-loading {
-  text-align: center;
-  padding: 4rem 2rem;
-  background-color: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.b2b-empty-state {
-  background-color: white;
-  border-radius: 0.75rem;
-  padding: 4rem 2rem;
-  text-align: center;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+.count-badge {
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
   border: 1px solid #e5e7eb;
 }
 
-.b2b-empty-icon {
-  font-size: 4rem;
+/* --- Grid Layout --- */
+.b2b-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+/* --- Retailer Card --- */
+.retailer-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.retailer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+  border-color: rgba(255, 61, 61, 0.2);
+}
+
+.retailer-card-img {
+  height: 220px;
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #f3f4f6;
+  padding: 1rem;
+}
+
+.retailer-card-img img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  opacity: 0.3;
+}
+
+.retailer-card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.retailer-card-body h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.desc {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- Pricing Box --- */
+.pricing-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
   margin-bottom: 1rem;
 }
 
-.b2b-empty-title {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #111827;
-  font-weight: 600;
-}
-
-.b2b-empty-text {
-  color: #6b7280;
-}
-
-.b2b-products-header {
-  margin-bottom: 1.5rem;
-  padding: 1rem 1.5rem;
-  background-color: white;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
+.price-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0.5rem;
 }
 
-.b2b-products-count {
-  font-size: 1rem;
-  color: #6b7280;
+.price-row:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+.val {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.val.strike {
+  text-decoration: line-through;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.val.primary {
+  color: var(--primary); /* Red */
+  font-size: 1.1rem;
+}
+
+.divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.8rem 0;
+}
+
+.bulk-label {
+  font-weight: 600;
+  color: var(--secondary); /* Green for bulk deals usually, or keep red? User said red for interactive. Let's keep green for "savings" context or use red if strictly enforced. Actually user said red for "interactive elements". Green is standard for "money saved" or "success". Let's use a darker green or teal for bulk price to differentiate, but if user insisted on red replacement, maybe I should check. User said "Replace all blue accent usage". Green is fine. */
+}
+
+.bulk-val {
+  font-size: 1.2rem;
+  color: var(--text-soft);
+}
+
+.bulk-val.active {
+  color: var(--secondary); /* Green */
+  font-weight: 700;
+}
+
+.min-qty-hint {
+  text-align: right;
+  font-size: 0.75rem;
+  color: #f59e0b; /* Amber */
   font-weight: 500;
+  margin-top: 0.2rem;
 }
 
-.b2b-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+/* --- Stock Badge --- */
+.stock-badge {
+  text-align: center;
+  padding: 0.4rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
-/* Responsive Styles */
-@media (min-width: 768px) {
-  .b2b-main {
-    padding: 2rem 1.5rem;
+.stock-badge.in-stock {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.stock-badge.out-stock {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* --- Quantity Section --- */
+.qty-section {
+  margin-bottom: 1rem;
+}
+
+.qty-section label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.bulk-applied {
+  font-size: 0.8rem;
+  color: var(--secondary);
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+/* --- Subtotal --- */
+.subtotal-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.sub-label {
+  font-size: 0.8rem;
+  color: #166534;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.sub-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #15803d;
+}
+
+/* --- Add Button --- */
+.btn-add-retail {
+  width: 100%;
+  padding: 0.9rem;
+  background: var(--primary); /* Red */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(255, 61, 61, 0.2);
+}
+
+.btn-add-retail:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(255, 61, 61, 0.3);
+}
+
+.btn-add-retail:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+/* --- Empty/Loading --- */
+.b2b-loading, .b2b-empty {
+  text-align: center;
+  padding: 4rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin: 2rem;
+}
+
+.spinner {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.b2b-error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 1rem;
+  margin: 1rem 2rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .b2b-hero {
+    padding: 2rem 1rem;
   }
-
-  .b2b-title {
+  
+  .b2b-hero-content h1 {
     font-size: 2rem;
   }
-
-  .b2b-subtitle {
-    font-size: 1rem;
+  
+  .b2b-content {
+    padding: 1rem;
   }
-
+  
   .b2b-grid {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: 1fr;
   }
 }

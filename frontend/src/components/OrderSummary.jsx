@@ -13,8 +13,8 @@ export default function OrderSummary({ items }) {
         {isRetailer && (
           <span style={{ 
             padding: '4px 8px', 
-            backgroundColor: '#dbeafe', 
-            color: '#1e40af', 
+            backgroundColor: '#fee2e2', 
+            color: '#991b1b', 
             borderRadius: '6px', 
             fontSize: '12px',
             fontWeight: '500'

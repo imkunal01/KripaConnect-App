@@ -14,7 +14,7 @@ export default function Admin() {
   const { user, role, token, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const [activeTab, setActiveTab] = useState(() => (location.hash.replace('#', '') || 'dashboard'))
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -27,10 +27,6 @@ export default function Admin() {
       navigate('/')
       return
     }
-
-    // Set active tab from URL hash or default
-    const hash = location.hash.replace('#', '') || 'dashboard'
-    setActiveTab(hash)
   }, [token, role, navigate, location])
 
   function handleTabChange(tab) {
@@ -123,7 +119,7 @@ export default function Admin() {
                 style={{
                   padding: '0.875rem 1rem',
                   textAlign: 'left',
-                  backgroundColor: activeTab === tab.id ? '#2563eb' : 'transparent',
+                  backgroundColor: activeTab === tab.id ? '#FF3D3D' : 'transparent',
                   color: activeTab === tab.id ? 'white' : '#d1d5db',
                   border: 'none',
                   cursor: 'pointer',

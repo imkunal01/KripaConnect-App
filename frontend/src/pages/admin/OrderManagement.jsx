@@ -18,7 +18,7 @@ function formatDate(dateString) {
 
 function getStatusColor(status) {
   switch (status) {
-    case 'pending': return { bg: '#dbeafe', color: '#1e40af', label: 'Pending' }
+    case 'pending': return { bg: '#fff7ed', color: '#c2410c', label: 'Pending' }
     case 'shipped': return { bg: '#e9d5ff', color: '#7c3aed', label: 'Shipped' }
     case 'delivered': return { bg: '#d1fae5', color: '#166534', label: 'Delivered' }
     case 'cancelled': return { bg: '#fee2e2', color: '#991b1b', label: 'Cancelled' }
@@ -210,8 +210,8 @@ export default function OrderManagement() {
                             display: 'inline-block',
                             marginTop: '4px',
                             padding: '2px 8px',
-                            backgroundColor: '#dbeafe',
-                            color: '#1e40af',
+                            backgroundColor: '#fff1f2',
+                            color: '#FF3D3D',
                             borderRadius: '4px',
                             fontSize: '12px',
                             fontWeight: '500'

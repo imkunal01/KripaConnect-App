@@ -47,4 +47,10 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Indexes for faster dashboard/analytics queries
+orderSchema.index({ user: 1 });
+orderSchema.index({ deliveryStatus: 1 });
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ "items.product": 1 }); // For top selling products aggregation
+
 module.exports = mongoose.model("Order", orderSchema);

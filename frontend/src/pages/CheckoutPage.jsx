@@ -12,7 +12,7 @@ import { createRazorpayOrder, verifyPayment } from '../services/payments'
 import './CheckoutPage.css'
 
 export default function CheckoutPage() {
-  const { cart, removeFromCart } = useContext(ShopContext)
+  const { cart, removeFromCart, clearCart } = useContext(ShopContext)
   const { token, user } = useContext(AuthContext)
   const navigate = useNavigate()
 
@@ -20,12 +20,13 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState({})
   const [method, setMethod] = useState('COD')
   const [placing, setPlacing] = useState(false)
+  const [orderPlaced, setOrderPlaced] = useState(false)
 
   const empty = cart.length === 0
 
   useEffect(() => {
-    if (empty) navigate('/cart')
-  }, [empty, navigate])
+    if (empty && !orderPlaced) navigate('/cart')
+  }, [empty, navigate, orderPlaced])
 
   const itemsPayload = useMemo(
     () => cart.map(i => ({ product: i.productId, qty: i.qty })),
@@ -47,10 +48,16 @@ export default function CheckoutPage() {
         { items: itemsPayload, shippingAddress: address, paymentMethod: method },
         token
       )
-      const order = res.data
+      // Robustly handle response structure
+      const order = res.data?.data || res.data || {}
+      
+      if (!order._id) {
+        throw new Error('Invalid order response from server')
+      }
 
       if (method === 'COD') {
-        cart.forEach(i => removeFromCart(i.productId))
+        setOrderPlaced(true)
+        await clearCart()
         navigate(`/success/${order._id}`)
         return
       }
@@ -64,11 +71,20 @@ export default function CheckoutPage() {
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
         handler: async res => {
-          await verifyPayment(res, token)
-          cart.forEach(i => removeFromCart(i.productId))
-          navigate(`/success/${order._id}`)
+          try {
+            await verifyPayment(res, token)
+            setOrderPlaced(true)
+            await clearCart()
+            navigate(`/success/${order._id}`)
+          } catch (err) {
+            console.error(err)
+            alert('Payment verification failed: ' + (err.message || 'Unknown error'))
+          }
         }
       }).open()
+    } catch (err) {
+      console.error(err)
+      alert('Failed to place order: ' + (err.message || 'Unknown error'))
     } finally {
       setPlacing(false)
     }
