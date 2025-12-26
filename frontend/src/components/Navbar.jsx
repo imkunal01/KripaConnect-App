@@ -2,6 +2,7 @@ import { useState, useContext } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import ShopContext from '../context/ShopContext.jsx'
+import Logo from '../assets/Logo.png'
 import './Navbar.css'
 
 // (Keep your Icons object exactly as it is)
@@ -121,7 +122,8 @@ export default function Navbar() {
           
           {/* Left: Logo */}
           <Link to="/" className="desk-logo">
-            BizLink<div className="brand-dot"/>
+            <img src={Logo} alt="Kripa Connect" className="logo-image" />
+            KC
           </Link>
 
           {/* Center: Search */}
