@@ -96,28 +96,33 @@ const razorpayWebhook = async (req, res) => {
 
       // find transaction by razorpay_order_id
       const txn = await Transaction.findOne({ razorpay_order_id: razorpayOrderId });
+
+      // Find related order (primary source of truth in this app)
+      const order = await Order.findOne({ "razorpay.order_id": razorpayOrderId }) || (txn ? await Order.findById(txn.order) : null);
+
       if (txn) {
         txn.razorpay_payment_id = razorpayPaymentId;
+        // NOTE: webhook signature is NOT the same as checkout signature; we store it for audit only.
         txn.razorpay_signature = signature;
         txn.status = "captured";
         txn.payload = payload;
         await txn.save();
-      } else {
-        // create a fallback txn record
+      } else if (order) {
+        // Create a transaction only if we can attach it to a valid Order (Transaction.order is required)
         await Transaction.create({
-          order: payload.payload.order ? payload.payload.order.entity.id : null,
+          order: order._id,
           razorpay_order_id: razorpayOrderId,
           razorpay_payment_id: razorpayPaymentId,
           amount,
           status: "captured",
           payload,
         });
+      } else {
+        console.warn("Razorpay webhook captured: unable to resolve order/txn for", razorpayOrderId);
       }
 
       // update order payment status
       // find order by razorpay.order_id stored earlier
-      const order = await Order.findOne({ "razorpay.order_id": razorpayOrderId }) || await Order.findOne({ _id: txn?.order });
-
       if (order) {
         order.paymentStatus = "paid";
         order.paymentMethod = "razorpay";
@@ -206,6 +211,7 @@ const verifyPayment = async (req, res) => {
       order.paymentMethod = "razorpay";
       order.razorpay = order.razorpay || {};
       order.razorpay.payment_id = razorpay_payment_id;
+      order.razorpay.signature = razorpay_signature;
       await order.save();
 
       // Clear user's cart after server-side verification success

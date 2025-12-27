@@ -7,7 +7,7 @@ const { protect } = require("../middleware/authMiddleware");
 router.post("/create-order", protect, createOrderForPayment);
 
 // Optional server-side verify (client can call after checkout)
-router.post("/verify", verifyPayment);
+router.post("/verify", protect, verifyPayment);
 
 /**
  * Webhook endpoint:
