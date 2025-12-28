@@ -2,9 +2,32 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { profile, updateProfile, uploadProfilePhoto } from '../services/auth'
+import AddressForm from '../components/AddressForm.jsx'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './ProfilePage.css'
+
+function getDefaultAddress(user) {
+  const list = Array.isArray(user?.savedAddresses) ? user.savedAddresses : []
+  return list.find(a => a?.default) || list[0] || null
+}
+
+function hasAnyAddressField(a) {
+  const v = a || {}
+  return !!(
+    v.name ||
+    v.phone ||
+    v.addressLine ||
+    v.city ||
+    v.state ||
+    v.pincode
+  )
+}
+
+function isAddressComplete(a) {
+  const v = a || {}
+  return !!(v.name && v.phone && v.addressLine && v.city && v.state && v.pincode)
+}
 
 export default function ProfilePage() {
   const { token, signOut } = useAuth()
@@ -24,6 +47,7 @@ export default function ProfilePage() {
   
   // Form Data
   const [formData, setFormData] = useState({ name: '', phone: '' })
+  const [addressData, setAddressData] = useState({})
   const [photoPreview, setPhotoPreview] = useState(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
@@ -43,6 +67,16 @@ export default function ProfilePage() {
       setUser(userData)
       setFormData({ name: userData.name || '', phone: userData.phone || '' })
       setPhotoPreview(userData.profilePhoto || null)
+
+      const def = getDefaultAddress(userData)
+      setAddressData({
+        name: def?.name || userData.name || '',
+        phone: def?.phone || userData.phone || '',
+        addressLine: def?.addressLine || '',
+        city: def?.city || '',
+        state: def?.state || '',
+        pincode: def?.pincode || '',
+      })
     } catch (err) {
       setError('Failed to load profile')
     } finally {
@@ -51,7 +85,20 @@ export default function ProfilePage() {
   }
 
   function handleChange(e) {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+    // Keep address phone in sync with profile phone
+    if (name === 'phone') {
+      setAddressData(prev => ({ ...prev, phone: value }))
+    }
+  }
+
+  function handleAddressChange(next) {
+    setAddressData(next)
+    // Keep profile phone in sync with address phone
+    if (next?.phone !== undefined) {
+      setFormData(prev => ({ ...prev, phone: next.phone }))
+    }
   }
 
   // Handle File Selection
@@ -106,8 +153,28 @@ export default function ProfilePage() {
     try {
       setSaving(true)
       setError('')
-      const res = await updateProfile(formData, token)
-      setUser(res.data)
+
+      const payload = { ...formData }
+      if (hasAnyAddressField(addressData)) {
+        if (!isAddressComplete(addressData)) {
+          throw new Error('Please complete all address fields (name, phone, address, city, state, pincode).')
+        }
+        payload.savedAddress = addressData
+      }
+
+      const res = await updateProfile(payload, token)
+      const updated = res.data
+      setUser(updated)
+      setFormData({ name: updated.name || '', phone: updated.phone || '' })
+      const def = getDefaultAddress(updated)
+      setAddressData({
+        name: def?.name || updated.name || '',
+        phone: def?.phone || updated.phone || '',
+        addressLine: def?.addressLine || '',
+        city: def?.city || '',
+        state: def?.state || '',
+        pincode: def?.pincode || '',
+      })
       setEditing(false)
       setSuccess('Profile updated successfully!')
       setTimeout(() => setSuccess(''), 3000)
@@ -122,6 +189,15 @@ export default function ProfilePage() {
     setEditing(false)
     setFormData({ name: user.name || '', phone: user.phone || '' })
     setPhotoPreview(user.profilePhoto || null)
+    const def = getDefaultAddress(user)
+    setAddressData({
+      name: def?.name || user.name || '',
+      phone: def?.phone || user.phone || '',
+      addressLine: def?.addressLine || '',
+      city: def?.city || '',
+      state: def?.state || '',
+      pincode: def?.pincode || '',
+    })
     setError('')
   }
 
@@ -247,6 +323,27 @@ export default function ProfilePage() {
                     <label>Email Address</label>
                     <div className="value-display disabled">{user.email}</div>
                   </div>
+                </div>
+
+                <div style={{ marginTop: '2rem' }}>
+                  <h3>Delivery Address</h3>
+
+                  {editing ? (
+                    <AddressForm value={addressData} onChange={handleAddressChange} disabled={saving} />
+                  ) : (
+                    <div className="value-display">
+                      {isAddressComplete(addressData) ? (
+                        <>
+                          {addressData.name}<br />
+                          {addressData.phone}<br />
+                          {addressData.addressLine}<br />
+                          {addressData.city}, {addressData.state} - {addressData.pincode}
+                        </>
+                      ) : (
+                        'Not set'
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

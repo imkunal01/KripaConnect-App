@@ -28,6 +28,33 @@ export default function CheckoutPage() {
     if (empty && !orderPlaced) navigate('/cart')
   }, [empty, navigate, orderPlaced])
 
+  // If user hasn't completed onboarding (no saved address), send them to onboarding first.
+  useEffect(() => {
+    if (!token) return
+    const list = Array.isArray(user?.savedAddresses) ? user.savedAddresses : []
+    if (user && list.length === 0) {
+      navigate('/onboarding?next=/checkout', { replace: true })
+    }
+  }, [token, user, navigate])
+
+  // Auto-prefill address from savedAddresses (default/first) for logged-in users
+  useEffect(() => {
+    const list = Array.isArray(user?.savedAddresses) ? user.savedAddresses : []
+    if (!list.length) return
+
+    const def = list.find(a => a?.default) || list[0]
+    const current = address || {}
+    const isEmpty =
+      !current.name &&
+      !current.phone &&
+      !current.addressLine &&
+      !current.city &&
+      !current.state &&
+      !current.pincode
+
+    if (isEmpty && def) setAddress(def)
+  }, [user])
+
   const itemsPayload = useMemo(
     () => cart.map(i => ({ product: i.productId, qty: i.qty })),
     [cart]

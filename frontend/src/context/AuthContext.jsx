@@ -1,5 +1,5 @@
 import { createContext, useEffect, useMemo, useRef, useState } from 'react'
-import { login as apiLogin, signup as apiSignup, logout as apiLogout, refresh as apiRefresh, profile as apiProfile, googleLogin as apiGoogleLogin } from '../services/auth'
+import { login as apiLogin, signup as apiSignup, logout as apiLogout, refresh as apiRefresh, profile as apiProfile, googleLogin as apiGoogleLogin, phoneFirebaseLogin as apiPhoneFirebaseLogin } from '../services/auth'
 
 function parseJwt(token) {
   try {
@@ -46,6 +46,22 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const refreshTimer = useRef(null)
   const initialized = useRef(false)
+
+  async function refreshMe(accessToken = token) {
+    if (!accessToken) return null
+    if (accessToken !== token) {
+      setToken(accessToken)
+      await scheduleRefresh(accessToken)
+    }
+
+    const meRes = await apiProfile(accessToken)
+    const me = meRes?.data || null
+    setUser(me)
+    const storedRole = parseJwt(accessToken)?.role || role || null
+    setRole(storedRole)
+    saveStoredAuth({ token: accessToken, user: me, role: storedRole })
+    return me
+  }
 
   async function scheduleRefresh(accessToken) {
     if (refreshTimer.current) clearTimeout(refreshTimer.current)
@@ -115,14 +131,17 @@ export function AuthProvider({ children }) {
     const res = await apiLogin({ email, password })
     const payload = res?.data || {}
     setToken(payload.token)
-    setUser({ _id: payload._id, name: payload.name, email: payload.email, role: payload.role })
+    setUser({ _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses })
     setRole(payload.role)
     await scheduleRefresh(payload.token)
     saveStoredAuth({
       token: payload.token,
-      user: { _id: payload._id, name: payload.name, email: payload.email, role: payload.role },
+      user: { _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses },
       role: payload.role,
     })
+
+    // Immediately hydrate full profile (includes phone + savedAddresses)
+    await refreshMe(payload.token).catch(() => {})
     return payload
   }
 
@@ -130,14 +149,16 @@ export function AuthProvider({ children }) {
     const res = await apiSignup({ name, email, password, role })
     const payload = res?.data || {}
     setToken(payload.token)
-    setUser({ _id: payload._id, name: payload.name, email: payload.email, role: payload.role })
+    setUser({ _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses })
     setRole(payload.role)
     await scheduleRefresh(payload.token)
     saveStoredAuth({
       token: payload.token,
-      user: { _id: payload._id, name: payload.name, email: payload.email, role: payload.role },
+      user: { _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses },
       role: payload.role,
     })
+
+    await refreshMe(payload.token).catch(() => {})
     return payload
   }
 
@@ -145,14 +166,34 @@ export function AuthProvider({ children }) {
     const res = await apiGoogleLogin(credential, accessToken, role)
     const payload = res?.data || {}
     setToken(payload.token)
-    setUser({ _id: payload._id, name: payload.name, email: payload.email, role: payload.role })
+    setUser({ _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses })
     setRole(payload.role)
     await scheduleRefresh(payload.token)
     saveStoredAuth({
       token: payload.token,
-      user: { _id: payload._id, name: payload.name, email: payload.email, role: payload.role },
+      user: { _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses },
       role: payload.role,
     })
+
+    await refreshMe(payload.token).catch(() => {})
+    return payload
+  }
+
+  async function phoneOtpSignIn(firebaseIdToken) {
+    const res = await apiPhoneFirebaseLogin(firebaseIdToken)
+    const payload = res?.data || {}
+
+    setToken(payload.token)
+    setUser({ _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses })
+    setRole(payload.role)
+    await scheduleRefresh(payload.token)
+    saveStoredAuth({
+      token: payload.token,
+      user: { _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses },
+      role: payload.role,
+    })
+
+    await refreshMe(payload.token).catch(() => {})
     return payload
   }
 
@@ -196,7 +237,7 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
   }, [])
 
-  const value = useMemo(() => ({ token, user, role, loading, signIn, signUp, signOut, googleSignIn }), [token, user, role, loading])
+  const value = useMemo(() => ({ token, user, role, loading, signIn, signUp, signOut, googleSignIn, phoneOtpSignIn, refreshMe }), [token, user, role, loading])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 export default AuthContext

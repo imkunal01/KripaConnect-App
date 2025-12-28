@@ -17,6 +17,23 @@
   padding: 16px;
 }
 
+@keyframes authFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes authFloat {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes authGlow {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: 0.95; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .auth-left {
   background: var(--auth-bg);
   border-radius: 28px 0 0 28px;
@@ -27,6 +44,25 @@
   justify-content: flex-start;
   gap: 24px;
   box-shadow: var(--auth-shadow);
+  animation: authFadeUp 420ms ease both;
+}
+
+.auth-back-btn {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--auth-border);
+  background: #fff;
+  color: var(--auth-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+.auth-back-btn:hover {
+  border-color: #111827;
 }
 
 .auth-right {
@@ -37,6 +73,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: var(--auth-shadow);
+  animation: authFadeUp 520ms ease both;
 }
 
 .auth-right::before {
@@ -46,6 +83,7 @@
   background: radial-gradient(900px 600px at 70% 30%, rgba(139,92,246,0.8), transparent 60%),
               radial-gradient(800px 500px at 40% 70%, rgba(255, 61, 61, 0.8), transparent 60%),
               linear-gradient(120deg, #1f2937 0%, #111827 100%);
+  animation: authGlow 10s ease-in-out infinite;
 }
 
 .right-actions {
@@ -79,6 +117,16 @@
   color: #e5e7eb;
   max-width: 520px;
   padding: 24px;
+  animation: authFloat 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-left,
+  .auth-right,
+  .auth-right::before,
+  .visual-content {
+    animation: none !important;
+  }
 }
 .visual-content h2 {
   font-size: 2rem;

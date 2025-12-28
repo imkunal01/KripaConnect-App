@@ -102,17 +102,86 @@ const getUserProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
-        const { name, phone } = req.body;
+        const { name, phone, role, savedAddress } = req.body;
         const user = await User.findById(req.user._id);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
+
+        const prevRole = user.role;
         
         if (name) user.name = name;
         if (phone !== undefined) user.phone = phone;
+
+        // Optional: allow setting role only to customer/retailer
+        if (role !== undefined) {
+            if (role !== 'customer' && role !== 'retailer') {
+                return res.status(400).json({ message: 'Invalid role' });
+            }
+            user.role = role;
+        }
+
+        // Optional: save/update the user's default shipping address
+        // Body: { savedAddress: { name, phone, addressLine, city, state, pincode } }
+        if (savedAddress) {
+            const a = savedAddress || {};
+
+            const normalized = {
+                name: (a.name || user.name || '').toString().trim(),
+                phone: (a.phone || user.phone || '').toString().trim(),
+                addressLine: (a.addressLine || '').toString().trim(),
+                city: (a.city || '').toString().trim(),
+                state: (a.state || '').toString().trim(),
+                pincode: (a.pincode || '').toString().trim(),
+                default: true,
+            };
+
+            const missing = [];
+            if (!normalized.name) missing.push('name');
+            if (!normalized.phone) missing.push('phone');
+            if (!normalized.addressLine) missing.push('addressLine');
+            if (!normalized.city) missing.push('city');
+            if (!normalized.state) missing.push('state');
+            if (!normalized.pincode) missing.push('pincode');
+            if (missing.length) {
+                return res.status(400).json({ message: `Missing address fields: ${missing.join(', ')}` });
+            }
+
+            // Keep user.phone in sync if address has phone
+            if (normalized.phone && user.phone !== normalized.phone) user.phone = normalized.phone;
+
+            user.savedAddresses = Array.isArray(user.savedAddresses) ? user.savedAddresses : [];
+
+            // Find current default BEFORE clearing flags
+            const existingDefaultIdx = user.savedAddresses.findIndex(addr => addr.default === true);
+
+            // Ensure only one default
+            user.savedAddresses.forEach(addr => { addr.default = false; });
+
+            if (existingDefaultIdx >= 0) {
+                const existing = user.savedAddresses[existingDefaultIdx];
+                // Mongoose subdoc: assign fields directly
+                existing.name = normalized.name;
+                existing.phone = normalized.phone;
+                existing.addressLine = normalized.addressLine;
+                existing.city = normalized.city;
+                existing.state = normalized.state;
+                existing.pincode = normalized.pincode;
+                existing.default = true;
+            } else {
+                user.savedAddresses.push(normalized);
+            }
+        }
         
         await user.save();
         const updatedUser = await User.findById(user._id).select("-password");
+
+        // If role changed, return a fresh access token so frontend permissions update immediately
+        if (role !== undefined && prevRole !== user.role) {
+            const access = generateToken(user._id, user.role, user.tokenVersion)
+            return res.json({ ...updatedUser.toObject(), token: access })
+        }
+
         res.json(updatedUser);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -236,6 +305,7 @@ const googleAuth = async (req, res) => {
 
         const email = info.email
         let user = await User.findOne({ email })
+        const isNewUser = !user
         if (!user) {
             const pwd = Math.random().toString(36).slice(-12)
             user = await User.create({ name: info.name || email.split('@')[0], email, password: pwd, role: role || 'customer', profilePhoto: info.picture })
@@ -248,10 +318,50 @@ const googleAuth = async (req, res) => {
         const access = generateToken(user._id, user.role, user.tokenVersion)
         const refresh = generateRefreshToken(user._id, user.tokenVersion)
         res.cookie('refreshToken', refresh, getCookieOptions(req))
-        res.json({ _id: user._id, name: user.name, email: user.email, role: user.role, token: access })
+        res.json({ _id: user._id, name: user.name, email: user.email, role: user.role, savedAddresses: user.savedAddresses, isNewUser, token: access })
     } catch (e) {
         res.status(500).json({ message: e.message })
     }
 }
 
-module.exports = { registerUser, loginUser, getUserProfile, updateProfile, uploadProfilePhoto, logoutUser, refreshAccessToken, googleAuth };
+const phoneFirebaseAuth = async (req, res) => {
+    try {
+        const phone = req.verifiedPhoneNumber
+        if (!phone) return res.status(400).json({ message: 'Missing verified phone number' })
+
+        // Find user by phone (E.164 format, e.g. +9198xxxxxx)
+        let user = await User.findOne({ phone })
+        const isNewUser = !user
+
+        if (!user) {
+            // NOTE: Current User schema requires email + password.
+            // We create a synthetic email/password so existing email/password auth remains unchanged.
+            const syntheticEmail = `otp_${phone.replace(/[^0-9]/g, '')}@phone.local`
+            const pwd = Math.random().toString(36).slice(-12)
+            user = await User.create({
+                name: `User ${phone.slice(-4)}`,
+                email: syntheticEmail,
+                password: pwd,
+                role: 'customer',
+                phone,
+            })
+        }
+
+        const access = generateToken(user._id, user.role, user.tokenVersion)
+        const refresh = generateRefreshToken(user._id, user.tokenVersion)
+        res.cookie('refreshToken', refresh, getCookieOptions(req))
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            savedAddresses: user.savedAddresses,
+            isNewUser,
+            token: access,
+        })
+    } catch (e) {
+        res.status(500).json({ message: e.message })
+    }
+}
+
+module.exports = { registerUser, loginUser, getUserProfile, updateProfile, uploadProfilePhoto, logoutUser, refreshAccessToken, googleAuth, phoneFirebaseAuth };

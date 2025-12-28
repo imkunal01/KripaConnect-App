@@ -15,6 +15,8 @@ const CartPage = lazy(() => import('./pages/CartPage.jsx'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage.jsx'))
 const SuccessScreen = lazy(() => import('./pages/SuccessScreen.jsx'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage.jsx'))
+const AddressSetupPage = lazy(() => import('./pages/AddressSetupPage.jsx'))
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage.jsx'))
 const OrdersPage = lazy(() => import('./pages/OrdersPage.jsx'))
 const OrderDetailsPage = lazy(() => import('./pages/OrderDetailsPage.jsx'))
 const About = lazy(() => import('./pages/About.jsx'))
@@ -48,9 +50,11 @@ function App() {
           <Route path="/categories" element={<Categories />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
           <Route path="/success/:orderId" element={<SuccessScreen />} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+          <Route path="/address-setup" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
           <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailsPage /></ProtectedRoute>} />
           <Route path="/b2b" element={<ProtectedRoute allow={['retailer']}><B2B /></ProtectedRoute>} />

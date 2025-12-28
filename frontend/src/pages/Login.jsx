@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
+import PhoneOtpLogin from '../components/PhoneOtpLogin.jsx'
 import './FormStyles.css'
 
 export default function Login() {
@@ -15,8 +16,10 @@ export default function Login() {
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        await googleSignIn(null, tokenResponse.access_token);
-        navigate('/');
+        const payload = await googleSignIn(null, tokenResponse.access_token);
+        const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
+        const needsOnboarding = !!payload?.isNewUser || !hasAddress
+        navigate(needsOnboarding ? '/onboarding' : '/');
       } catch (e) {
         console.error(e);
         alert("Google Login Failed");
@@ -32,8 +35,9 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     try {
-      await signIn({ email, password })
-      navigate('/')
+      const payload = await signIn({ email, password })
+      const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
+      navigate(hasAddress ? '/' : '/onboarding')
     } catch (err) {
       alert("Login failed")
     } finally {
@@ -41,10 +45,23 @@ export default function Login() {
     }
   }
 
+  const goBack = () => {
+    try {
+      if (window.history.length > 1) navigate(-1)
+      else navigate('/')
+    } catch {
+      navigate('/')
+    }
+  }
+
   return (
     <div className="auth-wrapper">
       {/* LEFT: Form Section */}
       <div className="auth-left">
+        <button type="button" className="auth-back-btn" onClick={goBack}>
+          ← Back
+        </button>
+
         <header className="auth-header">
           <div className="brand">KARC</div>
           <div className="auth-toggle">
@@ -94,6 +111,16 @@ export default function Login() {
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="Google" />
           Google
         </button>
+
+        <div className="divider">or use phone OTP</div>
+
+        <PhoneOtpLogin
+          onDone={(payload) => {
+            const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
+            const needsOnboarding = !!payload?.isNewUser || !hasAddress
+            navigate(needsOnboarding ? '/onboarding' : '/')
+          }}
+        />
       </div>
 
       {/* RIGHT: Visual Section */}

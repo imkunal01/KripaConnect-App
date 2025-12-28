@@ -20,6 +20,10 @@ export async function googleLogin(credential, accessToken, role) {
   return apiFetch('/api/auth/google', { method: 'POST', body: { credential, accessToken, role } })
 }
 
+export async function phoneFirebaseLogin(firebaseIdToken) {
+  return apiFetch('/api/auth/phone/firebase', { method: 'POST', body: { firebaseIdToken } })
+}
+
 export async function profile(token) {
   return apiFetch('/api/auth/profile', { token })
 }

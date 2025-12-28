@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FaUserAlt, FaStore } from 'react-icons/fa'
 import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
 import './FormStyles.css'
@@ -9,7 +8,6 @@ export default function Signup() {
   const { signUp, googleSignIn } = useAuth()
   const navigate = useNavigate()
   
-  const [role, setRole] = useState('customer')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,8 +16,10 @@ export default function Signup() {
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        await googleSignIn(null, tokenResponse.access_token, role);
-        navigate('/');
+        const payload = await googleSignIn(null, tokenResponse.access_token);
+        const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
+        const needsOnboarding = !!payload?.isNewUser || !hasAddress
+        navigate(needsOnboarding ? '/onboarding' : '/');
       } catch (e) {
         console.error(e);
         alert("Google Signup Failed");
@@ -35,8 +35,8 @@ export default function Signup() {
     e.preventDefault()
     setLoading(true)
     try {
-      await signUp({ name, email, password, role })
-      navigate('/')
+      await signUp({ name, email, password })
+      navigate('/onboarding')
     } catch (err) {
       alert("Signup failed: " + err.message)
     } finally {
@@ -44,10 +44,23 @@ export default function Signup() {
     }
   }
 
+  const goBack = () => {
+    try {
+      if (window.history.length > 1) navigate(-1)
+      else navigate('/')
+    } catch {
+      navigate('/')
+    }
+  }
+
   return (
     <div className="auth-wrapper">
       {/* LEFT: Form Section */}
       <div className="auth-left">
+        <button type="button" className="auth-back-btn" onClick={goBack}>
+          ← Back
+        </button>
+
         <header className="auth-header">
           <div className="brand">KARC</div>
           <div className="auth-toggle">
@@ -58,52 +71,30 @@ export default function Signup() {
 
         <div className="welcome-text">
           <h1>Create Account</h1>
-          <p>Start your journey with us today.</p>
+          <p>Enter your details to create your account.</p>
         </div>
 
         <form onSubmit={handleSignup} className="form-stack">
-          
-          {/* Role Selection */}
-          <div>
-            <label className="role-label">I am a:</label>
-            <div className="role-grid">
-              <div 
-                className={`role-card ${role === 'customer' ? 'active' : ''}`}
-                onClick={() => setRole('customer')}
-              >
-                <FaUserAlt style={{fontSize: '1.2rem'}} />
-                <span style={{fontSize: '0.9rem', fontWeight: '600'}}>Customer</span>
-              </div>
-              <div 
-                className={`role-card ${role === 'retailer' ? 'active' : ''}`}
-                onClick={() => setRole('retailer')}
-              >
-                <FaStore style={{fontSize: '1.2rem'}} />
-                <span style={{fontSize: '0.9rem', fontWeight: '600'}}>Retailer</span>
-              </div>
-            </div>
-          </div>
-
-          <input 
-            className="input-field" 
-            type="text" 
-            placeholder="Full Name" 
+          <input
+            className="input-field"
+            type="text"
+            placeholder="Full Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
-          <input 
-            className="input-field" 
-            type="email" 
-            placeholder="Email Address" 
+          <input
+            className="input-field"
+            type="email"
+            placeholder="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <input 
-            className="input-field" 
-            type="password" 
-            placeholder="Create Password" 
+          <input
+            className="input-field"
+            type="password"
+            placeholder="Create Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
