@@ -43,12 +43,12 @@ export default function Login() {
       alert("Login failed")
     } finally {
       setLoading(false)
-   
+    }
+  }
 
   const handleOtpSuccess = (payload) => {
     const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
     navigate(hasAddress ? '/' : '/onboarding')
-  } }
   }
 
   const goBack = () => {

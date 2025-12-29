@@ -1,7 +1,7 @@
 const User = require('../models/User')
 const crypto = require('crypto')
 const bcrypt = require('bcrypt')
-const { sendPasswordResetEmail, sendOtpEmail } = require('../services/firebaseEmailService')
+const { sendPasswordResetEmail, sendOtpEmail } = require('../services/emailService')
 const generateToken = require('../utils/generateToken')
 const generateRefreshToken = require('../utils/generateRefreshToken')
 
