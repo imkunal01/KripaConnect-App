@@ -35,13 +35,10 @@ function initFirebaseAdmin() {
   return admin
 }
 
-async function verifyFirebaseIdToken(idToken) {
-  if (!idToken) throw new Error('Missing Firebase ID token')
-  const a = initFirebaseAdmin()
-  return a.auth().verifyIdToken(idToken)
-}
-
 module.exports = {
   initFirebaseAdmin,
-  verifyFirebaseIdToken,
+  getFirebaseAdmin: () => {
+    if (!initialized) initFirebaseAdmin()
+    return admin
+  }
 }

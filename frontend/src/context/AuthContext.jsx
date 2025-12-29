@@ -1,5 +1,5 @@
 import { createContext, useEffect, useMemo, useRef, useState } from 'react'
-import { login as apiLogin, signup as apiSignup, logout as apiLogout, refresh as apiRefresh, profile as apiProfile, googleLogin as apiGoogleLogin, phoneFirebaseLogin as apiPhoneFirebaseLogin } from '../services/auth'
+import { login as apiLogin, signup as apiSignup, logout as apiLogout, refresh as apiRefresh, profile as apiProfile, googleLogin as apiGoogleLogin, verifyOtp as apiVerifyOtp } from '../services/auth'
 
 function parseJwt(token) {
   try {
@@ -237,7 +237,7 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
   }, [])
 
-  const value = useMemo(() => ({ token, user, role, loading, signIn, signUp, signOut, googleSignIn, phoneOtpSignIn, refreshMe }), [token, user, role, loading])
+  const value = useMemo(() => ({ token, user, role, loading, signIn, signUp, signOut, googleSignIn, otpSignIn, refreshMe }), [token, user, role, loading])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 export default AuthContext

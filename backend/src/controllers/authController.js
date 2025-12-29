@@ -324,44 +324,4 @@ const googleAuth = async (req, res) => {
     }
 }
 
-const phoneFirebaseAuth = async (req, res) => {
-    try {
-        const phone = req.verifiedPhoneNumber
-        if (!phone) return res.status(400).json({ message: 'Missing verified phone number' })
-
-        // Find user by phone (E.164 format, e.g. +9198xxxxxx)
-        let user = await User.findOne({ phone })
-        const isNewUser = !user
-
-        if (!user) {
-            // NOTE: Current User schema requires email + password.
-            // We create a synthetic email/password so existing email/password auth remains unchanged.
-            const syntheticEmail = `otp_${phone.replace(/[^0-9]/g, '')}@phone.local`
-            const pwd = Math.random().toString(36).slice(-12)
-            user = await User.create({
-                name: `User ${phone.slice(-4)}`,
-                email: syntheticEmail,
-                password: pwd,
-                role: 'customer',
-                phone,
-            })
-        }
-
-        const access = generateToken(user._id, user.role, user.tokenVersion)
-        const refresh = generateRefreshToken(user._id, user.tokenVersion)
-        res.cookie('refreshToken', refresh, getCookieOptions(req))
-        res.json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            savedAddresses: user.savedAddresses,
-            isNewUser,
-            token: access,
-        })
-    } catch (e) {
-        res.status(500).json({ message: e.message })
-    }
-}
-
-module.exports = { registerUser, loginUser, getUserProfile, updateProfile, uploadProfilePhoto, logoutUser, refreshAccessToken, googleAuth, phoneFirebaseAuth };
+module.exports = { registerUser, loginUser, getUserProfile, updateProfile, uploadProfilePhoto, logoutUser, refreshAccessToken, googleAuth };

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
-import PhoneOtpLogin from '../components/PhoneOtpLogin.jsx'
+import OtpLogin from '../components/OtpLogin.jsx'
 import './FormStyles.css'
 
 export default function Login() {
@@ -12,6 +12,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [useOtp, setUseOtp] = useState(false)
 
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -42,7 +43,12 @@ export default function Login() {
       alert("Login failed")
     } finally {
       setLoading(false)
-    }
+   
+
+  const handleOtpSuccess = (payload) => {
+    const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
+    navigate(hasAddress ? '/' : '/onboarding')
+  } }
   }
 
   const goBack = () => {
@@ -70,40 +76,58 @@ export default function Login() {
           </div>
         </header>
 
-        <div className="welcome-text">
-          <h1>Hello!</h1>
-          <p>Welcome back to the community</p>
-        </div>
+        {!useOtp ? (
+          <form onSubmit={handleLogin} className="form-stack">
+            <input 
+              className="input-field" 
+              type="email" 
+              placeholder="Email Address" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <input 
+              className="input-field" 
+              type="password" 
+              placeholder="Password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            
+            <div className="form-extras">
+              <label style={{display:'flex', gap:'8px', alignItems:'center', color:'#71717a', cursor:'pointer'}}>
+                <input type="checkbox" style={{width:'16px', height:'16px'}} /> Remember me
+              </label>
+              <Link to="/forgot-password" className="link-reset">Forgot Password?</Link>
+            </div>
 
-        <form onSubmit={handleLogin} className="form-stack">
-          <input 
-            className="input-field" 
-            type="email" 
-            placeholder="Email Address" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input 
-            className="input-field" 
-            type="password" 
-            placeholder="Password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          
-          <div className="form-extras">
-            <label style={{display:'flex', gap:'8px', alignItems:'center', color:'#71717a', cursor:'pointer'}}>
-              <input type="checkbox" style={{width:'16px', height:'16px'}} /> Remember me
-            </label>
-            <Link to="/forgot-password" className="link-reset">Forgot Password?</Link>
-          </div>
+            <button className="btn-primary" type="submit" disabled={loading}>
+              {loading ? 'Signing In...' : 'Log In'}
+            </button>
 
-          <button className="btn-primary" type="submit" disabled={loading}>
-            {loading ? 'Signing In...' : 'Log In'}
-          </button>
-        </form>
+            <button
+              type="button"
+              className="btn-google"
+              onClick={() => setUseOtp(true)}
+              style={{ marginTop: '10px' }}
+            >
+              Login with Email OTP instead
+            </button>
+          </form>
+        ) : (
+          <>
+            <OtpLogin onSuccess={handleOtpSuccess} />
+            <button
+              type="button"
+              className="btn-google"
+              onClick={() => setUseOtp(false)}
+              style={{ marginTop: '10px' }}
+            >
+              ← Back to Password Login
+            </button>
+          </>
+        )}
 
         <div className="divider">or continue with</div>
 
@@ -111,16 +135,6 @@ export default function Login() {
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="Google" />
           Google
         </button>
-
-        <div className="divider">or use phone OTP</div>
-
-        <PhoneOtpLogin
-          onDone={(payload) => {
-            const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
-            const needsOnboarding = !!payload?.isNewUser || !hasAddress
-            navigate(needsOnboarding ? '/onboarding' : '/')
-          }}
-        />
       </div>
 
       {/* RIGHT: Visual Section */}

@@ -20,10 +20,6 @@ export async function googleLogin(credential, accessToken, role) {
   return apiFetch('/api/auth/google', { method: 'POST', body: { credential, accessToken, role } })
 }
 
-export async function phoneFirebaseLogin(firebaseIdToken) {
-  return apiFetch('/api/auth/phone/firebase', { method: 'POST', body: { firebaseIdToken } })
-}
-
 export async function profile(token) {
   return apiFetch('/api/auth/profile', { token })
 }
@@ -55,4 +51,22 @@ export async function uploadProfilePhoto(file, token) {
   }
   
   return { ok: true, status: res.status, data: await res.json() }
+}
+
+// Password Reset
+export async function forgotPassword(email) {
+  return apiFetch('/api/auth/forgot-password', { method: 'POST', body: { email } })
+}
+
+export async function resetPassword(token, newPassword) {
+  return apiFetch('/api/auth/reset-password', { method: 'POST', body: { token, newPassword } })
+}
+
+// OTP Login
+export async function requestOtp(email) {
+  return apiFetch('/api/auth/login-otp/request', { method: 'POST', body: { email } })
+}
+
+export async function verifyOtp(email, otp) {
+  return apiFetch('/api/auth/login-otp/verify', { method: 'POST', body: { email, otp } })
 }

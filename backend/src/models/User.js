@@ -43,7 +43,12 @@ const userSchema = new mongoose.Schema({
             product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
             qty: { type: Number, required: true, min: 1 }
         }
-    ]
+    ],
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
+    loginOtp: { type: String },
+    loginOtpExpires: { type: Date },
+    loginOtpAttempts: { type: Number, default: 0 },
 }, { timestamps: true });
 
 userSchema.pre('save',async function (next){
