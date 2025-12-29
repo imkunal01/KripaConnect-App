@@ -237,7 +237,7 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
   }, [])
 
-  const value = useMemo(() => ({ token, user, role, loading, signIn, signUp, signOut, googleSignIn, otpSignIn, refreshMe }), [token, user, role, loading])
+  const value = useMemo(() => ({ token, user, role, loading, signIn, signUp, signOut, googleSignIn, refreshMe }), [token, user, role, loading])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 export default AuthContext
