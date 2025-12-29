@@ -8,7 +8,7 @@ export default function About() {
       <Navbar />
       <main className="page-main">
         <section className="hero">
-          <h1 className="hero-title">About Kripa Connect</h1>
+          <h1 className="hero-title">About BIZLINK</h1>
           <p className="hero-lead">Connecting quality products with seamless modern commerce.</p>
         </section>
         <section className="section grid-two">

@@ -12,6 +12,34 @@ const apiLimiter = rateLimit({
   },
 });
 
+// Stricter limiters for auth-sensitive routes
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: {
+    success: false,
+    message: "Too many password reset requests, please try again later.",
+  },
+});
+
+const otpRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: {
+    success: false,
+    message: "Too many OTP requests, please try again later.",
+  },
+});
+
+const otpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15,
+  message: {
+    success: false,
+    message: "Too many OTP verification attempts, please try again later.",
+  },
+});
+
 // Input Sanitization
 const sanitizeRequest = (req, res, next) => {
   if (req.body) mongoSanitize(req.body);
@@ -23,5 +51,8 @@ const sanitizeRequest = (req, res, next) => {
 module.exports = {
   helmet,
   apiLimiter,
+  forgotPasswordLimiter,
+  otpRequestLimiter,
+  otpVerifyLimiter,
   sanitizeRequest,
 };

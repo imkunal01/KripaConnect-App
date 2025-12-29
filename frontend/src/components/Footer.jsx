@@ -21,7 +21,7 @@ export default function Footer() {
       {/* Top Row: Brand & Newsletter */}
       <div className="arch-grid-row top-row">
         <div className="arch-cell brand-cell">
-          <h2 className="arch-logo">KRIPA CONNECT®</h2>
+          <h2 className="arch-logo">BIZ LINK®</h2>
           <span className="tech-font">EST. 2024 — SYSTEM_V.0.9</span>
         </div>
         

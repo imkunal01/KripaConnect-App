@@ -46,7 +46,7 @@ export default function Navbar() {
       ======================== */}
       <nav className="navbar-top">
         <Link to="/" className="brand-logo">
-          KC<div className="brand-dot"/>
+          BizLink<div className="brand-dot"/>
         </Link>
         <Link to="/cart" style={{ position: 'relative', color: '#0f172a', display: 'flex' }}>
           <Icons.Cart />
@@ -123,7 +123,7 @@ export default function Navbar() {
           {/* Left: Logo */}
           <Link to="/" className="desk-logo">
             <img src={Logo} alt="Kripa Connect" className="logo-image" />
-            KC
+            BizLink
           </Link>
 
           {/* Center: Search */}

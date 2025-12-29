@@ -5,6 +5,7 @@ const { protect } = require("../middleware/authMiddleware.js");
 const validate = require('../middleware/validate.js')
 const {registerValidation , loginValidation} = require('../validations/authValidations.js')
 const upload = require('../middleware/uploadMiddleware.js')
+const { forgotPasswordLimiter, otpRequestLimiter, otpVerifyLimiter } = require('../middleware/security')
 const router = express.Router();
 
 router.post("/register", registerValidation, validate, registerUser);
@@ -17,12 +18,12 @@ router.post("/refresh", refreshAccessToken);
 router.post("/google", googleAuth);
 
 // Password reset routes
-router.post("/forgot-password", requestPasswordReset);
+router.post("/forgot-password", forgotPasswordLimiter, requestPasswordReset);
 router.post("/reset-password", resetPassword);
 
 // OTP login routes
-router.post("/login-otp/request", requestLoginOtp);
-router.post("/login-otp/verify", verifyLoginOtp);
+router.post("/login-otp/request", otpRequestLimiter, requestLoginOtp);
+router.post("/login-otp/verify", otpVerifyLimiter, verifyLoginOtp);
 
 
 module.exports = router;

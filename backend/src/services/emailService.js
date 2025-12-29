@@ -1,5 +1,15 @@
 const nodemailer = require("nodemailer");
 
+function getFrontendUrl() {
+  return (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')
+}
+
+function assertEmailEnv() {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error('Missing EMAIL_USER/EMAIL_PASS env vars for email sending')
+  }
+}
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -9,6 +19,7 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendMail({ to, subject, html, attachments = [] }) {
+  assertEmailEnv()
   await transporter.sendMail({
     from: `"Smart E-Commerce" <${process.env.EMAIL_USER}>`,
     to,
@@ -22,7 +33,7 @@ async function sendMail({ to, subject, html, attachments = [] }) {
  * Send password reset email with reset link
  */
 async function sendPasswordResetEmail(email, resetToken, userName = 'User') {
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+  const resetUrl = `${getFrontendUrl()}/reset-password?token=${resetToken}`;
   
   const html = `
     <!DOCTYPE html>
