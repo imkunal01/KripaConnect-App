@@ -62,7 +62,7 @@ export default function PhoneOtpLogin({ onDone }) {
   return (
     <div style={{ width: '100%' }}>
       {/* Required for Firebase RecaptchaVerifier */}
-      <div id="recaptcha-container" />
+      <div id="recaptcha-container" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }} />
 
       {step === 'phone' ? (
         <form onSubmit={handleSend} className="form-stack">
