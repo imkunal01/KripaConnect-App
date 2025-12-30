@@ -207,7 +207,7 @@ curl -X POST http://localhost:5000/api/auth/login-otp/verify \
 
 Both emails feature:
 - Modern, responsive HTML design
-- KARC branding
+- BizLink branding
 - Clear call-to-action buttons
 - Security warnings
 - Mobile-friendly layout
