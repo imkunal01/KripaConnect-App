@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js "
+    "start": "node index.js ",
+    "test:razorpay": "node scripts/testRazorpay.js",
+    "test:email": "node scripts/testEmail.js",
+    "seed": "node scripts/seedData.js",
+    "check:payment": "node scripts/checkPaymentStatus.js"
   },
   "keywords": [],
   "author": "",

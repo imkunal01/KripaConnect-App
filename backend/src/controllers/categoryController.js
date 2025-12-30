@@ -1,10 +1,10 @@
 const Category = require('../models/Category');
 const slugify = require('slugify');
 
-// Get all categories
+// Get all categories - use lean() for faster read-only query
 exports.getCategories = async (req, res) => {
   try {
-    const categories = await Category.find({}).sort({ name: 1 });
+    const categories = await Category.find({}).sort({ name: 1 }).lean();
     res.json(categories);
   } catch (error) {
     res.status(500).json({ message: error.message });

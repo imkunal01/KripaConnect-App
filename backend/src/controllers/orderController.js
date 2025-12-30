@@ -99,8 +99,10 @@ const createOrder = async (req, res) => {
 const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
+      .select("items totalAmount paymentMethod paymentStatus shippingAddress deliveryStatus isBulkOrder createdAt")
       .populate("items.product", "name price images")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -112,7 +114,8 @@ const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate("items.product", "name price images description")
-      .populate("user", "name email phone");
+      .populate("user", "name email phone")
+      .lean();
     
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -133,8 +136,11 @@ const getOrderById = async (req, res) => {
 const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
+      .select("items totalAmount paymentMethod paymentStatus shippingAddress deliveryStatus isBulkOrder user createdAt")
       .populate("user", "name email")
-      .populate("items.product", "name price");
+      .populate("items.product", "name price")
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: err.message });

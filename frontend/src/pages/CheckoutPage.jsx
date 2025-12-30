@@ -92,11 +92,18 @@ export default function CheckoutPage() {
       const pay = await createRazorpayOrder(order._id, token)
       const { keyId, razorpayOrder } = pay.data
 
-      new window.Razorpay({
+      // Check if Razorpay script is loaded
+      if (!window.Razorpay) {
+        throw new Error('Payment gateway could not be loaded. Please disable ad blockers and try again.')
+      }
+
+      const options = {
         key: keyId,
         order_id: razorpayOrder.id,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
+        name: 'BIZ LINK®',
+        description: 'Order Payment',
         handler: async res => {
           try {
             await verifyPayment(res, token)
@@ -107,8 +114,26 @@ export default function CheckoutPage() {
             console.error(err)
             alert('Payment verification failed: ' + (err.message || 'Unknown error'))
           }
+        },
+        modal: {
+          ondismiss: () => {
+            setPlacing(false)
+          }
+        },
+        theme: {
+          color: '#3399cc'
         }
-      }).open()
+      }
+
+      const rzp = new window.Razorpay(options)
+      
+      rzp.on('payment.failed', function (response) {
+        console.error('Payment failed:', response.error)
+        alert(`Payment failed: ${response.error.description || 'Please try again'}`)
+        setPlacing(false)
+      })
+
+      rzp.open()
     } catch (err) {
       console.error(err)
       alert('Failed to place order: ' + (err.message || 'Unknown error'))
@@ -159,6 +184,18 @@ export default function CheckoutPage() {
           {step === 2 && (
             <>
               <h2>Payment</h2>
+              {method === 'razorpay' && (
+                <div style={{
+                  padding: '12px',
+                  marginBottom: '16px',
+                  backgroundColor: '#fff3cd',
+                  border: '1px solid #ffc107',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}>
+                  💡 <strong>Note:</strong> If payment fails to load, please disable ad blockers or privacy extensions and try again.
+                </div>
+              )}
               <PaymentSelector method={method} onChange={setMethod} />
             </>
           )}

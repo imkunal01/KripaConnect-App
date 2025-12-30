@@ -34,8 +34,8 @@ const AppFallback = () => (
   <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f7f7f7' }}>
     <div style={{ padding: '1.5rem 2rem', borderRadius: '12px', background: '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', textAlign: 'center' }}>
       <div style={{ width: '48px', height: '48px', margin: '0 auto 12px', border: '4px solid #d0d8e0', borderTopColor: '#eb2525ff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <div style={{ fontWeight: 600, color: '#111827', marginBottom: '4px' }}>Rukiye Jaraa...</div>
-      <div style={{ color: '#6b7280', fontSize: '0.95rem' }}>Bass Ho hi Gya...</div>
+      <div style={{ fontWeight: 600, color: '#111827', marginBottom: '4px' }}>Wait a moment...</div>
+      <div style={{ color: '#6b7280', fontSize: '0.95rem' }}>Loading...</div>
     </div>
     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
   </div>

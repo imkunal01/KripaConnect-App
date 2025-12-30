@@ -64,6 +64,11 @@ userSchema.methods.matchPassword= async function (enterPassword){
     return await bcrypt.compare(enterPassword,this.password)
 }
 
+// Indexes for better query performance
+userSchema.index({ email: 1 });
+userSchema.index({ 'cart.product': 1 });
+userSchema.index({ favorites: 1 });
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;

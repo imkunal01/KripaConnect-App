@@ -157,14 +157,19 @@ async function listProducts(req, res) {
 
     /* ---- Pagination ---- */
     const skip = (Number(page) - 1) * Number(limit);
+    const limitNum = Number(limit);
 
+    // Use lean() for faster read-only queries and select only needed fields
     let query = Product.find(filter)
+      .select("name slug description price retailer_price price_bulk min_bulk_qty stock images tags active Category")
       .populate("Category", "name slug")
       .skip(skip)
-      .limit(Number(limit));
+      .limit(limitNum)
+      .lean();
 
     if (sort) query = query.sort(sort);
 
+    // Run queries in parallel for better performance
     const [items, total] = await Promise.all([
       query.exec(),
       Product.countDocuments(filter)
@@ -172,7 +177,7 @@ async function listProducts(req, res) {
 
     res.json({
       items,
-      meta: { page: Number(page), limit: Number(limit), total }
+      meta: { page: Number(page), limit: limitNum, total }
     });
 
   } catch (err) {
@@ -186,7 +191,8 @@ async function listProducts(req, res) {
 async function getProduct(req, res) {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("Category", "name slug");
+      .populate("Category", "name slug")
+      .lean();
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -324,7 +330,8 @@ async function getRetailerProducts(req, res) {
 
     const products = await Product.find({ active: true })
       .select("name description images stock price retailer_price price_bulk min_bulk_qty Category tags")
-      .populate("Category", "name slug");
+      .populate("Category", "name slug")
+      .lean();
 
     res.json({ success: true, data: products });
 

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ShopContext from '../context/ShopContext.jsx'
 import AuthContext from '../context/AuthContext.jsx'
@@ -12,24 +12,52 @@ export default function Favorites() {
   const { addToCart, toggleFavorite, favorites } = useContext(ShopContext)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const loadedRef = useRef(false)
 
+  const visibleItems = useMemo(() => {
+    if (!token) return []
+    const favSet = new Set(favorites)
+    return items.filter(p => favSet.has(p._id))
+  }, [token, favorites, items])
+
+  // Only fetch full item details on initial load or when favorites length changes significantly
   useEffect(() => {
+    if (!token) {
+      const t = setTimeout(() => {
+        setItems([])
+        setLoading(false)
+        loadedRef.current = false
+      }, 0)
+
+      return () => clearTimeout(t)
+    }
+
+    // If we already loaded and the user removed favorites, no refetch needed.
+    // If favorites increased (new items), refetch to get full product details.
+    if (loadedRef.current && favorites.length <= items.length) return
+
     let active = true
-    ;(async () => {
+    const t = setTimeout(() => {
+      if (!active) return
       setLoading(true)
-      try {
-        if (token) {
-          const data = await listFavorites(token)
-          if (active) setItems(data)
-        } else {
-          setItems([])
-        }
-      } finally {
-        if (active) setLoading(false)
-      }
-    })()
-    return () => { active = false }
-  }, [token, favorites])
+      listFavorites(token)
+        .then(data => {
+          if (active) {
+            setItems(data)
+            loadedRef.current = true
+          }
+        })
+        .catch(err => console.error('Failed to load favorites:', err))
+        .finally(() => {
+          if (active) setLoading(false)
+        })
+    }, 0)
+
+    return () => {
+      active = false
+      clearTimeout(t)
+    }
+  }, [token, favorites.length]) // Only depend on length, not the full array
 
   return (
     <div className="favorites-page">
@@ -45,7 +73,7 @@ export default function Favorites() {
             <div className="favorites-loading-icon">⏳</div>
             <p style={{ color: '#6b7280' }}>Loading favorites...</p>
           </div>
-        ) : items.length === 0 ? (
+        ) : visibleItems.length === 0 ? (
           <div className="favorites-empty-state">
             <div className="favorites-empty-icon">❤️</div>
             <h2 className="favorites-empty-title">No favorites yet</h2>
@@ -58,7 +86,7 @@ export default function Favorites() {
           </div>
         ) : (
           <div className="favorites-grid">
-            {items.map(p => (
+            {visibleItems.map(p => (
               <div key={p._id} className="favorite-card">
                 <Link to={`/product/${p._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
                   <div className="favorite-image">

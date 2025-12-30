@@ -6,6 +6,7 @@ import './index.css'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ShopProvider } from './context/ShopContext.jsx'
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import AppToaster from './components/AppToaster.jsx'
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <ShopProvider>
             <App />
+            <AppToaster />
           </ShopProvider>
         </AuthProvider>
       </BrowserRouter>

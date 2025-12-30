@@ -10,7 +10,10 @@ const protect = async (req, res, next) => {
         try {
             token = req.headers.authorization.split(" ")[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const user = await User.findById(decoded.id).select("-password");
+            // Use lean() for faster query since we only need read-only access
+            const user = await User.findById(decoded.id)
+                .select("-password -cart -favorites -savedAddresses")
+                .lean();
             if (!user) {
                 return res.status(401).json({message: "Not authorized"});
             }

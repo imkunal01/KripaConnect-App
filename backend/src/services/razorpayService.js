@@ -1,5 +1,10 @@
 const Razorpay = require("razorpay");
 
+// Validate Razorpay credentials
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  console.error("⚠️  RAZORPAY CONFIGURATION ERROR: Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET in environment variables");
+}
+
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,

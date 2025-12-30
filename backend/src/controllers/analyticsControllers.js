@@ -117,7 +117,8 @@ exports.getUserGrowth = async (req, res) => {
 exports.getLowStock = async (req, res) => {
   try {
     const products = await Product.find({ stock: { $lt: 10 } })
-      .select("name stock images");
+      .select("name stock images")
+      .lean();
 
     res.json({ success: true, data: products });
   } catch (err) {

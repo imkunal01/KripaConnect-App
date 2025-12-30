@@ -1,5 +1,14 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
 
+// Common production misconfig: forgetting to set VITE_API_BASE_URL on Vercel/Netlify.
+// This silently points the app to localhost in production, breaking login/OTP/reset.
+if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[Config] VITE_API_BASE_URL is not set. Falling back to http://localhost:5000 (this will break in production).'
+  )
+}
+
 async function apiFetch(path, { method = 'GET', body, token, headers = {}, credentials = 'include', noThrow = false } = {}) {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,

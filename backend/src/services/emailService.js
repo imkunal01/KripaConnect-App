@@ -1,39 +1,142 @@
 const nodemailer = require("nodemailer");
 
 function getFrontendUrl() {
-  return (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')
+  return (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
 }
 
-function assertEmailEnv() {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error('Missing EMAIL_USER/EMAIL_PASS env vars for email sending')
+function isTruthy(value) {
+  if (value === true) return true;
+  const v = String(value || "").toLowerCase().trim();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+function getFromAddress() {
+  const fromEmail = process.env.EMAIL_FROM_EMAIL || process.env.EMAIL_USER;
+  const fromName = process.env.EMAIL_FROM_NAME || "Smart E-Commerce";
+  if (!fromEmail) return undefined;
+  return `"${fromName}" <${fromEmail}>`;
+}
+
+function buildTransportConfig() {
+  // Prefer explicit SMTP configuration in production.
+  // Env supported:
+  // - EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE, EMAIL_USER, EMAIL_PASS
+  // Optional:
+  // - EMAIL_PROVIDER=gmail
+  // - EMAIL_SERVICE=gmail (legacy)
+  const hasSmtpHost = !!process.env.EMAIL_HOST;
+
+  if (hasSmtpHost) {
+    const port = Number(process.env.EMAIL_PORT || (isTruthy(process.env.EMAIL_SECURE) ? 465 : 587));
+    const secure = isTruthy(process.env.EMAIL_SECURE) || port === 465;
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      throw new Error("Missing EMAIL_USER/EMAIL_PASS for SMTP authentication");
+    }
+
+    return {
+      host: process.env.EMAIL_HOST,
+      port,
+      secure,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    };
   }
+
+  const provider = (process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || "gmail").toLowerCase().trim();
+  if (provider === "gmail") {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      throw new Error("Missing EMAIL_USER/EMAIL_PASS for Gmail SMTP (use an App Password in production)");
+    }
+
+    return {
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    };
+  }
+
+  throw new Error(
+    "Email is not configured. Set EMAIL_HOST/EMAIL_PORT/EMAIL_USER/EMAIL_PASS (SMTP) or EMAIL_PROVIDER=gmail with EMAIL_USER/EMAIL_PASS."
+  );
 }
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+let cachedTransporter = null;
+let cachedTransporterKey = null;
+
+function getTransporter() {
+  const key = JSON.stringify({
+    EMAIL_HOST: process.env.EMAIL_HOST,
+    EMAIL_PORT: process.env.EMAIL_PORT,
+    EMAIL_SECURE: process.env.EMAIL_SECURE,
+    EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,
+    EMAIL_SERVICE: process.env.EMAIL_SERVICE,
+    EMAIL_USER: process.env.EMAIL_USER,
+    EMAIL_PASS: process.env.EMAIL_PASS ? "***" : "",
+  });
+
+  if (cachedTransporter && cachedTransporterKey === key) return cachedTransporter;
+
+  const config = buildTransportConfig();
+  cachedTransporter = nodemailer.createTransport({
+    ...config,
+    // Safer defaults for production; doesn't change behavior for most providers.
+    pool: true,
+    maxConnections: 2,
+    maxMessages: 50,
+  });
+  cachedTransporterKey = key;
+  return cachedTransporter;
+}
+
+function formatSmtpError(error) {
+  const code = error?.code;
+  const response = error?.response;
+  const responseCode = error?.responseCode;
+
+  // Common Gmail production issue: using normal password instead of App Password.
+  if (code === "EAUTH" || responseCode === 535) {
+    return `${error.message}. SMTP auth failed (code=${code || responseCode}). If using Gmail, enable 2FA and use an App Password for EMAIL_PASS.`;
+  }
+
+  if (code) return `${error.message} (code=${code})`;
+  if (response) return `${error.message} (response=${response})`;
+  return error?.message || "Unknown email error";
+}
 
 async function sendMail({ to, subject, html, attachments = [] }) {
-  assertEmailEnv()
-  await transporter.sendMail({
-    from: `"Smart E-Commerce" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-    attachments,
-  });
+  const transporter = getTransporter();
+  const from = getFromAddress();
+
+  try {
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      attachments,
+    });
+
+    if (process.env.NODE_ENV === "production") {
+      console.log(`[Email] sent to=${to} messageId=${info?.messageId || "?"}`);
+    }
+
+    return info;
+  } catch (error) {
+    console.error("[Email] send failed:", formatSmtpError(error));
+    throw error;
+  }
 }
 
 /**
  * Send password reset email with reset link
  */
 async function sendPasswordResetEmail(email, resetToken, userName = 'User') {
-  const resetUrl = `${getFrontendUrl()}/reset-password?token=${resetToken}`;
+  const resetUrl = `${getFrontendUrl()}/reset-password?token=${encodeURIComponent(resetToken)}`;
   
   const html = `
     <!DOCTYPE html>

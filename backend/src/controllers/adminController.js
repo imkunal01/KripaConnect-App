@@ -1,9 +1,11 @@
 const User = require("../models/User");
 
-// Get all users (without password)
+// Get all users (without password) - use lean() for faster read-only query
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find()
+      .select("-password -cart -favorites -savedAddresses -resetPasswordToken -resetPasswordExpires -loginOtp -loginOtpExpires")
+      .lean();
     res.json({ success: true, data: users });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
