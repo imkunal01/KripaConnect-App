@@ -53,15 +53,16 @@
 
 ## 📧 Email Service Architecture
 
-**Current Implementation:**
-- Uses existing `emailService.js` with Gmail SMTP (Nodemailer)
-- Beautiful HTML email templates (responsive, modern design)
-- Firebase Admin SDK installed but NOT used for email sending (as Firebase doesn't natively support custom OTP emails)
+**Current Implementation (SendGrid):**
+- Backend sends emails directly using SendGrid’s REST API (no Firebase, no SMTP).
+- Controllers call `sendMail()` / `sendPasswordResetEmail()` / `sendOtpEmail()`.
+- `backend/src/services/emailService.js` uses `@sendgrid/mail`.
 
-**Why not pure Firebase?**
-- Firebase Admin SDK doesn't provide direct custom email template APIs
-- Requires Cloud Functions + third-party email service (SendGrid/Mailgun)
-- Current Gmail SMTP solution is simpler and production-ready
+**Flow (end-to-end):**
+1. API endpoint runs (Forgot Password / OTP / Order / Invoice)
+2. Controller calls `sendPasswordResetEmail()` / `sendOtpEmail()` / `sendMail()`
+3. Email service calls SendGrid API
+4. SendGrid delivers the email and logs delivery events
 
 ---
 
@@ -92,10 +93,9 @@
 ```
 backend/src/
 ├── config/
-│   └── firebaseAdmin.js              # Firebase Admin SDK initialization
+│   └── (no firebase required)
 ├── services/
-│   ├── emailService.js               # Gmail SMTP transporter
-│   └── firebaseEmailService.js       # Email templates for reset/OTP
+│   └── emailService.js               # SendGrid sender + HTML templates
 ├── controllers/
 │   └── passwordResetController.js    # All reset + OTP logic
 ├── models/
@@ -128,12 +128,12 @@ frontend/src/
 # Frontend URL for email links
 FRONTEND_URL=http://localhost:5173
 
-# Email service (Gmail SMTP)
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-specific-password
+# SendGrid
+SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-# Firebase Admin SDK (for future expansion)
-FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
+# Email sender identity (must be a verified sender/domain inside SendGrid)
+EMAIL_FROM_NAME=Smart E-Commerce
+EMAIL_FROM_EMAIL=no-reply@yourdomain.com
 ```
 
 ### Frontend `.env`

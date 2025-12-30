@@ -21,7 +21,7 @@ The backend system is a robust RESTful API built to support a B2B/B2C E-commerce
 - **External Services**:
   - **Cloudinary**: Image hosting and transformation.
   - **Razorpay**: Payment gateway.
-  - **Nodemailer**: Email transaction services (Gmail SMTP).
+  - **SendGrid**: Transactional email delivery (OTP, Password Reset, Order Confirmation).
 
 ### Infrastructure
 - **Server**: REST API server running on Node.js.
@@ -70,7 +70,7 @@ All API routes are prefixed with `/api`.
 - **Cloudinary**: Stores product images.
   - *Service File*: `src/services/cloudinaryService.js`
   - *Key Methods*: `uploadBuffer` (Stream upload), `deleteById`.
-- **Nodemailer**: Sends transactional emails (Welcome, Order Confirmation).
+- **SendGrid**: Sends transactional emails (Order Confirmation, OTP, Password Reset).
   - *Service File*: `src/services/emailService.js`
 
 ---

@@ -13,7 +13,7 @@ backend/
 │   │   ├── db.js             # MongoDB connection
 │   │   ├── cloudinary.js     # Cloudinary setup
 │   │   ├── razorpay.js       # Razorpay instance
-│   │   ├── mailer.js         # Nodemailer config
+│   │   ├── emailService.js   # Firestore mail queue sender
 │   │   ├── pdfkit.js         # PDF generator helper setup
 │   │   └── index.js          # Exports all configs cleanly
 │   │

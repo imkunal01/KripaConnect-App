@@ -39,7 +39,8 @@ export default function Login() {
       const payload = await signIn({ email, password })
       const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
       navigate(hasAddress ? '/' : '/onboarding')
-    } catch (err) {
+    } catch (e) {
+      console.error(e)
       alert("Login failed")
     } finally {
       setLoading(false)

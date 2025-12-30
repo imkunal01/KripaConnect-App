@@ -45,7 +45,7 @@ export default function OrdersPage() {
     loadOrders()
   }, [token, navigate, loadOrders])
 
-  function handleBuyAgain(order) {
+  function handleBuyAgain() {
     navigate("/products")
   }
 
@@ -54,7 +54,10 @@ export default function OrdersPage() {
     try {
       await cancelOrder(id, token)
       loadOrders()
-    } catch (err) {}
+    } catch (e) {
+      console.error(e)
+      setError(e?.message || 'Failed to cancel order')
+    }
   }
 
   if (loading) {

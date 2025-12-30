@@ -1,18 +1,3 @@
-function getStatusInfo(status) {
-  switch (status) {
-    case 'pending':
-      return { label: 'Order Placed', icon: '📦', color: '#FF3D3D', completed: true }
-    case 'shipped':
-      return { label: 'Shipped', icon: '🚚', color: '#8b5cf6', completed: true }
-    case 'delivered':
-      return { label: 'Delivered', icon: '✅', color: '#10b981', completed: true }
-    case 'cancelled':
-      return { label: 'Cancelled', icon: '❌', color: '#ef4444', completed: true }
-    default:
-      return { label: status, icon: '📦', color: '#9ca3af', completed: false }
-  }
-}
-
 function getStatusSteps(currentStatus) {
   const allSteps = [
     { key: 'pending', label: 'Order Placed', icon: '📦' },

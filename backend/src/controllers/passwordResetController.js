@@ -150,7 +150,22 @@ const requestLoginOtp = async (req, res) => {
 
     res.json({ message: 'If that email exists, an OTP has been sent.' })
   } catch (error) {
-    console.error('[Request OTP]', error)
+    console.error('[Request OTP]', {
+      message: error?.message,
+      statusCode: error?.statusCode || error?.code,
+      provider: error?.provider,
+      providerErrors: error?.providerErrors,
+    })
+
+    // In development, return the provider error to make setup/debugging easy.
+    if ((process.env.NODE_ENV || '').trim() !== 'production') {
+      return res.status(500).json({
+        message: 'Failed to send OTP (email provider rejected the request).',
+        detail: error?.message,
+      })
+    }
+
+    // In production, keep it generic.
     res.status(500).json({ message: 'Failed to send OTP' })
   }
 }

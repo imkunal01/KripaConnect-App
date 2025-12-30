@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { listProducts } from '../../services/products'
 import { listCategories } from '../../services/categories'
-import { createProductAdmin, updateProductAdmin, deleteProductAdmin, removeProductImage } from '../../services/admin'
-import { apiFetch } from '../../services/api'
+import { createProductAdmin, updateProductAdmin, deleteProductAdmin } from '../../services/admin'
 
 export default function ProductManagement() {
   const { token } = useAuth()

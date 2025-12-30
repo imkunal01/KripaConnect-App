@@ -1,134 +1,85 @@
-const nodemailer = require("nodemailer");
+const sgMail = require('@sendgrid/mail')
+
+function readEnvTrimmed(key) {
+  const value = process.env[key]
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed.length ? trimmed : undefined
+}
 
 function getFrontendUrl() {
   return (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
 }
 
-function isTruthy(value) {
-  if (value === true) return true;
-  const v = String(value || "").toLowerCase().trim();
-  return v === "1" || v === "true" || v === "yes";
-}
-
 function getFromAddress() {
-  const fromEmail = process.env.EMAIL_FROM_EMAIL || process.env.EMAIL_USER;
-  const fromName = process.env.EMAIL_FROM_NAME || "Smart E-Commerce";
-  if (!fromEmail) return undefined;
-  return `"${fromName}" <${fromEmail}>`;
+  const fromEmail = readEnvTrimmed('EMAIL_FROM_EMAIL')
+  const fromName = readEnvTrimmed('EMAIL_FROM_NAME') || 'Smart E-Commerce'
+  if (!fromEmail) {
+    throw new Error('Missing EMAIL_FROM_EMAIL env var (SendGrid requires a verified sender).')
+  }
+  return { email: fromEmail, name: fromName }
 }
 
-function buildTransportConfig() {
-  // Prefer explicit SMTP configuration in production.
-  // Env supported:
-  // - EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE, EMAIL_USER, EMAIL_PASS
-  // Optional:
-  // - EMAIL_PROVIDER=gmail
-  // - EMAIL_SERVICE=gmail (legacy)
-  const hasSmtpHost = !!process.env.EMAIL_HOST;
+/**
+ * SendGrid email sender (production-safe on Render).
+ *
+ * This sends email directly via SendGrid API.
+ * Required env vars:
+ *  - SENDGRID_API_KEY
+ *  - EMAIL_FROM_EMAIL (verified sender in SendGrid)
+ */
+async function sendMail({ to, subject, html, text, cc, bcc, replyTo }) {
+  if (!to) throw new Error('Missing email recipient (to)')
+  if (!subject) throw new Error('Missing email subject')
+  if (!html && !text) throw new Error('Missing email body (html or text)')
 
-  if (hasSmtpHost) {
-    const port = Number(process.env.EMAIL_PORT || (isTruthy(process.env.EMAIL_SECURE) ? 465 : 587));
-    const secure = isTruthy(process.env.EMAIL_SECURE) || port === 465;
-
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      throw new Error("Missing EMAIL_USER/EMAIL_PASS for SMTP authentication");
-    }
-
-    return {
-      host: process.env.EMAIL_HOST,
-      port,
-      secure,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    };
+  const apiKey = readEnvTrimmed('SENDGRID_API_KEY')
+  if (!apiKey) {
+    throw new Error('Missing SENDGRID_API_KEY env var')
   }
 
-  const provider = (process.env.EMAIL_PROVIDER || process.env.EMAIL_SERVICE || "gmail").toLowerCase().trim();
-  if (provider === "gmail") {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      throw new Error("Missing EMAIL_USER/EMAIL_PASS for Gmail SMTP (use an App Password in production)");
-    }
+  sgMail.setApiKey(apiKey)
 
-    return {
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    };
+  const from = getFromAddress()
+
+  const msg = {
+    to,
+    from,
+    subject,
+    ...(text ? { text } : {}),
+    ...(html ? { html } : {}),
+    ...(replyTo ? { replyTo } : {}),
+    ...(cc ? { cc } : {}),
+    ...(bcc ? { bcc } : {}),
   }
-
-  throw new Error(
-    "Email is not configured. Set EMAIL_HOST/EMAIL_PORT/EMAIL_USER/EMAIL_PASS (SMTP) or EMAIL_PROVIDER=gmail with EMAIL_USER/EMAIL_PASS."
-  );
-}
-
-let cachedTransporter = null;
-let cachedTransporterKey = null;
-
-function getTransporter() {
-  const key = JSON.stringify({
-    EMAIL_HOST: process.env.EMAIL_HOST,
-    EMAIL_PORT: process.env.EMAIL_PORT,
-    EMAIL_SECURE: process.env.EMAIL_SECURE,
-    EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,
-    EMAIL_SERVICE: process.env.EMAIL_SERVICE,
-    EMAIL_USER: process.env.EMAIL_USER,
-    EMAIL_PASS: process.env.EMAIL_PASS ? "***" : "",
-  });
-
-  if (cachedTransporter && cachedTransporterKey === key) return cachedTransporter;
-
-  const config = buildTransportConfig();
-  cachedTransporter = nodemailer.createTransport({
-    ...config,
-    // Safer defaults for production; doesn't change behavior for most providers.
-    pool: true,
-    maxConnections: 2,
-    maxMessages: 50,
-  });
-  cachedTransporterKey = key;
-  return cachedTransporter;
-}
-
-function formatSmtpError(error) {
-  const code = error?.code;
-  const response = error?.response;
-  const responseCode = error?.responseCode;
-
-  // Common Gmail production issue: using normal password instead of App Password.
-  if (code === "EAUTH" || responseCode === 535) {
-    return `${error.message}. SMTP auth failed (code=${code || responseCode}). If using Gmail, enable 2FA and use an App Password for EMAIL_PASS.`;
-  }
-
-  if (code) return `${error.message} (code=${code})`;
-  if (response) return `${error.message} (response=${response})`;
-  return error?.message || "Unknown email error";
-}
-
-async function sendMail({ to, subject, html, attachments = [] }) {
-  const transporter = getTransporter();
-  const from = getFromAddress();
 
   try {
-    const info = await transporter.sendMail({
-      from,
-      to,
-      subject,
-      html,
-      attachments,
-    });
+    const [result] = await sgMail.send(msg)
 
-    if (process.env.NODE_ENV === "production") {
-      console.log(`[Email] sent to=${to} messageId=${info?.messageId || "?"}`);
+    if (process.env.NODE_ENV === 'production') {
+      const status = result?.statusCode
+      console.log(`[Email] sent to=${Array.isArray(to) ? to.join(',') : to} status=${status}`)
     }
 
-    return info;
-  } catch (error) {
-    console.error("[Email] send failed:", formatSmtpError(error));
-    throw error;
+    return { statusCode: result?.statusCode }
+  } catch (err) {
+    const statusCode = err?.code || err?.response?.statusCode
+    const sendgridErrors = err?.response?.body?.errors
+    const detailMessage = Array.isArray(sendgridErrors)
+      ? sendgridErrors.map((e) => e?.message).filter(Boolean).join(' | ')
+      : undefined
+
+    console.error('[SendGrid] send failed', {
+      statusCode,
+      detailMessage,
+      sendgridErrors,
+    })
+
+    const e = new Error(detailMessage || 'SendGrid rejected the email request')
+    e.statusCode = statusCode
+    e.provider = 'sendgrid'
+    e.providerErrors = sendgridErrors
+    throw e
   }
 }
 
@@ -178,7 +129,8 @@ async function sendPasswordResetEmail(email, resetToken, userName = 'User') {
   await sendMail({
     to: email,
     subject: 'Password Reset Request',
-    html
+    html,
+    text: `Hi ${userName},\n\nReset your password using this link (expires in 15 minutes):\n${resetUrl}\n\nIf you didn't request a reset, ignore this email.`
   });
 }
 
@@ -226,7 +178,8 @@ async function sendOtpEmail(email, otp, userName = 'User') {
   await sendMail({
     to: email,
     subject: 'Your Login OTP Code',
-    html
+    html,
+    text: `Hi ${userName},\n\nYour login OTP is: ${otp}\n\nThis OTP expires in 5 minutes. If you didn't request it, ignore this email.`
   });
 }
 

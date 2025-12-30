@@ -4,28 +4,48 @@ export default function AppToaster() {
   return (
     <Toaster
       position="top-right"
-      gutter={10}
+      gutter={12}
       toastOptions={{
-        duration: 3000,
+        duration: 2800,
+
         style: {
-          background: 'var(--bg-primary)',
-          color: 'var(--text-primary)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '12px',
-          padding: '10px 12px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-          maxWidth: '360px',
+          background: '#ffffff',
+          color: '#1f2937', // slate-800
+          borderRadius: '14px',
+          padding: '12px 14px',
+          fontSize: '14px',
+          fontWeight: 500,
+          lineHeight: '1.4',
+          maxWidth: '340px',
+          borderLeft: '5px solid #c1121f', // Indian red accent
+          boxShadow:
+            '0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05)',
         },
+
         success: {
           iconTheme: {
-            primary: 'var(--secondary)',
-            secondary: 'var(--bg-primary)',
+            primary: '#c1121f', // Indian red
+            secondary: '#ffffff',
+          },
+          style: {
+            borderLeft: '5px solid #15803d', // subtle green for success
           },
         },
+
         error: {
           iconTheme: {
-            primary: 'var(--danger)',
-            secondary: 'var(--bg-primary)',
+            primary: '#b91c1c',
+            secondary: '#ffffff',
+          },
+          style: {
+            borderLeft: '5px solid #b91c1c',
+          },
+        },
+
+        loading: {
+          iconTheme: {
+            primary: '#c1121f',
+            secondary: '#ffffff',
           },
         },
       }}

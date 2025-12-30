@@ -12,7 +12,7 @@ import { createRazorpayOrder, verifyPayment } from '../services/payments'
 import './CheckoutPage.css'
 
 export default function CheckoutPage() {
-  const { cart, removeFromCart, clearCart } = useContext(ShopContext)
+  const { cart, clearCart } = useContext(ShopContext)
   const { token, user } = useContext(AuthContext)
   const navigate = useNavigate()
 

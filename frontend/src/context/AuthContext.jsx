@@ -1,5 +1,5 @@
 import { createContext, useEffect, useMemo, useRef, useState } from 'react'
-import { login as apiLogin, signup as apiSignup, logout as apiLogout, refresh as apiRefresh, profile as apiProfile, googleLogin as apiGoogleLogin, verifyOtp as apiVerifyOtp } from '../services/auth'
+import { login as apiLogin, signup as apiSignup, logout as apiLogout, refresh as apiRefresh, profile as apiProfile, googleLogin as apiGoogleLogin } from '../services/auth'
 
 function parseJwt(token) {
   try {
@@ -40,9 +40,10 @@ function saveStoredAuth(auth) {
 }
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null)
-  const [user, setUser] = useState(null)
-  const [role, setRole] = useState(null)
+  const initialStored = useMemo(() => loadStoredAuth(), [])
+  const [token, setToken] = useState(() => initialStored?.token || null)
+  const [user, setUser] = useState(() => initialStored?.user || null)
+  const [role, setRole] = useState(() => initialStored?.role || null)
   const [loading, setLoading] = useState(true)
   const refreshTimer = useRef(null)
   const initialized = useRef(false)
@@ -71,16 +72,19 @@ export function AuthProvider({ children }) {
 
     setRole(payload.role)
     
-    // Check expiry
-    const exp = payload.exp ? payload.exp * 1000 : Date.now() + 15 * 60 * 1000
-    const now = Date.now()
-    const timeLeft = exp - now
-    
-    // Refresh 1 minute before expiry, or immediately if close
-    const delay = Math.max(1000, timeLeft - 60 * 1000)
-    
-    console.log(`[Auth] Token check: Expires in ${Math.round(timeLeft/1000)}s. Next refresh in ${Math.round(delay/1000)}s`)
-    refreshTimer.current = setTimeout(refreshAccess, delay)
+    // Schedule refresh based on JWT exp. Compute time in a timer callback to
+    // satisfy react-hooks/purity linting (no Date.now usage in render path).
+    refreshTimer.current = setTimeout(() => {
+      const exp = payload.exp ? payload.exp * 1000 : null
+      if (!exp) return
+
+      const now = Date.now()
+      const timeLeft = exp - now
+      const delay = Math.max(1000, timeLeft - 60 * 1000)
+
+      // schedule the actual refresh
+      refreshTimer.current = setTimeout(refreshAccess, delay)
+    }, 0)
   }
 
   async function refreshAccess() {
@@ -179,24 +183,6 @@ export function AuthProvider({ children }) {
     return payload
   }
 
-  async function phoneOtpSignIn(firebaseIdToken) {
-    const res = await apiPhoneFirebaseLogin(firebaseIdToken)
-    const payload = res?.data || {}
-
-    setToken(payload.token)
-    setUser({ _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses })
-    setRole(payload.role)
-    await scheduleRefresh(payload.token)
-    saveStoredAuth({
-      token: payload.token,
-      user: { _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses },
-      role: payload.role,
-    })
-
-    await refreshMe(payload.token).catch(() => {})
-    return payload
-  }
-
   async function signOut() {
     await apiLogout().catch(() => {})
     setToken(null)
@@ -209,21 +195,25 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
-    // 1) Synchronously hydrate from localStorage so deep links don't
-    //    immediately redirect on hard refresh.
-    const stored = loadStoredAuth()
-    if (stored?.token) {
-      setToken(stored.token)
-      setUser(stored.user || null)
-      setRole(stored.role || null)
-      scheduleRefresh(stored.token)
-    }
+    // If we already have a token from initial state, schedule refresh.
+    const scheduleTimer = token
+      ? setTimeout(() => {
+          scheduleRefresh(token)
+        }, 0)
+      : null
 
-    // 2) Then validate/refresh token from backend.
-    //    Until this finishes, `loading` stays true and ProtectedRoute
-    //    will show a loading screen instead of redirecting.
-    refreshAccess().finally(() => setLoading(false))
-    return () => { if (refreshTimer.current) clearTimeout(refreshTimer.current) }
+    // Then validate/refresh token from backend.
+    // Until this finishes, `loading` stays true and ProtectedRoute
+    // will show a loading screen instead of redirecting.
+    refreshAccess().finally(() => {
+      setTimeout(() => setLoading(false), 0)
+    })
+
+    return () => {
+      if (scheduleTimer) clearTimeout(scheduleTimer)
+      if (refreshTimer.current) clearTimeout(refreshTimer.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

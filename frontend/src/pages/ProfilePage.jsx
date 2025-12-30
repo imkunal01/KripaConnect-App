@@ -78,6 +78,7 @@ export default function ProfilePage() {
         pincode: def?.pincode || '',
       })
     } catch (err) {
+      console.error(err)
       setError('Failed to load profile')
     } finally {
       setLoading(false)
