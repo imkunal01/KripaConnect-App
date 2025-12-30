@@ -63,6 +63,12 @@ const requestPasswordReset = async (req, res) => {
     res.json({ message: 'If that email exists, a password reset link has been sent.' })
   } catch (error) {
     console.error('[Forgot Password]', error)
+    if ((process.env.NODE_ENV || '').trim() !== 'production') {
+      return res.status(500).json({
+        message: 'Failed to process password reset request (email provider rejected the request).',
+        detail: error?.message,
+      })
+    }
     res.status(500).json({ message: 'Failed to process password reset request' })
   }
 }

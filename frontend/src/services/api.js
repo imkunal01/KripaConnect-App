@@ -33,7 +33,12 @@ async function apiFetch(path, { method = 'GET', body, token, headers = {}, crede
       window.dispatchEvent(new Event('auth:unauthorized'))
     }
     if (noThrow) return { ok: false, status: res.status, data }
-    const message = typeof data === 'string' ? data : data?.message || 'Request failed'
+    const message =
+      typeof data === 'string'
+        ? data
+        : data?.detail
+          ? `${data?.message || 'Request failed'} (${data.detail})`
+          : data?.message || 'Request failed'
     const error = new Error(message)
     error.status = res.status
     error.data = data
