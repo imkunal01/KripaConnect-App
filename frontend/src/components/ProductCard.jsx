@@ -32,7 +32,7 @@ export default function ProductCard({ product, favorite }) {
         </div>
       </Link>
 
-      <div style={{ marginBottom: '0.5rem' }}>
+      <div className="product-card-body">
         <Link to={`/product/${product._id}`} className="product-card-link">
           <div className="product-card-name">{product.name}</div>
         </Link>
