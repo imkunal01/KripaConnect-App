@@ -122,7 +122,7 @@ export default function Navbar() {
           
           {/* Left: Logo */}
           <Link to="/" className="desk-logo">
-            <img src={Logo} alt="Kripa Connect" className="logo-image" />
+            {/* <img src={""} alt="Kripa Connect" className="logo-image" /> */}
             BizLink
           </Link>
 
