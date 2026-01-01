@@ -122,7 +122,7 @@ export default function ProductManagement() {
           }}
           style={{
             padding: '12px 24px',
-            backgroundColor: '#FF3D3D',
+            backgroundColor: 'var(--primary)',
             color: '#fff',
             border: 'none',
             borderRadius: '6px',
@@ -281,7 +281,7 @@ export default function ProductManagement() {
                   style={{
                     flex: 1,
                     padding: '12px',
-                    backgroundColor: '#FF3D3D',
+                    backgroundColor: 'var(--primary)',
                     color: '#fff',
                     border: 'none',
                     borderRadius: '6px',
@@ -368,7 +368,7 @@ export default function ProductManagement() {
                         onClick={() => handleEdit(product)}
                         style={{
                           padding: '6px 12px',
-                          backgroundColor: '#FF3D3D',
+                          backgroundColor: 'var(--primary)',
                           color: '#fff',
                           border: 'none',
                           borderRadius: '4px',

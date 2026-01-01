@@ -26,6 +26,28 @@ function getStatusColor(status) {
   }
 }
 
+function getOrderModeTag(order) {
+  const isRetailer = order?.user?.role === 'retailer'
+  if (!isRetailer) return null
+
+  const isBulk = order?.purchaseMode === 'retailer' || !!order?.isBulkOrder
+  if (isBulk) {
+    return {
+      text: 'Retailer – Bulk Mode',
+      bg: 'rgba(var(--kc-primary-rgb), 0.10)',
+      color: 'var(--primary)',
+      border: '1px solid rgba(var(--kc-primary-rgb), 0.25)'
+    }
+  }
+
+  return {
+    text: 'Retailer – Customer Mode',
+    bg: '#f3f4f6',
+    color: '#374151',
+    border: '1px solid #e5e7eb'
+  }
+}
+
 export default function OrderManagement() {
   const { token } = useAuth()
   const [orders, setOrders] = useState([])
@@ -175,6 +197,7 @@ export default function OrderManagement() {
             ) : (
               filteredOrders.map(order => {
                 const statusStyle = getStatusColor(order.deliveryStatus || 'pending')
+                const modeTag = getOrderModeTag(order)
                 return (
                   <div
                     key={order._id}
@@ -205,18 +228,19 @@ export default function OrderManagement() {
                         <div style={{ fontSize: '14px', color: '#6b7280' }}>
                           {order.user?.name} ({order.user?.email})
                         </div>
-                        {order.isBulkOrder && (
+                        {modeTag && (
                           <span style={{
                             display: 'inline-block',
                             marginTop: '4px',
                             padding: '2px 8px',
-                            backgroundColor: '#fff1f2',
-                            color: '#FF3D3D',
+                            backgroundColor: modeTag.bg,
+                            color: modeTag.color,
+                            border: modeTag.border,
                             borderRadius: '4px',
                             fontSize: '12px',
                             fontWeight: '500'
                           }}>
-                            Bulk Order
+                            {modeTag.text}
                           </span>
                         )}
                       </div>

@@ -186,6 +186,6 @@
 }
 
 .orders-btn-primary {
-  background: #FF3D3D;
+  background: var(--primary);
   color: white;
 }

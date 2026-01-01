@@ -10,6 +10,8 @@ import ReviewList from '../components/ReviewList.jsx'
 import ReviewForm from '../components/ReviewForm.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
+import { useAuth } from '../hooks/useAuth.js'
+import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import './ProductDetails.css'
 
 export default function ProductDetails() {
@@ -17,6 +19,8 @@ export default function ProductDetails() {
   const navigate = useNavigate()
   const { addToCart, favorites } = useContext(ShopContext)
   const { token } = useContext(AuthContext)
+  const { role } = useAuth()
+  const { mode } = usePurchaseMode()
   
   const [product, setProduct] = useState(null)
   const [reviews, setReviews] = useState([])
@@ -24,6 +28,19 @@ export default function ProductDetails() {
   const [qty, setQty] = useState(1)
   const [selectedImage, setSelectedImage] = useState(null)
   const [activeTab, setActiveTab] = useState('details') // 'details' or 'reviews'
+
+  const isRetailer = role === 'retailer'
+  const retailerBulk = isRetailer && mode === 'retailer'
+  const minBulkQty = product?.min_bulk_qty > 0 ? product.min_bulk_qty : 1
+
+  useEffect(() => {
+    if (!product) return
+    if (retailerBulk) {
+      setQty(prev => Math.max(minBulkQty, prev || 1))
+    } else {
+      setQty(prev => Math.max(1, prev || 1))
+    }
+  }, [product, retailerBulk, minBulkQty])
 
   // Fetch Data
   useEffect(() => {
@@ -68,6 +85,8 @@ export default function ProductDetails() {
   if (!product) return <div className="error-screen">Product not found. <Link to="/">Go Home</Link></div>
 
   const inStock = (product.stock || 0) > 0
+  const bulkUnitPrice = product?.price_bulk || product?.retailer_price || product?.price
+  const displayUnitPrice = retailerBulk ? bulkUnitPrice : product.price
 
   return (
     <div className="pdp-page">
@@ -120,9 +139,21 @@ export default function ProductDetails() {
                 </nav>
                 <h1 className="pdp-title">{product.name}</h1>
                 <div className="pdp-price-row">
-                  <span className="pdp-price">₹{product.price?.toLocaleString('en-IN')}</span>
+                  {retailerBulk ? (
+                    <span className="pdp-price">
+                      <span style={{ textDecoration: 'line-through', opacity: 0.6, marginRight: 10 }}>
+                        ₹{product.price?.toLocaleString('en-IN')}
+                      </span>
+                      ₹{bulkUnitPrice?.toLocaleString('en-IN')}
+                    </span>
+                  ) : (
+                    <span className="pdp-price">₹{product.price?.toLocaleString('en-IN')}</span>
+                  )}
                   <FavoritesButton productId={product._id} active={favorites.includes(product._id)} />
                 </div>
+                {retailerBulk && minBulkQty > 1 && (
+                  <div className="pdp-subtext">Minimum bulk quantity: {minBulkQty}</div>
+                )}
               </div>
 
               <div className="pdp-divider" />
@@ -131,21 +162,21 @@ export default function ProductDetails() {
               <div className="pdp-actions-zone">
                 <div className="quantity-row">
                   <span className="label-subtle">Quantity</span>
-                  <QuantitySelector value={qty} max={product.stock} onChange={setQty} />
+                  <QuantitySelector value={qty} min={retailerBulk ? minBulkQty : 1} max={product.stock} onChange={setQty} />
                 </div>
 
                 <div className="buttons-stack">
                   <button 
                     className="btn-add-cart" 
                     onClick={() => addToCart(product, qty)}
-                    disabled={!inStock}
+                    disabled={!inStock || (retailerBulk && qty < minBulkQty)}
                   >
                     Add to Cart
                   </button>
                   <button 
                     className="btn-buy-now"
                     onClick={handleBuyNow}
-                    disabled={!inStock}
+                    disabled={!inStock || (retailerBulk && qty < minBulkQty)}
                   >
                     Buy Now - Fast Checkout
                   </button>
@@ -213,12 +244,12 @@ export default function ProductDetails() {
       <div className="mobile-fab-bar">
         <div className="fab-price">
            <small>Total</small>
-           ₹{(product.price * qty).toLocaleString()}
+           ₹{(displayUnitPrice * qty).toLocaleString()}
         </div>
         <button 
           className="fab-btn" 
           onClick={() => addToCart(product, qty)}
-          disabled={!inStock}
+          disabled={!inStock || (retailerBulk && qty < minBulkQty)}
         >
           {inStock ? 'Add to Cart' : 'Sold Out'}
         </button>

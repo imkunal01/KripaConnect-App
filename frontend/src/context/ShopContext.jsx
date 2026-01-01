@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import AuthContext from './AuthContext.jsx'
+import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import { listFavorites, addFavorite, removeFavorite } from '../services/favorites'
 import { getCart, addToCart as apiAddToCart, updateCartItem, removeCartItem } from '../services/cart'
 import toast from 'react-hot-toast'
@@ -25,6 +26,7 @@ function mapCartItem(i) {
 
 export function ShopProvider({ children }) {
   const { token } = useContext(AuthContext)
+  const { mode } = usePurchaseMode()
   const [cart, setCart] = useState(() => {
     try { return JSON.parse(localStorage.getItem('kc_cart')) || [] } catch { return [] }
   })
@@ -55,7 +57,7 @@ export function ShopProvider({ children }) {
   const addToCart = useCallback(async (product, qty = 1) => {
     if (token) {
       try {
-        const res = await apiAddToCart(product._id, qty, token)
+        const res = await apiAddToCart(product._id, qty, token, mode)
         // Optimistically update cart from response instead of refetching
         if (res.data?.item) {
           const newItem = mapCartItem(res.data.item)
@@ -89,7 +91,7 @@ export function ShopProvider({ children }) {
 
       toast.success('Added to cart')
     }
-  }, [token])
+  }, [token, mode])
 
   const removeFromCart = useCallback(async (productId) => {
     if (token) {
@@ -100,7 +102,7 @@ export function ShopProvider({ children }) {
         toast.success('Removed from cart')
       } catch (err) {
         // Revert on error - refetch cart
-        const items = await getCart(token)
+        const items = await getCart(token, mode)
         setCart(items.map(mapCartItem))
         toast.error(err?.message || 'Failed to remove item')
         throw err
@@ -109,14 +111,14 @@ export function ShopProvider({ children }) {
       setCart(prev => prev.filter(i => i.productId !== productId))
       toast.success('Removed from cart')
     }
-  }, [token])
+  }, [token, mode])
 
   const updateQty = useCallback(async (productId, qty) => {
     if (token) {
       // Optimistically update UI
       setCart(prev => prev.map(i => i.productId === productId ? { ...i, qty } : i))
       try {
-        const res = await updateCartItem(productId, qty, token)
+        const res = await updateCartItem(productId, qty, token, mode)
         if (res.data?.removed) {
           setCart(prev => prev.filter(i => i.productId !== productId))
         } else if (res.data?.item) {
@@ -125,14 +127,14 @@ export function ShopProvider({ children }) {
         }
       } catch (err) {
         // Revert on error - refetch cart
-        const items = await getCart(token)
+        const items = await getCart(token, mode)
         setCart(items.map(mapCartItem))
         throw err
       }
     } else {
       setCart(prev => prev.map(i => i.productId === productId ? { ...i, qty } : i))
     }
-  }, [token])
+  }, [token, mode])
 
   const toggleFavorite = useCallback(async (productId) => {
     if (token) {
@@ -168,7 +170,7 @@ export function ShopProvider({ children }) {
     const t = setTimeout(() => {
       if (cancelled) return
       setLoading(true)
-      Promise.all([listFavorites(token), getCart(token)])
+      Promise.all([listFavorites(token), getCart(token, mode)])
         .then(([favItems, cartItems]) => {
           if (cancelled) return
           setFavorites(favItems.map(p => p._id))
@@ -185,13 +187,13 @@ export function ShopProvider({ children }) {
       cancelled = true
       clearTimeout(t)
     }
-  }, [token])
+  }, [token, mode])
 
   const clearCart = useCallback(async () => {
     if (token) {
       // Fetch latest cart state (after order placement, cart should be empty)
       try {
-        const items = await getCart(token)
+        const items = await getCart(token, mode)
         setCart(items.map(mapCartItem))
       } catch {
         setCart([])
@@ -199,17 +201,47 @@ export function ShopProvider({ children }) {
     } else {
       setCart([])
     }
-  }, [token])
+  }, [token, mode])
+
+  // Phase 3: used when switching purchase modes (must fully empty cart)
+  const wipeCart = useCallback(async () => {
+    // Always clear local cart immediately; if server clearing fails we will restore from server.
+    const prev = cart
+    setCart([])
+
+    if (!token) return true
+
+    try {
+      const ids = Array.isArray(prev) ? prev.map(i => i.productId).filter(Boolean) : []
+      for (const productId of ids) {
+        // best-effort delete; backend cart endpoints don't have a single clear route
+        await removeCartItem(productId, token)
+      }
+
+      const items = await getCart(token, mode)
+      setCart(items.map(mapCartItem))
+      return items.length === 0
+    } catch {
+      // Restore UI from server as source of truth
+      try {
+        const items = await getCart(token, mode)
+        setCart(items.map(mapCartItem))
+      } catch {
+        // If even refresh fails, keep UI empty (user can refresh)
+      }
+      return false
+    }
+  }, [token, cart, mode])
 
   const refreshCart = useCallback(async () => {
     if (!token) return
     try {
-      const items = await getCart(token)
+      const items = await getCart(token, mode)
       setCart(items.map(mapCartItem))
     } catch (err) {
       console.error('Failed to refresh cart:', err)
     }
-  }, [token])
+  }, [token, mode])
 
   const value = useMemo(() => ({ 
     cart, 
@@ -220,8 +252,9 @@ export function ShopProvider({ children }) {
     updateQty, 
     toggleFavorite, 
     clearCart,
+    wipeCart,
     refreshCart
-  }), [cart, favorites, loading, addToCart, removeFromCart, updateQty, toggleFavorite, clearCart, refreshCart])
+  }), [cart, favorites, loading, addToCart, removeFromCart, updateQty, toggleFavorite, clearCart, wipeCart, refreshCart])
   
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>
 }

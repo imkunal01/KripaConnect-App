@@ -119,7 +119,7 @@ export default function Admin() {
                 style={{
                   padding: '0.875rem 1rem',
                   textAlign: 'left',
-                  backgroundColor: activeTab === tab.id ? '#FF3D3D' : 'transparent',
+                  backgroundColor: activeTab === tab.id ? 'var(--primary)' : 'transparent',
                   color: activeTab === tab.id ? 'white' : '#d1d5db',
                   border: 'none',
                   cursor: 'pointer',

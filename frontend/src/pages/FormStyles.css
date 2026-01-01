@@ -4,7 +4,7 @@
   --auth-muted: #64748b;
   --auth-border: #e5e7eb;
   --auth-shadow: 0 10px 25px -10px rgba(0,0,0,0.15);
-  --primary: #FF3D3D;
+  --primary: var(--kc-primary);
   --accent: #8b5cf6;
   --danger: #ef4444;
 }
@@ -81,7 +81,7 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(900px 600px at 70% 30%, rgba(139,92,246,0.8), transparent 60%),
-              radial-gradient(800px 500px at 40% 70%, rgba(255, 61, 61, 0.8), transparent 60%),
+              radial-gradient(800px 500px at 40% 70%, rgba(var(--kc-primary-rgb), 0.8), transparent 60%),
               linear-gradient(120deg, #1f2937 0%, #111827 100%);
   animation: authGlow 10s ease-in-out infinite;
 }
@@ -273,7 +273,7 @@
 }
 .role-card.active {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(255, 61, 61, 0.12);
+  box-shadow: 0 0 0 4px rgba(var(--kc-primary-rgb), 0.12);
   color: var(--primary);
 }
 

@@ -1,7 +1,7 @@
 :root {
   --profile-bg: #f8fafc;
   --profile-card-bg: #ffffff;
-  --profile-primary: #FF3D3D;
+  --profile-primary: var(--primary);
   --profile-text: #1e293b;
   --profile-text-muted: #64748b;
   --profile-border: #e2e8f0;
@@ -27,7 +27,7 @@
 /* --- Banner --- */
 .profile-banner {
   height: 200px;
-  background: linear-gradient(135deg, var(--profile-primary) 0%, #991b1b 100%);
+  background: linear-gradient(135deg, var(--profile-primary) 0%, var(--primary-dark) 100%);
   width: 100%;
   position: relative;
 }
@@ -261,7 +261,7 @@
   outline: none;
   border-color: var(--profile-primary);
   background: white;
-  box-shadow: 0 0 0 3px rgba(255, 61, 61, 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--kc-primary-rgb), 0.1);
 }
 
 /* Action Cards */

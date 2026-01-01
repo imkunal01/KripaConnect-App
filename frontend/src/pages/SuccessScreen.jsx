@@ -19,7 +19,10 @@ export default function SuccessScreen() {
     canvas.width = width
     canvas.height = height
 
-    const colors = ['#FF3D3D', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+    const primary = getComputedStyle(document.documentElement)
+      .getPropertyValue('--kc-primary')
+      .trim() || '#FF3D3D'
+    const colors = [primary, '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
     function createParticle() {
       return {

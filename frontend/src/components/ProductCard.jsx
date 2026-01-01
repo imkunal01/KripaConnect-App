@@ -1,12 +1,22 @@
 import { useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ShopContext from '../context/ShopContext.jsx'
+import { useAuth } from '../hooks/useAuth.js'
+import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import './ProductCard.css'
 
 export default function ProductCard({ product, favorite }) {
   const { addToCart, toggleFavorite } = useContext(ShopContext)
+  const { role } = useAuth()
+  const { mode } = usePurchaseMode()
   const [isHovered, setIsHovered] = useState(false)
   const inStock = (product.stock || 0) > 0
+
+  const isRetailer = role === 'retailer'
+  const retailerBulk = isRetailer && mode === 'retailer'
+  const minBulkQty = product?.min_bulk_qty > 0 ? product.min_bulk_qty : 1
+  const bulkUnitPrice = product?.price_bulk || product?.retailer_price || product?.price
+  const canQuickAdd = !retailerBulk || minBulkQty <= 1
   
   return (
     <div
@@ -42,19 +52,34 @@ export default function ProductCard({ product, favorite }) {
         )}
 
         <div className="product-card-price-row">
-          <div className="product-card-price">₹{product.price?.toLocaleString('en-IN')}</div>
+          {retailerBulk ? (
+            <div className="product-card-price">
+              <span style={{ textDecoration: 'line-through', opacity: 0.6, marginRight: 8 }}>
+                ₹{product.price?.toLocaleString('en-IN')}
+              </span>
+              <span>
+                ₹{bulkUnitPrice?.toLocaleString('en-IN')}
+              </span>
+            </div>
+          ) : (
+            <div className="product-card-price">₹{product.price?.toLocaleString('en-IN')}</div>
+          )}
           <div className={`product-card-stock ${inStock ? '' : 'out-of-stock'}`}>
             {inStock ? 'In Stock' : 'Out of Stock'}
           </div>
         </div>
+
+        {retailerBulk && minBulkQty > 1 && (
+          <div className="product-card-tag">Min bulk qty: {minBulkQty}</div>
+        )}
       </div>
 
       <button
         onClick={() => addToCart(product, 1)}
-        disabled={!inStock}
+        disabled={!inStock || !canQuickAdd}
         className="product-card-button"
       >
-        {inStock ? 'Add to Cart' : 'Out of Stock'}
+        {!inStock ? 'Out of Stock' : !canQuickAdd ? `Min ${minBulkQty} units` : 'Add to Cart'}
       </button>
     </div>
   )

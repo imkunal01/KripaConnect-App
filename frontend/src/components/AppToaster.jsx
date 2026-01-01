@@ -17,14 +17,14 @@ export default function AppToaster() {
           fontWeight: 500,
           lineHeight: '1.4',
           maxWidth: '340px',
-          borderLeft: '5px solid #c1121f', // Indian red accent
+          borderLeft: '5px solid var(--primary)',
           boxShadow:
             '0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05)',
         },
 
         success: {
           iconTheme: {
-            primary: '#c1121f', // Indian red
+            primary: 'var(--primary)',
             secondary: '#ffffff',
           },
           style: {
@@ -44,7 +44,7 @@ export default function AppToaster() {
 
         loading: {
           iconTheme: {
-            primary: '#c1121f',
+            primary: 'var(--primary)',
             secondary: '#ffffff',
           },
         },

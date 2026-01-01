@@ -48,7 +48,7 @@ function App() {
   return (
     <Suspense fallback={<AppFallback />}>
       <div>
-        <Routes>
+        <Routes>  
           <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />

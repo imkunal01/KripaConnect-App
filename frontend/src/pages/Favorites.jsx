@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import ShopContext from '../context/ShopContext.jsx'
 import AuthContext from '../context/AuthContext.jsx'
 import { listFavorites } from '../services/favorites'
+import { useAuth } from '../hooks/useAuth.js'
+import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import './Favorites.css'
@@ -10,9 +12,14 @@ import './Favorites.css'
 export default function Favorites() {
   const { token } = useContext(AuthContext)
   const { addToCart, toggleFavorite, favorites } = useContext(ShopContext)
+  const { role } = useAuth()
+  const { mode } = usePurchaseMode()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const loadedRef = useRef(false)
+
+  const isRetailer = role === 'retailer'
+  const retailerBulk = isRetailer && mode === 'retailer'
 
   const visibleItems = useMemo(() => {
     if (!token) return []
@@ -97,12 +104,53 @@ export default function Favorites() {
                     )}
                   </div>
                   <div className="favorite-name">{p.name}</div>
-                  <div className="favorite-price">₹{p.price?.toLocaleString('en-IN')}</div>
+
+                  {(() => {
+                    const minBulkQty = p?.min_bulk_qty > 0 ? p.min_bulk_qty : 1
+                    const bulkUnitPrice = p?.price_bulk || p?.retailer_price || p?.price
+                    const hasBulkPricing = !!p?.price_bulk && minBulkQty > 1
+
+                    if (retailerBulk && hasBulkPricing) {
+                      return (
+                        <>
+                          <div className="favorite-price-row">
+                            <span className="favorite-price-strike">₹{p.price?.toLocaleString('en-IN')}</span>
+                            <span className="favorite-price">₹{bulkUnitPrice?.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="favorite-bulk-hint">Min bulk qty: {minBulkQty}</div>
+                        </>
+                      )
+                    }
+
+                    return (
+                      <>
+                        <div className="favorite-price">₹{p.price?.toLocaleString('en-IN')}</div>
+                        {isRetailer && hasBulkPricing && (
+                          <div className="favorite-bulk-hint">
+                            Bulk pricing available in Retailer Mode (min {minBulkQty})
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()}
                 </Link>
                 <div className="favorite-actions">
-                  <button onClick={() => addToCart(p, 1)} className="favorite-add-cart-btn">
-                    Add to Cart
-                  </button>
+                  {(() => {
+                    const minBulkQty = p?.min_bulk_qty > 0 ? p.min_bulk_qty : 1
+                    const hasBulkPricing = !!p?.price_bulk && minBulkQty > 1
+                    const canQuickAdd = !retailerBulk || !hasBulkPricing
+
+                    return (
+                      <button
+                        onClick={() => addToCart(p, 1)}
+                        className="favorite-add-cart-btn"
+                        disabled={!canQuickAdd}
+                        title={!canQuickAdd ? `Minimum ${minBulkQty} units required in Retailer Mode` : undefined}
+                      >
+                        {!canQuickAdd ? `Min ${minBulkQty}` : 'Add to Cart'}
+                      </button>
+                    )
+                  })()}
                   <button onClick={() => toggleFavorite(p._id)} className="favorite-remove-btn">
                     Remove
                   </button>

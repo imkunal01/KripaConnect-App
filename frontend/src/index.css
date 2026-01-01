@@ -2,8 +2,14 @@
 
 :root {
   /* Core Design Tokens - Red Accent Redesign */
-  --primary: #FF3D3D;
-  --primary-dark: #D32F2F;
+  /* Mode-aware accent tokens */
+  --kc-primary: #FF3D3D;
+  --kc-primary-dark: #D32F2F;
+  --kc-primary-rgb: 255, 61, 61;
+  --kc-primary-light: #FFEBEE;
+
+  --primary: var(--kc-primary);
+  --primary-dark: var(--kc-primary-dark);
   --secondary: #10b981;
   --danger: #ef4444;
   
@@ -25,6 +31,13 @@
   --border-color: #e5e7eb;
 }
 
+:root[data-purchase-mode='retailer'] {
+  --kc-primary: #2563eb;
+  --kc-primary-dark: #1d4ed8;
+  --kc-primary-rgb: 37, 99, 235;
+  --kc-primary-light: #dbeafe;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -39,6 +52,14 @@ body {
   background-color: var(--bg-secondary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent fixed mobile navbar/dock from covering page content */
+@media (max-width: 1023px) {
+  body {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 92px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+  }
 }
 
 #root {
@@ -64,7 +85,7 @@ a {
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(800px 400px at 50% 10%, rgba(255, 61, 61, 0.10), transparent 60%),
+    radial-gradient(800px 400px at 50% 10%, rgba(var(--kc-primary-rgb), 0.10), transparent 60%),
     radial-gradient(600px 360px at 10% 80%, rgba(16, 185, 129, 0.08), transparent 55%),
     linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
 }
@@ -86,8 +107,8 @@ a {
   display: grid;
   place-items: center;
   border-radius: 16px;
-  background: rgba(255, 61, 61, 0.08);
-  border: 1px solid rgba(255, 61, 61, 0.18);
+  background: rgba(var(--kc-primary-rgb), 0.08);
+  border: 1px solid rgba(var(--kc-primary-rgb), 0.18);
 }
 
 .app-fallback__spinner {
@@ -124,7 +145,7 @@ a {
   height: 100%;
   width: 42%;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(255, 61, 61, 0.15), rgba(255, 61, 61, 0.55), rgba(255, 61, 61, 0.15));
+  background: linear-gradient(90deg, rgba(var(--kc-primary-rgb), 0.15), rgba(var(--kc-primary-rgb), 0.55), rgba(var(--kc-primary-rgb), 0.15));
   background-size: 200% 100%;
   animation: appShimmer 1.05s ease-in-out infinite;
 }

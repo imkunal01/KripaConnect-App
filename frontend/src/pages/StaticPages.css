@@ -131,10 +131,10 @@
 }
 
 .btn.primary {
-  background-color: #FF3D3D;
+  background-color: var(--primary);
   color: #fff;
   border: none;
-  box-shadow: 0 8px 20px rgba(255, 61, 61, 0.25);
+  box-shadow: 0 8px 20px rgba(var(--kc-primary-rgb), 0.25);
 }
 
 .muted {

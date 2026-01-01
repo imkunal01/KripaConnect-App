@@ -2,6 +2,7 @@ import { useContext, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ShopContext from '../context/ShopContext.jsx'
 import { useAuth } from '../hooks/useAuth.js'
+import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import './CartPage.css'
@@ -9,8 +10,32 @@ import './CartPage.css'
 export default function CartPage() {
   const { cart, updateQty, removeFromCart } = useContext(ShopContext)
   const { role } = useAuth()
+  const { mode } = usePurchaseMode()
   const navigate = useNavigate()
   const isRetailer = role === 'retailer'
+  const retailerBulk = isRetailer && mode === 'retailer'
+
+  const blockers = useMemo(() => {
+    const issues = []
+
+    for (const item of cart) {
+      const minQty = retailerBulk ? (item.minBulkQty || 1) : 1
+      const stockKnown = typeof item.stock === 'number'
+      const stock = stockKnown ? item.stock : null
+
+      if (item.qty < minQty) {
+        issues.push(`Minimum quantity is ${minQty} for ${item.name}`)
+      }
+
+      if (stockKnown && stock <= 0) {
+        issues.push(`${item.name} is out of stock`)
+      } else if (stockKnown && item.qty > stock) {
+        issues.push(`${item.name} exceeds available stock (${stock})`)
+      }
+    }
+
+    return issues
+  }, [cart, retailerBulk])
 
   const totals = useMemo(() => {
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
@@ -40,7 +65,13 @@ export default function CartPage() {
           <div className="cart-grid">
             {/* LEFT – ITEMS */}
             <section className="cart-items-x">
-              {cart.map(item => (
+              {cart.map(item => {
+                const minQty = retailerBulk ? (item.minBulkQty || 1) : 1
+                const stockKnown = typeof item.stock === 'number'
+                const maxQty = stockKnown && item.stock > 0 ? item.stock : null
+                const atMin = item.qty <= minQty
+                const atMax = maxQty != null && item.qty >= maxQty
+                return (
                 <div key={item.productId} className="cart-item-x">
                   <img src={item.image} alt={item.name} />
 
@@ -52,17 +83,22 @@ export default function CartPage() {
                         ₹{item.price.toLocaleString('en-IN')}
                       </span>
 
-                      {isRetailer && item.isBulkPrice && (
+                      {retailerBulk && (
                         <span className="bulk-pill">Bulk</span>
                       )}
                     </div>
 
+                    {retailerBulk && item.minBulkQty > 1 && (
+                      <div className="small-muted">Min bulk qty: {item.minBulkQty}</div>
+                    )}
+
                     {/* 🔥 NEW QUANTITY COUNTER */}
                     <div className="qty-control-x">
                       <button
-                        disabled={item.qty <= 1}
+                        disabled={atMin}
+                        title={atMin ? `Minimum quantity is ${minQty}` : undefined}
                         onClick={() =>
-                          updateQty(item.productId, Math.max(1, item.qty - 1))
+                          updateQty(item.productId, Math.max(minQty, item.qty - 1))
                         }
                       >
                         –
@@ -71,9 +107,18 @@ export default function CartPage() {
                       <span>{item.qty}</span>
 
                       <button
-                        onClick={() =>
-                          updateQty(item.productId, item.qty + 1)
+                        disabled={atMax || (stockKnown && item.stock <= 0)}
+                        title={
+                          stockKnown && item.stock <= 0
+                            ? 'Out of stock'
+                            : atMax
+                              ? `Only ${maxQty} available`
+                              : undefined
                         }
+                        onClick={() => {
+                          const nextQty = maxQty != null ? Math.min(maxQty, item.qty + 1) : (item.qty + 1)
+                          updateQty(item.productId, nextQty)
+                        }}
                       >
                         +
                       </button>
@@ -93,7 +138,7 @@ export default function CartPage() {
                     </button>
                   </div>
                 </div>
-              ))}
+              )})}
             </section>
 
             {/* RIGHT – SUMMARY */}
@@ -113,6 +158,8 @@ export default function CartPage() {
               <button
                 className="checkout-x"
                 onClick={() => navigate('/checkout')}
+                disabled={blockers.length > 0}
+                title={blockers.length > 0 ? blockers[0] : undefined}
               >
                 Checkout →
               </button>

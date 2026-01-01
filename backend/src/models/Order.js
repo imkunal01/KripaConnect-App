@@ -43,6 +43,11 @@ const orderSchema = new mongoose.Schema(
     },
     invoiceUrl: { type: String, default: null },
     isBulkOrder: { type: Boolean, default: false },
+    purchaseMode: {
+      type: String,
+      enum: ["customer", "retailer"],
+      default: "customer",
+    },
   },
   { timestamps: true }
 );

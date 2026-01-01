@@ -9,18 +9,23 @@ import PaymentSelector from '../components/PaymentSelector.jsx'
 import OrderSummary from '../components/OrderSummary.jsx'
 import { createOrder } from '../services/orders'
 import { createRazorpayOrder, verifyPayment } from '../services/payments'
+import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import './CheckoutPage.css'
 
 export default function CheckoutPage() {
   const { cart, clearCart } = useContext(ShopContext)
   const { token, user } = useContext(AuthContext)
+  const { mode } = usePurchaseMode()
   const navigate = useNavigate()
+
+  const LARGE_BULK_QTY_THRESHOLD = 50
 
   const [step, setStep] = useState(1)
   const [address, setAddress] = useState({})
   const [method, setMethod] = useState('COD')
   const [placing, setPlacing] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
 
   const empty = cart.length === 0
 
@@ -60,6 +65,15 @@ export default function CheckoutPage() {
     [cart]
   )
 
+  const totals = useMemo(() => {
+    const totalQty = cart.reduce((s, i) => s + (Number(i.qty) || 0), 0)
+    const totalAmount = cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 0), 0)
+    return { totalQty, totalAmount }
+  }, [cart])
+
+  const checkoutTitle = mode === 'retailer' ? 'Retailer Bulk Checkout' : 'Customer Checkout'
+  const showLargeBulkConfirm = mode === 'retailer' && totals.totalQty >= LARGE_BULK_QTY_THRESHOLD
+
   const addressDone =
     address.name &&
     address.phone &&
@@ -72,7 +86,7 @@ export default function CheckoutPage() {
     setPlacing(true)
     try {
       const res = await createOrder(
-        { items: itemsPayload, shippingAddress: address, paymentMethod: method },
+        { items: itemsPayload, shippingAddress: address, paymentMethod: method, purchaseMode: mode },
         token
       )
       // Robustly handle response structure
@@ -142,6 +156,15 @@ export default function CheckoutPage() {
     }
   }
 
+  async function handlePlaceOrderClick() {
+    if (placing) return
+    if (showLargeBulkConfirm) {
+      setBulkConfirmOpen(true)
+      return
+    }
+    await placeOrder()
+  }
+
   return (
     <div className="checkout-clean">
       <Navbar />
@@ -151,7 +174,12 @@ export default function CheckoutPage() {
         <section className="checkout-flow">
           <div className="flow-header">
             <span className="flow-step">Step {step} of 3</span>
-            <h1>Checkout</h1>
+            <h1>{checkoutTitle}</h1>
+            <div className="checkout-mode-badge" role="note">
+              {mode === 'retailer'
+                ? `You are placing a Retailer Bulk order (min quantities apply).`
+                : `You are placing a Customer order (standard pricing).`}
+            </div>
           </div>
 
           {step === 1 && (
@@ -203,6 +231,12 @@ export default function CheckoutPage() {
           {step === 3 && (
             <>
               <h2>Review</h2>
+
+              <div className="review-block">
+                <p><strong>Order type</strong></p>
+                <p>{mode === 'retailer' ? 'Retailer Bulk Checkout' : 'Customer Checkout'}</p>
+              </div>
+
               <div className="review-block">
                 <p><strong>Deliver to</strong></p>
                 <p>
@@ -238,7 +272,7 @@ export default function CheckoutPage() {
               <button
                 className="primary-btn"
                 disabled={placing}
-                onClick={placeOrder}
+                onClick={handlePlaceOrderClick}
               >
                 {placing ? 'Placing order…' : 'Place order'}
               </button>
@@ -248,9 +282,46 @@ export default function CheckoutPage() {
 
         {/* RIGHT */}
         <aside className="checkout-summary">
-          <OrderSummary items={cart} />
+          <OrderSummary items={cart} purchaseMode={mode} />
         </aside>
       </main>
+
+      {bulkConfirmOpen && (
+        <div className="checkout-confirm-overlay" role="dialog" aria-modal="true" aria-label="Confirm bulk order">
+          <div className="checkout-confirm-modal">
+            <h3 className="checkout-confirm-title">Confirm Retailer Bulk Order</h3>
+            <p className="checkout-confirm-text">
+              This looks like a large bulk order ({totals.totalQty} units). Please confirm you intend to place a{' '}
+              <strong>Retailer Bulk</strong> order.
+            </p>
+
+            <div className="checkout-confirm-metrics">
+              <div><span>Units</span><strong>{totals.totalQty}</strong></div>
+              <div><span>Total</span><strong>₹{totals.totalAmount.toLocaleString('en-IN')}</strong></div>
+            </div>
+
+            <div className="checkout-confirm-actions">
+              <button
+                className="checkout-confirm-cancel"
+                onClick={() => setBulkConfirmOpen(false)}
+                disabled={placing}
+              >
+                Cancel
+              </button>
+              <button
+                className="checkout-confirm-confirm"
+                onClick={async () => {
+                  setBulkConfirmOpen(false)
+                  await placeOrder()
+                }}
+                disabled={placing}
+              >
+                Confirm & Place Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

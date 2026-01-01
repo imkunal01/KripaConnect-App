@@ -1,19 +1,28 @@
 const User = require("../models/User");
 const Product = require("../models/Product");
 
+function normalizePurchaseMode(value, isRetailer) {
+  if (!isRetailer) return "customer";
+  return value === "retailer" ? "retailer" : "customer";
+}
+
+function computeBulkConfig(product) {
+  const minBulkQty = product.min_bulk_qty > 0 ? product.min_bulk_qty : 1;
+  const bulkUnitPrice = product.price_bulk || product.retailer_price || product.price;
+  return { minBulkQty, bulkUnitPrice };
+}
+
 // Helper to map cart items consistently
-function mapCartItems(cartItems, isRetailer) {
+function mapCartItems(cartItems, isRetailer, purchaseMode) {
   return cartItems.map(it => {
     const product = it.product;
     if (!product || !product._id) return null;
     
     let price = product.price;
-    if (isRetailer) {
-      if (it.qty >= product.min_bulk_qty && product.price_bulk) {
-        price = product.price_bulk;
-      } else if (product.retailer_price) {
-        price = product.retailer_price;
-      }
+    const effectivePurchaseMode = normalizePurchaseMode(purchaseMode, isRetailer);
+    const retailerBulk = isRetailer && effectivePurchaseMode === "retailer";
+    if (retailerBulk) {
+      price = computeBulkConfig(product).bulkUnitPrice;
     }
     
     return {
@@ -23,13 +32,15 @@ function mapCartItems(cartItems, isRetailer) {
       image: product.images?.[0]?.url,
       stock: product.stock,
       qty: it.qty,
-      ...(isRetailer ? {
-        regularPrice: product.price,
-        retailerPrice: product.retailer_price,
-        bulkPrice: product.price_bulk,
-        minBulkQty: product.min_bulk_qty,
-        isBulkPrice: it.qty >= product.min_bulk_qty && !!product.price_bulk
-      } : {})
+      ...(retailerBulk ? (() => {
+        const { minBulkQty, bulkUnitPrice } = computeBulkConfig(product);
+        return {
+          regularPrice: product.price,
+          bulkPrice: bulkUnitPrice,
+          minBulkQty,
+          isBulkPrice: true,
+        };
+      })() : {})
     };
   }).filter(Boolean);
 }
@@ -37,6 +48,7 @@ function mapCartItems(cartItems, isRetailer) {
 async function getCart(req, res) {
   try {
     const isRetailer = req.user.role === "retailer";
+    const effectivePurchaseMode = normalizePurchaseMode(req.query?.purchaseMode, isRetailer);
     const user = await User.findById(req.user._id)
       .select("cart")
       .populate("cart.product", "name price images stock retailer_price price_bulk min_bulk_qty")
@@ -53,7 +65,7 @@ async function getCart(req, res) {
       });
     }
     
-    res.json({ success: true, data: mapCartItems(validItems, isRetailer) });
+    res.json({ success: true, data: mapCartItems(validItems, isRetailer, effectivePurchaseMode) });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -61,7 +73,7 @@ async function getCart(req, res) {
 
 async function addItem(req, res) {
   try {
-    const { productId, qty = 1 } = req.body;
+    const { productId, qty = 1, purchaseMode } = req.body;
     if (!productId) return res.status(400).json({ success: false, message: "productId is required" });
     
     const product = await Product.findById(productId).select("stock min_bulk_qty price_bulk name price images retailer_price").lean();
@@ -69,16 +81,20 @@ async function addItem(req, res) {
     if (product.stock <= 0) return res.status(400).json({ success: false, message: "Out of stock" });
 
     const isRetailer = req.user.role === "retailer";
+    const effectivePurchaseMode = normalizePurchaseMode(purchaseMode, isRetailer);
     const requestedQty = Math.max(1, Number(qty) || 1);
     
-    if (isRetailer && product.min_bulk_qty > 0 && product.price_bulk && requestedQty < product.min_bulk_qty) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `Minimum quantity of ${product.min_bulk_qty} required for bulk pricing` 
-      });
-    }
-
     const user = await User.findById(req.user._id).select("cart");
+
+    if (isRetailer && effectivePurchaseMode === "retailer") {
+      const { minBulkQty } = computeBulkConfig(product);
+      if (requestedQty < minBulkQty) {
+        return res.status(400).json({
+          success: false,
+          message: `Minimum quantity of ${minBulkQty} required for retailer purchase`,
+        });
+      }
+    }
     const idx = user.cart.findIndex(i => String(i.product) === String(productId));
     
     if (idx >= 0) {
@@ -90,13 +106,9 @@ async function addItem(req, res) {
     
     // Return the added/updated item directly to avoid extra API call
     let price = product.price;
-    if (isRetailer) {
-      const finalQty = idx >= 0 ? user.cart[idx].qty : Math.min(requestedQty, product.stock);
-      if (finalQty >= product.min_bulk_qty && product.price_bulk) {
-        price = product.price_bulk;
-      } else if (product.retailer_price) {
-        price = product.retailer_price;
-      }
+    const retailerBulk = isRetailer && effectivePurchaseMode === "retailer";
+    if (retailerBulk) {
+      price = computeBulkConfig(product).bulkUnitPrice;
     }
     
     res.json({ 
@@ -107,7 +119,16 @@ async function addItem(req, res) {
         price,
         image: product.images?.[0]?.url,
         stock: product.stock,
-        qty: idx >= 0 ? user.cart[idx].qty : Math.min(requestedQty, product.stock)
+        qty: idx >= 0 ? user.cart[idx].qty : Math.min(requestedQty, product.stock),
+        ...(retailerBulk ? (() => {
+          const { minBulkQty, bulkUnitPrice } = computeBulkConfig(product);
+          return {
+            regularPrice: product.price,
+            bulkPrice: bulkUnitPrice,
+            minBulkQty,
+            isBulkPrice: true,
+          };
+        })() : {})
       }
     });
   } catch (err) {
@@ -118,20 +139,24 @@ async function addItem(req, res) {
 async function updateItem(req, res) {
   try {
     const { productId } = req.params;
-    const { qty } = req.body;
+    const { qty, purchaseMode } = req.body;
     if (!productId) return res.status(400).json({ success: false, message: "productId is required" });
     
     const product = await Product.findById(productId).select("stock min_bulk_qty price_bulk name price images retailer_price").lean();
     if (!product) return res.status(404).json({ success: false, message: "Product not found" });
     
     const isRetailer = req.user.role === "retailer";
+    const effectivePurchaseMode = normalizePurchaseMode(purchaseMode, isRetailer);
     const nextQty = Number(qty);
     
-    if (isRetailer && product.min_bulk_qty > 0 && product.price_bulk && nextQty > 0 && nextQty < product.min_bulk_qty) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `Minimum quantity of ${product.min_bulk_qty} required for bulk pricing` 
-      });
+    if (isRetailer && effectivePurchaseMode === "retailer") {
+      const { minBulkQty } = computeBulkConfig(product);
+      if (nextQty > 0 && nextQty < minBulkQty) {
+        return res.status(400).json({
+          success: false,
+          message: `Minimum quantity of ${minBulkQty} required for retailer purchase`,
+        });
+      }
     }
     
     const user = await User.findById(req.user._id).select("cart");
@@ -152,12 +177,9 @@ async function updateItem(req, res) {
     }
     
     let price = product.price;
-    if (isRetailer) {
-      if (user.cart[idx].qty >= product.min_bulk_qty && product.price_bulk) {
-        price = product.price_bulk;
-      } else if (product.retailer_price) {
-        price = product.retailer_price;
-      }
+    const retailerBulk = isRetailer && effectivePurchaseMode === "retailer";
+    if (retailerBulk) {
+      price = computeBulkConfig(product).bulkUnitPrice;
     }
     
     res.json({ 
@@ -168,7 +190,16 @@ async function updateItem(req, res) {
         price,
         image: product.images?.[0]?.url,
         stock: product.stock,
-        qty: user.cart[idx].qty
+        qty: user.cart[idx].qty,
+        ...(retailerBulk ? (() => {
+          const { minBulkQty, bulkUnitPrice } = computeBulkConfig(product);
+          return {
+            regularPrice: product.price,
+            bulkPrice: bulkUnitPrice,
+            minBulkQty,
+            isBulkPrice: true,
+          };
+        })() : {})
       }
     });
   } catch (err) {

@@ -30,7 +30,7 @@
 
 .sort-dd-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 61, 61, 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--kc-primary-rgb), 0.15);
 }
 
 /* arrow */
@@ -81,8 +81,8 @@
 
 /* active */
 .sort-dd-item.active {
-  background: #fff1f2;
-  color: #FF3D3D;
+  background: rgba(var(--kc-primary-rgb), 0.10);
+  color: var(--primary);
   font-weight: 600;
 }
 

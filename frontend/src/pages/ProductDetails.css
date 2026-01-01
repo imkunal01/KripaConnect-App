@@ -3,8 +3,8 @@
   --pdp-bg: #ffffff;
   --pdp-text: #0f172a;
   --pdp-text-muted: #64748b;
-  --pdp-accent: #FF3D3D;
-  --pdp-accent-hover: #b91c1c;
+  --pdp-accent: var(--primary);
+  --pdp-accent-hover: var(--primary-dark);
   --pdp-surface: #f8fafc;
   --pdp-border: #e2e8f0;
   --pdp-radius: 20px;

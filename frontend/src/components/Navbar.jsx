@@ -1,9 +1,11 @@
 import { useState, useContext } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
+import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import ShopContext from '../context/ShopContext.jsx'
 import Logo from '../assets/Logo.png'
 import './Navbar.css'
+import toast from 'react-hot-toast'
 
 // (Keep your Icons object exactly as it is)
 const Icons = {
@@ -19,9 +21,13 @@ const Icons = {
 
 export default function Navbar() {
   const { user, role } = useAuth()
-  const { cart, favorites } = useContext(ShopContext)
+  const { mode, setMode, canSwitchMode } = usePurchaseMode()
+  const { cart, favorites, wipeCart } = useContext(ShopContext)
   const [q, setQ] = useState('')
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const [modeConfirmOpen, setModeConfirmOpen] = useState(false)
+  const [pendingMode, setPendingMode] = useState(null)
+  const [modeSwitchBusy, setModeSwitchBusy] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -39,8 +45,65 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path
 
+  const modeLabel = mode === 'retailer' ? 'Retailer Mode (Bulk)' : 'Customer Mode'
+
+  function requestModeChange(nextMode) {
+    if (!canSwitchMode) return
+    if (nextMode === mode) return
+    setPendingMode(nextMode)
+    setModeConfirmOpen(true)
+  }
+
+  async function confirmModeChange() {
+    if (!pendingMode || modeSwitchBusy) return
+    setModeSwitchBusy(true)
+    try {
+      const ok = await wipeCart()
+      if (!ok) {
+        toast.error('Could not clear cart. Please try again.')
+        return
+      }
+      setMode(pendingMode)
+      if (pendingMode === 'customer' && location.pathname === '/b2b') {
+        toast.error('Retailer dashboard is available only in Retailer Mode')
+        navigate('/products', { replace: true })
+      } else {
+        toast.success('Mode switched. Cart cleared.')
+      }
+      setModeConfirmOpen(false)
+      setPendingMode(null)
+    } finally {
+      setModeSwitchBusy(false)
+    }
+  }
+
+  function cancelModeChange() {
+    if (modeSwitchBusy) return
+    setModeConfirmOpen(false)
+    setPendingMode(null)
+  }
+
   return (
     <>
+      {modeConfirmOpen && (
+        <div className="mode-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirm mode switch">
+          <div className="mode-modal">
+            <div className="mode-modal-title">Switch purchase mode?</div>
+            <div className="mode-modal-body">
+              Switching modes will clear your cart to prevent mixed-mode items.
+            </div>
+            <div className="mode-modal-actions">
+              <button type="button" className="mode-btn mode-btn--ghost" onClick={cancelModeChange} disabled={modeSwitchBusy}>
+                Cancel
+              </button>
+              <button type="button" className="mode-btn mode-btn--primary" onClick={confirmModeChange} disabled={modeSwitchBusy}>
+                {modeSwitchBusy ? 'Switching…' : 'Clear Cart & Switch'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* =======================
           MOBILE TOP BAR
       ======================== */}
@@ -48,10 +111,28 @@ export default function Navbar() {
         <Link to="/" className="brand-logo">
           BizLink<div className="brand-dot"/>
         </Link>
-        <Link to="/cart" style={{ position: 'relative', color: '#0f172a', display: 'flex' }}>
-          <Icons.Cart />
-          {cartCount > 0 && <span className="badge-dot" />}
-        </Link>
+        <div className="navbar-top-right">
+          {canSwitchMode && (
+            <label className="mode-control mode-control--mobile" aria-label="Purchase mode">
+              <span className="mode-label">{modeLabel}</span>
+              <select
+                className="mode-select"
+                value={mode}
+                onChange={(e) => requestModeChange(e.target.value)}
+                disabled={modeConfirmOpen || modeSwitchBusy}
+                title={modeConfirmOpen ? 'Confirm mode switch to continue' : undefined}
+              >
+                <option value="customer">Customer Mode</option>
+                <option value="retailer">Retailer Mode (Bulk)</option>
+              </select>
+            </label>
+          )}
+
+          <Link to="/cart" className="navbar-top-icon" aria-label="Cart">
+            <Icons.Cart />
+            {cartCount > 0 && <span className="badge-dot" />}
+          </Link>
+        </div>
       </nav>
 
       {/* =======================
@@ -91,24 +172,26 @@ export default function Navbar() {
         
         {/* Search Toggle */}
         <button 
+          type="button"
           onClick={() => setMobileSearchOpen(!mobileSearchOpen)} 
           className={`dock-item ${mobileSearchOpen ? 'active' : ''}`} 
           style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          aria-label={mobileSearchOpen ? 'Close search' : 'Open search'}
         >
           <Icons.Search />
         </button>
 
-        <Link to="/favorites" className={`dock-item ${isActive('/favorites') ? 'active' : ''}`}>
+        <Link to="/favorites" className={`dock-item ${isActive('/favorites') ? 'active' : ''}`} aria-label="Favorites">
             <Icons.Heart />
             {favoritesCount > 0 && <span className="badge-dot" />}
         </Link>
         
-        <Link to={user ? "/profile" : "/login"} className={`dock-item ${isActive('/profile') ? 'active' : ''}`}>
+        <Link to={user ? "/profile" : "/login"} className={`dock-item ${isActive('/profile') ? 'active' : ''}`} aria-label={user ? 'My profile' : 'Sign in'}>
           <Icons.User />
         </Link>
 
-        {role === 'retailer' && (
-          <Link to="/b2b" className={`dock-item ${isActive('/b2b') ? 'active' : ''}`}>
+        {role === 'retailer' && mode === 'retailer' && (
+          <Link to="/b2b" className={`dock-item ${isActive('/b2b') ? 'active' : ''}`} aria-label="Retailer Dashboard">
             <Icons.Briefcase />
           </Link>
         )}
@@ -144,12 +227,26 @@ export default function Navbar() {
 
           {/* Right: Actions */}
           <div className="desk-actions">
+
+            {canSwitchMode && (
+              <div className="mode-control" aria-label="Purchase mode">
+                <div className="mode-label" title={modeLabel}>{modeLabel}</div>
+                <select
+                  className="mode-select"
+                  value={mode}
+                  onChange={(e) => requestModeChange(e.target.value)}
+                >
+                  <option value="customer">Customer Mode</option>
+                  <option value="retailer">Retailer Mode (Bulk)</option>
+                </select>
+              </div>
+            )}
             
             <nav className="nav-links">
                <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
                <Link to="/products" className={`nav-link ${isActive('/products') ? 'active' : ''}`}>Products</Link>
-               {role === 'retailer' && (
-                 <Link to="/b2b" className={`nav-link ${isActive('/b2b') ? 'active' : ''}`}>B2B</Link>
+               {role === 'retailer' && mode === 'retailer' && (
+                 <Link to="/b2b" className={`nav-link ${isActive('/b2b') ? 'active' : ''}`}>Retailer Dashboard</Link>
                )}
             </nav>
 

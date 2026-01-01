@@ -2,8 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap');
 
 :root {
-  --primary: #FF3D3D;
-  --primary-light: #FFEBEE;
+  --primary: var(--kc-primary);
+  --primary-light: var(--kc-primary-light);
   --bg-glass: rgba(255, 255, 255, 0.9);
   --bg-surface: #ffffff;
   --text-main: #0f172a;
@@ -33,7 +33,7 @@ body {
   z-index: var(--z-navbar);
 
   width: 90%;
-  max-width: 400px;
+  max-width: 520px;
 
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
@@ -41,19 +41,11 @@ body {
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-nav);
   border: 1px solid rgba(46, 46, 46, 0.24);
-  padding: 0.75rem 1.5rem;
+  padding: 0.65rem 1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   /* background: rgba(255, 255, 255, 0.85); */
-}
-.logo-image{
-  width: 40px;
-  height: 40px;
-}
-.logo-image {
-  width: 58px;
-  height: 58px;
 }
 .logo-image {
   width: 58px;
@@ -81,7 +73,150 @@ body {
   height: 8px;
   background-color: var(--primary);
   border-radius: 50%;
-  box-shadow: 0 0 10px rgba(255, 61, 61, 0.4);
+  box-shadow: 0 0 10px rgba(var(--kc-primary-rgb), 0.4);
+}
+
+.navbar-top-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-top-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-main);
+}
+
+.mode-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mode-control--mobile {
+  gap: 8px;
+  min-width: 0;
+}
+
+.mode-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.mode-select {
+  appearance: auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  border-radius: 999px;
+  padding: 8px 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mode-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--kc-primary-rgb), 0.12);
+}
+
+/* Mode switch confirmation modal */
+.mode-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  z-index: 10000;
+}
+
+.mode-modal {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.18);
+  padding: 16px;
+}
+
+.mode-modal-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.mode-modal-body {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.mode-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.mode-btn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: #ffffff;
+  color: var(--text-main);
+}
+
+.mode-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.mode-btn--ghost {
+  background: #ffffff;
+}
+
+.mode-btn--primary {
+  border-color: rgba(var(--kc-primary-rgb), 0.25);
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(var(--kc-primary-rgb), 0.22);
+}
+
+.mode-btn--primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+/* Override the global mobile select rule (font-size/min-height) for navbar UI */
+.navbar-top .mode-select,
+.desktop-header .mode-select {
+  font-size: 13px !important;
+  min-height: 34px !important;
+  padding: 6px 10px;
+}
+
+.navbar-top .mode-label {
+  font-size: 13px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 420px) {
+  /* On very small screens the select already shows the mode; keep the header uncluttered. */
+  .navbar-top .mode-label { display: none; }
 }
 
 /* =========================================
@@ -95,8 +230,7 @@ body {
   
   width: 90%;
   max-width: 400px;
-  /* add box shadow */
-  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.973);
+  /* keep a single consistent shadow */
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(46, 46, 46, 0.24);
@@ -105,9 +239,10 @@ body {
   background: rgba(0, 0, 0, 0);
   
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
-  padding: 0.75rem 1.5rem; 
+  padding: 0.55rem 0.9rem;
+  gap: 6px;
   z-index: var(--z-bottom-nav);
 }
 
@@ -116,8 +251,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   color: var(--text-muted);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -226,7 +361,7 @@ body {
 .mobile-search-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(255, 61, 61, 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--kc-primary-rgb), 0.15);
 }
 
 /* =========================================
@@ -290,7 +425,7 @@ body {
   
   .desk-search-wrapper:focus-within {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(255, 61, 61, 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--kc-primary-rgb), 0.1);
     background: #fff;
   }
   
@@ -383,12 +518,12 @@ body {
     font-weight: 600;
     font-size: 0.95rem;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(255, 61, 61, 0.25);
+    box-shadow: 0 4px 12px rgba(var(--kc-primary-rgb), 0.25);
   }
   
   .btn-primary-red:hover {
-    background: #e63946;
+    background: var(--primary-dark);
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(255, 61, 61, 0.35);
+    box-shadow: 0 6px 16px rgba(var(--kc-primary-rgb), 0.35);
   }
 }

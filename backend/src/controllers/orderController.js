@@ -3,16 +3,22 @@ const Product = require("../models/Product");
 const User = require("../models/User");
 const { sendMail } = require("../services/emailService");
 
+function normalizePurchaseMode(value, isRetailer) {
+  if (!isRetailer) return "customer";
+  return value === "retailer" ? "retailer" : "customer";
+}
+
 // 🧾 Create order (customer checkout)
 const createOrder = async (req, res) => {
   try {
-    const { items, shippingAddress, paymentMethod } = req.body;
+    const { items, shippingAddress, paymentMethod, purchaseMode } = req.body;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
     const isRetailer = req.user.role === "retailer";
+    const effectivePurchaseMode = normalizePurchaseMode(purchaseMode, isRetailer);
 
     // calculate total
     let total = 0;
@@ -29,21 +35,16 @@ const createOrder = async (req, res) => {
       if (!product) return res.status(404).json({ message: `Product ${item.product} not found` });
       if (product.stock < item.qty) return res.status(400).json({ message: `${product.name} is out of stock` });
 
-      // Pricing logic: use bulk price for retailers if quantity meets minimum
+      // Pricing logic: customer mode uses standard pricing; retailer mode enforces bulk rules
       let unitPrice = product.price;
-      if (isRetailer) {
-        if (item.qty >= product.min_bulk_qty && product.price_bulk) {
-          unitPrice = product.price_bulk;
-        } else {
-          unitPrice = product.retailer_price || product.price;
+      if (isRetailer && effectivePurchaseMode === "retailer") {
+        const minBulkQty = product.min_bulk_qty > 0 ? product.min_bulk_qty : 1;
+        if (minBulkQty > 1 && item.qty < minBulkQty) {
+          return res.status(400).json({
+            message: `${product.name} requires minimum quantity of ${minBulkQty} for bulk purchase`,
+          });
         }
-      }
-
-      // Validate minimum quantity for bulk orders
-      if (isRetailer && product.min_bulk_qty > 0 && item.qty < product.min_bulk_qty && product.price_bulk) {
-        return res.status(400).json({ 
-          message: `${product.name} requires minimum quantity of ${product.min_bulk_qty} for bulk pricing` 
-        });
+        unitPrice = product.price_bulk || product.retailer_price || product.price;
       }
 
       total += item.qty * unitPrice;
@@ -59,7 +60,8 @@ const createOrder = async (req, res) => {
       paymentMethod: paymentMethod || "COD",
       paymentStatus: paymentMethod === "COD" ? "pending" : "pending",
       shippingAddress,
-      isBulkOrder: isRetailer,
+      isBulkOrder: isRetailer && effectivePurchaseMode === "retailer",
+      purchaseMode: effectivePurchaseMode,
     });
 
     // Clear cart immediately for COD orders
@@ -73,7 +75,7 @@ const createOrder = async (req, res) => {
 
     // send email confirmation (simple)
     try {
-      const orderType = isRetailer ? "Bulk Order" : "Order";
+      const orderType = isRetailer && effectivePurchaseMode === "retailer" ? "Bulk Order" : "Order";
       await sendMail({
         to: req.user.email,
         subject: `${orderType} Placed Successfully`,
@@ -81,7 +83,7 @@ const createOrder = async (req, res) => {
          <p>Your ${orderType.toLowerCase()} (#${order._id}) has been placed successfully!</p>
          <p>Total Amount: ₹${total}</p>
          <p>Payment Method: ${paymentMethod}</p>
-         ${isRetailer ? '<p><strong>Bulk Order - Special Wholesale Pricing Applied</strong></p>' : ''}
+         ${isRetailer && effectivePurchaseMode === 'retailer' ? '<p><strong>Bulk Order - Special Wholesale Pricing Applied</strong></p>' : ''}
          <p>We'll notify you once it's shipped 🚚</p>`
       });
     } catch (e) {
@@ -99,8 +101,9 @@ const createOrder = async (req, res) => {
 const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
-      .select("items totalAmount paymentMethod paymentStatus shippingAddress deliveryStatus isBulkOrder createdAt")
-      .populate("items.product", "name price images")
+      .select("items totalAmount paymentMethod paymentStatus razorpay shippingAddress deliveryStatus isBulkOrder purchaseMode invoiceUrl createdAt")
+      .populate("items.product", "name price images Category")
+      .populate("items.product.Category", "name slug")
       .sort({ createdAt: -1 })
       .lean();
     res.json(orders);
@@ -136,7 +139,7 @@ const getOrderById = async (req, res) => {
 const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
-      .select("items totalAmount paymentMethod paymentStatus shippingAddress deliveryStatus isBulkOrder user createdAt")
+      .select("items totalAmount paymentMethod paymentStatus shippingAddress deliveryStatus isBulkOrder purchaseMode user createdAt")
       .populate("user", "name email")
       .populate("items.product", "name price")
       .sort({ createdAt: -1 })

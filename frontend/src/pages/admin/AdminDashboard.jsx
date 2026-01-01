@@ -26,9 +26,10 @@ import {
 } from 'react-icons/fa'
 import './AdminDashboard.css'
 
-const COLORS = ['#FF3D3D', '#374151', '#9CA3AF', '#F87171', '#EF4444']
+const COLORS = ['var(--primary)', '#374151', '#9CA3AF', '#F87171', '#EF4444']
 
-function StatCard({ title, value, icon, color = '#FF3D3D', loading }) {
+function StatCard({ title, value, icon, color = 'var(--primary)', loading }) {
+  const isCssVar = typeof color === 'string' && color.startsWith('var(')
   return (
     <div className="stat-card">
       <div className="stat-card-content">
@@ -40,7 +41,10 @@ function StatCard({ title, value, icon, color = '#FF3D3D', loading }) {
         </div>
         <div
           className="stat-card-icon"
-          style={{ color: color, backgroundColor: `${color}15` }}
+          style={{
+            color: color,
+            backgroundColor: isCssVar ? 'rgba(var(--kc-primary-rgb), 0.08)' : `${color}15`,
+          }}
         >
           {icon}
         </div>
@@ -137,7 +141,7 @@ export default function AdminDashboard() {
           title="Total Revenue"
           value={totalRevenue}
           icon={<div style={{ fontSize: 22, fontWeight: 'bold' }}>₹</div>}
-          color="#FF3D3D"
+          color="var(--primary)"
           loading={loading}
         />
         <StatCard
@@ -172,8 +176,8 @@ export default function AdminDashboard() {
                 <AreaChart data={formattedRevenue}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FF3D3D" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#FF3D3D" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -196,7 +200,7 @@ export default function AdminDashboard() {
                   <Area
                     type="monotone"
                     dataKey="amount"
-                    stroke="#FF3D3D"
+                    stroke="var(--primary)"
                     strokeWidth={2}
                     fill="url(#colorRevenue)"
                   />
