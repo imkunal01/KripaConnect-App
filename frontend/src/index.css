@@ -57,6 +57,106 @@ a {
   color: inherit;
 }
 
+/* App Suspense Fallback */
+.app-fallback {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(800px 400px at 50% 10%, rgba(255, 61, 61, 0.10), transparent 60%),
+    radial-gradient(600px 360px at 10% 80%, rgba(16, 185, 129, 0.08), transparent 55%),
+    linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
+}
+
+.app-fallback__card {
+  width: min(420px, 100%);
+  padding: 22px 22px 18px;
+  border-radius: 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 18px 50px rgba(17, 24, 39, 0.10);
+  text-align: center;
+}
+
+.app-fallback__mark {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 10px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: rgba(255, 61, 61, 0.08);
+  border: 1px solid rgba(255, 61, 61, 0.18);
+}
+
+.app-fallback__spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--primary);
+  animation: appSpin 0.9s linear infinite;
+}
+
+.app-fallback__title {
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.app-fallback__subtitle {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.app-fallback__bar {
+  height: 10px;
+  margin-top: 14px;
+  border-radius: 999px;
+  background: var(--gray-50);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.app-fallback__barFill {
+  height: 100%;
+  width: 42%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 61, 61, 0.15), rgba(255, 61, 61, 0.55), rgba(255, 61, 61, 0.15));
+  background-size: 200% 100%;
+  animation: appShimmer 1.05s ease-in-out infinite;
+}
+
+@keyframes appSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes appShimmer {
+  0% {
+    transform: translateX(-8%);
+    background-position: 0% 50%;
+  }
+  50% {
+    transform: translateX(65%);
+    background-position: 100% 50%;
+  }
+  100% {
+    transform: translateX(-8%);
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-fallback__spinner,
+  .app-fallback__barFill {
+    animation: none;
+  }
+}
+
 /* Touch-friendly inputs on mobile */
 @media (max-width: 767px) {
   input[type="text"],
