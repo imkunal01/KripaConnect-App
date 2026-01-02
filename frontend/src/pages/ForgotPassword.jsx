@@ -44,7 +44,7 @@ export default function ForgotPassword() {
           </button>
 
           <header className="auth-header">
-            <div className="brand">BizLink</div>
+            <div className="brand">KripaConnect</div>
           </header>
 
           <div className="welcome-text">
@@ -90,7 +90,7 @@ export default function ForgotPassword() {
         </button>
 
         <header className="auth-header">
-          <div className="brand">BizLink</div>
+          <div className="brand">KripaConnect</div>
         </header>
 
         <div className="welcome-text">

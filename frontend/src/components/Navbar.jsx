@@ -109,7 +109,7 @@ export default function Navbar() {
       ======================== */}
       <nav className="navbar-top">
         <Link to="/" className="brand-logo">
-          BizLink<div className="brand-dot"/>
+          KripaConnect<div className="brand-dot"/>
         </Link>
         <div className="navbar-top-right">
           {canSwitchMode && (
@@ -206,7 +206,7 @@ export default function Navbar() {
           {/* Left: Logo */}
           <Link to="/" className="desk-logo">
             {/* <img src={""} alt="Kripa Connect" className="logo-image" /> */}
-            BizLink
+            KripaConnect
           </Link>
 
           {/* Center: Search */}
