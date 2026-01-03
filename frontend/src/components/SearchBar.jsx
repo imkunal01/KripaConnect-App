@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import './SearchBar.css'   // ⭐ CSS import
+import './SearchBar.css'   // 
 
 export default function SearchBar({ value, onChange, debounce = 400 }) {
   const [text, setText] = useState(value || '')
