@@ -1,6 +1,6 @@
 {
   "appId": "com.kc.app",
-  "appName": "KripaConnect",
+  "appName": "BizLink",
   "webDir": "dist",
   "server": {
     "url": "https://kripa-connect-app.vercel.app",

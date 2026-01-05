@@ -13,12 +13,9 @@ connectDB();
 
 const app = express();
 
-// Trust proxy for Render/Vercel to correctly identify protocol (http vs https)
+// Trust proxy for Render/Vercel to correctly identify protocol (http vs https) 
 app.set('trust proxy', 1);
 
-/* =========================
-   CORS CONFIG (INLINE)
-========================= */
 
 function normalizeOrigin(o) {
   return String(o || "").trim().replace(/\/$/, "");

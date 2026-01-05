@@ -7,7 +7,7 @@ export default function AuthLayout({ children, title, subtitle }) {
       {/* Left Side: Form & Content */}
       <div className="auth-left">
         <div className="auth-header">
-          <Link to="/" className="brand-logo">KripaConnect</Link>
+          <Link to="/" className="brand-logo">BizLink</Link>
         </div>
         
         <div className="auth-content">
@@ -19,7 +19,7 @@ export default function AuthLayout({ children, title, subtitle }) {
         </div>
         
         <div className="auth-footer">
-          <p>© {new Date().getFullYear()} KripaConnect Inc.</p>
+          <p>© {new Date().getFullYear()} BizLink Inc.</p>
         </div>
       </div>
 

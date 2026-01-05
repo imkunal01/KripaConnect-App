@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">KripaConnect</string>
-    <string name="title_activity_main">KripaConnect</string>
+    <string name="app_name">BizLink</string>
+    <string name="title_activity_main">BizLink</string>
     <string name="package_name">com.kc.app</string>
     <string name="custom_url_scheme">com.kc.app</string>
 </resources>
