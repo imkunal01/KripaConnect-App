@@ -1,77 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
 import OtpLogin from '../components/OtpLogin.jsx'
-import { isNativePlatform, openGoogleOAuth, addBrowserClosedListener } from '../services/googleOAuthService.js'
-import { getStoredOAuthResult } from './OAuthCallback.jsx'
 import './FormStyles.css'
 
 export default function Login() {
-  const { signIn, googleSignIn, refreshMe } = useAuth()
+  const { signIn, googleSignIn } = useAuth()
   const navigate = useNavigate()
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [useOtp, setUseOtp] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
 
-  // Check for stored OAuth result on mount (when returning from browser)
-  useEffect(() => {
-    const result = getStoredOAuthResult();
-    if (result?.success && result?.targetPath) {
-      // User successfully logged in via OAuth, navigate to target
-      navigate(result.targetPath, { replace: true });
-    }
-  }, [navigate]);
-
-  // Listen for browser close on native platforms to refresh auth state
-  useEffect(() => {
-    if (!isNativePlatform()) return;
-    
-    const removeListener = addBrowserClosedListener(async () => {
-      // Browser was closed, check for stored OAuth result
-      setGoogleLoading(false);
-      
-      const result = getStoredOAuthResult();
-      if (result?.success && result?.targetPath) {
-        navigate(result.targetPath, { replace: true });
-        return;
-      }
-      
-      // Fallback: try to refresh auth state
-      try {
-        await refreshMe();
-      } catch (e) {
-        // User may not be logged in yet, that's okay
-      }
-    });
-    
-    return removeListener;
-  }, [refreshMe, navigate]);
-
-  // Google login handler - uses Browser plugin on native, popup on web
-  const handleGoogleLogin = async () => {
-    if (isNativePlatform()) {
-      // Native: Open Google OAuth in system browser (Chrome Custom Tabs)
-      try {
-        setGoogleLoading(true);
-        await openGoogleOAuth();
-        // Browser is now open, callback will handle the rest
-        // The OAuthCallback page will process the redirect
-      } catch (e) {
-        console.error('Failed to open Google OAuth:', e);
-        setGoogleLoading(false);
-        alert('Failed to open Google login');
-      }
-    } else {
-      // Web: Use existing popup-based flow
-      loginWithGoogle();
-    }
-  };
-
-  // Web-only Google login (popup-based)
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -190,13 +132,9 @@ export default function Login() {
 
         <div className="divider">or continue with</div>
 
-        <button 
-          className="btn-google" 
-          onClick={handleGoogleLogin}
-          disabled={googleLoading}
-        >
+        <button className="btn-google" onClick={() => loginWithGoogle()}>
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="Google" />
-          {googleLoading ? 'Opening...' : 'Google'}
+          Google
         </button>
       </div>
 

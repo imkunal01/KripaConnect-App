@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 
 const Login = lazy(() => import('./pages/Login.jsx'))
 const Signup = lazy(() => import('./pages/Signup.jsx'))
-const OAuthCallback = lazy(() => import('./pages/OAuthCallback.jsx'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'))
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
@@ -53,7 +52,6 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/products" element={<Products />} />

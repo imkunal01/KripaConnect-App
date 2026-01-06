@@ -1,72 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
-import { isNativePlatform, openGoogleOAuth, addBrowserClosedListener } from '../services/googleOAuthService.js'
-import { getStoredOAuthResult } from './OAuthCallback.jsx'
 import './FormStyles.css'
 
 export default function Signup() {
-  const { signUp, googleSignIn, refreshMe } = useAuth()
+  const { signUp, googleSignIn } = useAuth()
   const navigate = useNavigate()
   
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
 
-  // Check for stored OAuth result on mount (when returning from browser)
-  useEffect(() => {
-    const result = getStoredOAuthResult();
-    if (result?.success && result?.targetPath) {
-      navigate(result.targetPath, { replace: true });
-    }
-  }, [navigate]);
-
-  // Listen for browser close on native platforms to refresh auth state
-  useEffect(() => {
-    if (!isNativePlatform()) return;
-    
-    const removeListener = addBrowserClosedListener(async () => {
-      setGoogleLoading(false);
-      
-      const result = getStoredOAuthResult();
-      if (result?.success && result?.targetPath) {
-        navigate(result.targetPath, { replace: true });
-        return;
-      }
-      
-      try {
-        await refreshMe();
-      } catch (e) {
-        // User may not be logged in yet
-      }
-    });
-    
-    return removeListener;
-  }, [refreshMe, navigate]);
-
-  // Google login handler - uses Browser plugin on native, popup on web
-  const handleGoogleLogin = async () => {
-    if (isNativePlatform()) {
-      // Native: Open Google OAuth in system browser (Chrome Custom Tabs)
-      try {
-        setGoogleLoading(true);
-        await openGoogleOAuth();
-        // Browser is now open, callback will handle the rest
-      } catch (e) {
-        console.error('Failed to open Google OAuth:', e);
-        setGoogleLoading(false);
-        alert('Failed to open Google signup');
-      }
-    } else {
-      // Web: Use existing popup-based flow
-      loginWithGoogle();
-    }
-  };
-
-  // Web-only Google login (popup-based)
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -161,13 +107,9 @@ export default function Signup() {
 
         <div className="divider">or continue with</div>
 
-        <button 
-          className="btn-google" 
-          onClick={handleGoogleLogin}
-          disabled={googleLoading}
-        >
+        <button className="btn-google" onClick={() => loginWithGoogle()}>
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="Google" />
-          {googleLoading ? 'Opening...' : 'Google'}
+          Google
         </button>
       </div>
 
