@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
 import { isNativePlatform, openGoogleOAuth, addBrowserClosedListener } from '../services/googleOAuthService.js'
+import { getStoredOAuthResult } from './OAuthCallback.jsx'
 import './FormStyles.css'
 
 export default function Signup() {
@@ -15,22 +16,36 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
+  // Check for stored OAuth result on mount (when returning from browser)
+  useEffect(() => {
+    const result = getStoredOAuthResult();
+    if (result?.success && result?.targetPath) {
+      navigate(result.targetPath, { replace: true });
+    }
+  }, [navigate]);
+
   // Listen for browser close on native platforms to refresh auth state
   useEffect(() => {
     if (!isNativePlatform()) return;
     
     const removeListener = addBrowserClosedListener(async () => {
-      // Browser was closed, check if user is now authenticated
       setGoogleLoading(false);
+      
+      const result = getStoredOAuthResult();
+      if (result?.success && result?.targetPath) {
+        navigate(result.targetPath, { replace: true });
+        return;
+      }
+      
       try {
         await refreshMe();
       } catch (e) {
-        // User may not be logged in yet, that's okay
+        // User may not be logged in yet
       }
     });
     
     return removeListener;
-  }, [refreshMe]);
+  }, [refreshMe, navigate]);
 
   // Google login handler - uses Browser plugin on native, popup on web
   const handleGoogleLogin = async () => {
