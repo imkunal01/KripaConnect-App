@@ -130,10 +130,12 @@ export default function AdminDashboard() {
   // ---------- UI ----------
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>Dashboard Overview</h1>
-        <p>Welcome back, Admin</p>
+    <div className="adminPage adminDashboard">
+      <div className="adminPageHeader">
+        <div>
+          <h1 className="adminPageHeader__title">Dashboard Overview</h1>
+          <p className="adminPageHeader__subtitle">Welcome back, Admin</p>
+        </div>
       </div>
 
       <div className="stats-grid">
@@ -168,8 +170,10 @@ export default function AdminDashboard() {
       </div>
 
       <div className="charts-grid">
-        <div className="chart-card">
-          <h3>Revenue Analytics</h3>
+        <div className="adminCard chart-card">
+          <div className="adminCard__header">
+            <h3 className="adminCard__title">Revenue Analytics</h3>
+          </div>
           <div className="chart-wrapper">
             {!loading && formattedRevenue.length ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -207,13 +211,15 @@ export default function AdminDashboard() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="empty-chart">No revenue data</div>
+              <div className="adminEmpty">No revenue data</div>
             )}
           </div>
         </div>
 
-        <div className="chart-card">
-          <h3>Order Status Distribution</h3>
+        <div className="adminCard chart-card">
+          <div className="adminCard__header">
+            <h3 className="adminCard__title">Order Status Distribution</h3>
+          </div>
           <div className="chart-wrapper">
             {!loading && pieData.length ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -236,18 +242,20 @@ export default function AdminDashboard() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="empty-chart">No order data</div>
+              <div className="adminEmpty">No order data</div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="dashboard-section">
-        <h3>Low Stock Alert</h3>
+      <div className="adminCard dashboard-section">
+        <div className="adminCard__header">
+          <h3 className="adminCard__title">Low Stock Alert</h3>
+        </div>
 
         {!loading && lowStock.length ? (
-          <div className="table-responsive">
-            <table className="modern-table">
+          <div className="adminTableWrap">
+            <table className="adminTable">
               <thead>
                 <tr>
                   <th>Product</th>
@@ -274,7 +282,7 @@ export default function AdminDashboard() {
                       {typeof item?.stock === 'number' ? item.stock : '—'}
                     </td>
                     <td>
-                      <span className="badge badge-danger">Low Stock</span>
+                      <span className="adminBadge adminBadge--danger">Low Stock</span>
                     </td>
                   </tr>
                 ))}
@@ -282,7 +290,7 @@ export default function AdminDashboard() {
             </table>
           </div>
         ) : (
-          <div className="empty-state">All products are well stocked!</div>
+          <div className="adminEmpty">All products are well stocked!</div>
         )}
       </div>
     </div>

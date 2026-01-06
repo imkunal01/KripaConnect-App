@@ -101,212 +101,191 @@ export default function ProductManagement() {
     }
   }
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <div className="adminEmpty">Loading…</div>
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+    <div className="adminPage">
+      <div className="adminPageHeader">
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px' }}>Product Management</h1>
-          <p style={{ color: '#6b7280' }}>Manage products, inventory, and pricing</p>
+          <h1 className="adminPageHeader__title">Product Management</h1>
+          <p className="adminPageHeader__subtitle">Manage products, inventory, and pricing</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingProduct(null)
-            setFormData({
-              name: '', description: '', category: '', price: '', retailer_price: '',
-              price_bulk: '', min_bulk_qty: '', stock: '', tags: '', active: true
-            })
-            setImages([])
-            setShowForm(true)
-          }}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: 'var(--primary)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '16px',
-            fontWeight: '500',
-            cursor: 'pointer'
-          }}
-        >
-          + Add Product
-        </button>
+        <div className="adminActions">
+          <button
+            type="button"
+            className="adminBtn adminBtnPrimary"
+            onClick={() => {
+              setEditingProduct(null)
+              setFormData({
+                name: '', description: '', category: '', price: '', retailer_price: '',
+                price_bulk: '', min_bulk_qty: '', stock: '', tags: '', active: true
+              })
+              setImages([])
+              setShowForm(true)
+            }}
+          >
+            + Add Product
+          </button>
+        </div>
       </div>
 
       {showForm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: '#fff',
-            borderRadius: '12px',
-            padding: '30px',
-            maxWidth: '600px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflowY: 'auto'
-          }}>
-            <h2 style={{ marginBottom: '20px' }}>{editingProduct ? 'Edit Product' : 'Add Product'}</h2>
+        <div className="adminModalOverlay" role="dialog" aria-modal="true">
+          <div className="adminCard adminModal">
+            <div className="adminModal__header">
+              <h2 className="adminModal__title">{editingProduct ? 'Edit Product' : 'Add Product'}</h2>
+              <button
+                type="button"
+                className="adminBtn adminBtnGhost adminBtn--sm"
+                onClick={() => {
+                  setShowForm(false)
+                  setEditingProduct(null)
+                }}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
             <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '16px' }}>
-                <label>Name *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-                />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label>Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
-                  rows="3"
-                  style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-                />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label>Category</label>
-                <select
-                  value={formData.category}
-                  onChange={e => setFormData({ ...formData, category: e.target.value })}
-                  style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-                >
-                  <option value="">Select Category</option>
-                  {categories.map(cat => (
-                    <option key={cat._id} value={cat._id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label>Price *</label>
+              <div className="adminModal__body">
+                <div style={{ marginBottom: 12 }}>
+                  <label className="adminLabel">Name *</label>
                   <input
-                    type="number"
-                    value={formData.price}
-                    onChange={e => setFormData({ ...formData, price: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-                  />
-                </div>
-                <div>
-                  <label>Retailer Price *</label>
-                  <input
-                    type="number"
-                    value={formData.retailer_price}
-                    onChange={e => setFormData({ ...formData, retailer_price: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label>Bulk Price</label>
-                  <input
-                    type="number"
-                    value={formData.price_bulk}
-                    onChange={e => setFormData({ ...formData, price_bulk: e.target.value })}
-                    style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-                  />
-                </div>
-                <div>
-                  <label>Min Bulk Qty</label>
-                  <input
-                    type="number"
-                    value={formData.min_bulk_qty}
-                    onChange={e => setFormData({ ...formData, min_bulk_qty: e.target.value })}
-                    style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label>Stock *</label>
-                  <input
-                    type="number"
-                    value={formData.stock}
-                    onChange={e => setFormData({ ...formData, stock: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-                  />
-                </div>
-                <div>
-                  <label>Tags (comma separated)</label>
-                  <input
+                    className="adminInput"
                     type="text"
-                    value={formData.tags}
-                    onChange={e => setFormData({ ...formData, tags: e.target.value })}
-                    style={{ width: '100%', padding: '8px', marginTop: '4px', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    required
                   />
                 </div>
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label>Images</label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={e => setImages(Array.from(e.target.files))}
-                  style={{ width: '100%', padding: '8px', marginTop: '4px' }}
-                />
-              </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.active}
-                    onChange={e => setFormData({ ...formData, active: e.target.checked })}
+
+                <div style={{ marginBottom: 12 }}>
+                  <label className="adminLabel">Description</label>
+                  <textarea
+                    className="adminTextarea"
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
                   />
-                  Active (visible to customers)
-                </label>
+                </div>
+
+                <div style={{ marginBottom: 12 }}>
+                  <label className="adminLabel">Category</label>
+                  <select
+                    className="adminSelect"
+                    value={formData.category}
+                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map(cat => (
+                      <option key={cat._id} value={cat._id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="adminFieldRow adminFieldRow--2" style={{ marginBottom: 12 }}>
+                  <div>
+                    <label className="adminLabel">Price *</label>
+                    <input
+                      className="adminInput"
+                      type="number"
+                      value={formData.price}
+                      onChange={e => setFormData({ ...formData, price: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="adminLabel">Retailer Price *</label>
+                    <input
+                      className="adminInput"
+                      type="number"
+                      value={formData.retailer_price}
+                      onChange={e => setFormData({ ...formData, retailer_price: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="adminFieldRow adminFieldRow--2" style={{ marginBottom: 12 }}>
+                  <div>
+                    <label className="adminLabel">Bulk Price</label>
+                    <input
+                      className="adminInput"
+                      type="number"
+                      value={formData.price_bulk}
+                      onChange={e => setFormData({ ...formData, price_bulk: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="adminLabel">Min Bulk Qty</label>
+                    <input
+                      className="adminInput"
+                      type="number"
+                      value={formData.min_bulk_qty}
+                      onChange={e => setFormData({ ...formData, min_bulk_qty: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="adminFieldRow adminFieldRow--2" style={{ marginBottom: 12 }}>
+                  <div>
+                    <label className="adminLabel">Stock *</label>
+                    <input
+                      className="adminInput"
+                      type="number"
+                      value={formData.stock}
+                      onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="adminLabel">Tags</label>
+                    <input
+                      className="adminInput"
+                      type="text"
+                      value={formData.tags}
+                      onChange={e => setFormData({ ...formData, tags: e.target.value })}
+                      placeholder="comma separated"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 12 }}>
+                  <label className="adminLabel">Images</label>
+                  <input
+                    className="adminInput"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={e => setImages(Array.from(e.target.files))}
+                  />
+                  <div className="adminHelp" style={{ marginTop: 6 }}>You can upload multiple images.</div>
+                </div>
+
+                <div style={{ marginBottom: 4 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.active}
+                      onChange={e => setFormData({ ...formData, active: e.target.checked })}
+                    />
+                    <span className="adminHelp" style={{ color: 'var(--text-primary)', fontWeight: 700 }}>Active</span>
+                    <span className="adminHelp">(visible to customers)</span>
+                  </label>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button
-                  type="submit"
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    backgroundColor: 'var(--primary)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                    fontWeight: '500',
-                    cursor: 'pointer'
-                  }}
-                >
+
+              <div className="adminModal__footer">
+                <button type="submit" className="adminBtn adminBtnPrimary adminBtn--full">
                   {editingProduct ? 'Update Product' : 'Create Product'}
                 </button>
                 <button
                   type="button"
+                  className="adminBtn adminBtn--full"
                   onClick={() => {
                     setShowForm(false)
                     setEditingProduct(null)
-                  }}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: '#e5e7eb',
-                    color: '#374151',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                    fontWeight: '500',
-                    cursor: 'pointer'
                   }}
                 >
                   Cancel
@@ -317,88 +296,59 @@ export default function ProductManagement() {
         </div>
       )}
 
-      <div style={{ backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ backgroundColor: '#f9fafb' }}>
+      <div className="adminCard">
+        <div className="adminTableWrap">
+          <table className="adminTable">
+            <thead>
               <tr>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Image</th>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Name</th>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Price</th>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Stock</th>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
-                <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {products.map(product => (
-                <tr key={product._id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                  <td style={{ padding: '12px' }}>
-                    <img
-                      src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
-                      alt={product.name}
-                      style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px' }}
-                    />
-                  </td>
-                  <td style={{ padding: '12px', fontWeight: '500' }}>{product.name}</td>
-                  <td style={{ padding: '12px' }}>₹{product.price?.toLocaleString('en-IN')}</td>
-                  <td style={{ padding: '12px' }}>
-                    <span style={{
-                      color: product.stock < 10 ? '#ef4444' : product.stock < 50 ? '#f59e0b' : '#10b981',
-                      fontWeight: '600'
-                    }}>
-                      {product.stock}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    <span style={{
-                      padding: '4px 12px',
-                      backgroundColor: product.active ? '#d1fae5' : '#fee2e2',
-                      color: product.active ? '#166534' : '#991b1b',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '500'
-                    }}>
-                      {product.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => handleEdit(product)}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: 'var(--primary)',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '14px'
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product._id)}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#ef4444',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '14px'
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {products.map(product => {
+                const stockNumber = typeof product.stock === 'number' ? product.stock : Number(product.stock)
+                const stockColor = stockNumber < 10 ? 'var(--danger)' : stockNumber < 50 ? 'var(--text-secondary)' : 'var(--secondary)'
+                return (
+                  <tr key={product._id}>
+                    <td>
+                      <img
+                        src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
+                        alt={product.name}
+                        style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 12, border: '1px solid var(--border-color)' }}
+                      />
+                    </td>
+                    <td style={{ fontWeight: 800 }}>{product.name}</td>
+                    <td>₹{product.price?.toLocaleString('en-IN')}</td>
+                    <td>
+                      <span style={{ color: stockColor, fontWeight: 900 }}>{product.stock}</span>
+                    </td>
+                    <td>
+                      <span className={`adminBadge ${product.active ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
+                        {product.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="adminActions">
+                        <button type="button" className="adminBtn adminBtnPrimary adminBtn--sm" onClick={() => handleEdit(product)}>
+                          Edit
+                        </button>
+                        <button type="button" className="adminBtn adminBtnDanger adminBtn--sm" onClick={() => handleDelete(product._id)}>
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
+        {products.length === 0 && <div className="adminEmpty">No products found</div>}
       </div>
     </div>
   )

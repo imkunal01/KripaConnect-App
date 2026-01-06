@@ -117,249 +117,211 @@ export default function OrderManagement() {
     return true
   })
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <div className="adminEmpty">Loading…</div>
 
   return (
-    <div>
-      <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px' }}>Order Management</h1>
-        <p style={{ color: '#6b7280' }}>View and manage all orders</p>
+    <div className="adminPage">
+      <div className="adminPageHeader">
+        <div>
+          <h1 className="adminPageHeader__title">Order Management</h1>
+          <p className="adminPageHeader__subtitle">View and manage all orders</p>
+        </div>
       </div>
 
-      <div style={{ 
-        backgroundColor: '#fff', 
-        borderRadius: '12px', 
-        padding: '20px', 
-        marginBottom: '20px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>Status</label>
-            <select
-              value={filters.status}
-              onChange={e => setFilters({ ...filters, status: e.target.value })}
-              style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-            >
-              <option value="">All Status</option>
-              {statusOptions.map(s => (
-                <option key={s} value={s}>{getStatusColor(s).label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>Payment</label>
-            <select
-              value={filters.paymentMethod}
-              onChange={e => setFilters({ ...filters, paymentMethod: e.target.value })}
-              style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-            >
-              <option value="">All Methods</option>
-              <option value="COD">COD</option>
-              <option value="razorpay">UPI</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>Order Type</label>
-            <select
-              value={filters.orderType}
-              onChange={e => setFilters({ ...filters, orderType: e.target.value })}
-              style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-            >
-              <option value="">All Orders</option>
-              <option value="customer">Customer</option>
-              <option value="bulk">Bulk Orders</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>Search</label>
-            <input
-              type="text"
-              placeholder="Order ID, Customer..."
-              value={filters.search}
-              onChange={e => setFilters({ ...filters, search: e.target.value })}
-              style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-            />
+      <div className="adminCard" style={{ marginBottom: 16 }}>
+        <div className="adminCard__section">
+          <div className="adminFieldRow" style={{ gap: 16 }}>
+            <div className="adminFieldRow adminFieldRow--2" style={{ gap: 16 }}>
+              <div>
+                <label className="adminLabel">Status</label>
+                <select
+                  className="adminSelect"
+                  value={filters.status}
+                  onChange={e => setFilters({ ...filters, status: e.target.value })}
+                >
+                  <option value="">All Status</option>
+                  {statusOptions.map(s => (
+                    <option key={s} value={s}>{getStatusColor(s).label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="adminLabel">Payment</label>
+                <select
+                  className="adminSelect"
+                  value={filters.paymentMethod}
+                  onChange={e => setFilters({ ...filters, paymentMethod: e.target.value })}
+                >
+                  <option value="">All Methods</option>
+                  <option value="COD">COD</option>
+                  <option value="razorpay">UPI</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="adminFieldRow adminFieldRow--2" style={{ gap: 16 }}>
+              <div>
+                <label className="adminLabel">Order Type</label>
+                <select
+                  className="adminSelect"
+                  value={filters.orderType}
+                  onChange={e => setFilters({ ...filters, orderType: e.target.value })}
+                >
+                  <option value="">All Orders</option>
+                  <option value="customer">Customer</option>
+                  <option value="bulk">Bulk Orders</option>
+                </select>
+              </div>
+              <div>
+                <label className="adminLabel">Search</label>
+                <input
+                  className="adminInput"
+                  type="text"
+                  placeholder="Order ID, customer name/email…"
+                  value={filters.search}
+                  onChange={e => setFilters({ ...filters, search: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selectedOrder ? '1fr 400px' : '1fr', gap: '20px' }}>
-        <div style={{ backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-          <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600' }}>Orders ({filteredOrders.length})</h3>
-            </div>
+      <div className={`adminGrid ${selectedOrder ? 'adminGrid--2' : ''}`}>
+        <div className="adminCard">
+          <div className="adminCard__header">
+            <h3 className="adminCard__title">Orders ({filteredOrders.length})</h3>
           </div>
-          <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+
+          <div style={{ maxHeight: 640, overflowY: 'auto' }}>
             {filteredOrders.length === 0 ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>No orders found</div>
+              <div className="adminEmpty">No orders found</div>
             ) : (
-              filteredOrders.map(order => {
-                const statusStyle = getStatusColor(order.deliveryStatus || 'pending')
-                const modeTag = getOrderModeTag(order)
-                return (
-                  <div
-                    key={order._id}
-                    onClick={() => getOrderByIdAdmin(order._id, token).then(res => setSelectedOrder(res.data))}
-                    style={{
-                      padding: '16px 20px',
-                      borderBottom: '1px solid #e5e7eb',
-                      cursor: 'pointer',
-                      backgroundColor: selectedOrder?._id === order._id ? '#f3f4f6' : '#fff',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedOrder?._id !== order._id) {
-                        e.currentTarget.style.backgroundColor = '#f9fafb'
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedOrder?._id !== order._id) {
-                        e.currentTarget.style.backgroundColor = '#fff'
-                      }
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <div>
-                        <div style={{ fontWeight: '600', marginBottom: '4px' }}>
-                          Order #{order._id.slice(-8).toUpperCase()}
-                        </div>
-                        <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                          {order.user?.name} ({order.user?.email})
-                        </div>
+              <div className="adminList">
+                {filteredOrders.map(order => {
+                  const statusStyle = getStatusColor(order.deliveryStatus || 'pending')
+                  const modeTag = getOrderModeTag(order)
+                  return (
+                    <button
+                      key={order._id}
+                      type="button"
+                      className={`adminListItem ${selectedOrder?._id === order._id ? 'isSelected' : ''}`}
+                      onClick={() => getOrderByIdAdmin(order._id, token).then(res => setSelectedOrder(res.data))}
+                      style={{ cursor: 'pointer', border: 0, width: '100%', textAlign: 'left' }}
+                    >
+                      <div className="adminListItem__main">
+                        <div className="adminListItem__title">Order #{order._id.slice(-8).toUpperCase()}</div>
+                        <div className="adminListItem__meta">{order.user?.name} ({order.user?.email})</div>
                         {modeTag && (
-                          <span style={{
-                            display: 'inline-block',
-                            marginTop: '4px',
-                            padding: '2px 8px',
-                            backgroundColor: modeTag.bg,
-                            color: modeTag.color,
-                            border: modeTag.border,
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            fontWeight: '500'
-                          }}>
-                            {modeTag.text}
-                          </span>
+                          <div style={{ marginTop: 6 }}>
+                            <span
+                              className="adminBadge"
+                              style={{
+                                backgroundColor: modeTag.bg,
+                                color: modeTag.color,
+                                border: modeTag.border
+                              }}
+                            >
+                              {modeTag.text}
+                            </span>
+                          </div>
                         )}
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: '700', fontSize: '18px', marginBottom: '4px' }}>
-                          ₹{order.totalAmount?.toLocaleString('en-IN')}
+                        <div className="adminListItem__meta" style={{ marginTop: 6 }}>
+                          {formatDate(order.createdAt)} • {order.paymentMethod === 'razorpay' ? 'UPI' : 'COD'}
                         </div>
-                        <span style={{
-                          padding: '4px 12px',
-                          backgroundColor: statusStyle.bg,
-                          color: statusStyle.color,
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: '500'
-                        }}>
+                      </div>
+
+                      <div className="adminListItem__side">
+                        <div className="adminListItem__amount">₹{order.totalAmount?.toLocaleString('en-IN')}</div>
+                        <span
+                          className="adminBadge"
+                          style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, borderColor: 'transparent' }}
+                        >
                           {statusStyle.label}
                         </span>
                       </div>
-                    </div>
-                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                      {formatDate(order.createdAt)} • {order.paymentMethod === 'razorpay' ? 'UPI' : 'COD'}
-                    </div>
-                  </div>
-                )
-              })
+                    </button>
+                  )
+                })}
+              </div>
             )}
           </div>
         </div>
 
         {selectedOrder && (
-          <div style={{ backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: '20px', maxHeight: '600px', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600' }}>Order Details</h3>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                style={{
-                  padding: '4px 8px',
-                  backgroundColor: '#e5e7eb',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
+          <div className="adminCard" style={{ maxHeight: 640, overflowY: 'auto' }}>
+            <div className="adminCard__header">
+              <h3 className="adminCard__title">Order Details</h3>
+              <button type="button" className="adminBtn adminBtnGhost adminBtn--sm" onClick={() => setSelectedOrder(null)}>
                 ✕
               </button>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <OrderTimeline status={selectedOrder.deliveryStatus} orderDate={selectedOrder.createdAt} />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Update Status</label>
-              <select
-                value={selectedOrder.deliveryStatus || 'pending'}
-                onChange={e => handleStatusUpdate(selectedOrder._id, e.target.value)}
-                style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-              >
-                {statusOptions.map(s => (
-                  <option key={s} value={s}>{getStatusColor(s).label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #e5e7eb' }}>
-              <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Order ID</div>
-              <div style={{ fontWeight: '600' }}>#{selectedOrder._id.slice(-8).toUpperCase()}</div>
-            </div>
-
-            <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #e5e7eb' }}>
-              <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Customer</div>
-              <div style={{ fontWeight: '600' }}>{selectedOrder.user?.name}</div>
-              <div style={{ fontSize: '14px', color: '#6b7280' }}>{selectedOrder.user?.email}</div>
-            </div>
-
-            {selectedOrder.shippingAddress && (
-              <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Delivery Address</div>
-                <div>{selectedOrder.shippingAddress.name}</div>
-                <div>{selectedOrder.shippingAddress.addressLine}</div>
-                <div>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} - {selectedOrder.shippingAddress.pincode}</div>
+            <div className="adminCard__section">
+              <div style={{ marginBottom: 16 }}>
+                <OrderTimeline status={selectedOrder.deliveryStatus} orderDate={selectedOrder.createdAt} />
               </div>
-            )}
 
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Items</div>
-              {selectedOrder.items?.map((item, idx) => (
-                <div key={idx} style={{ marginBottom: '12px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
-                  <div style={{ fontWeight: '600', marginBottom: '4px' }}>{item.name || item.product?.name}</div>
-                  <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                    Qty: {item.qty} × ₹{item.price?.toLocaleString('en-IN')} = ₹{(item.qty * item.price).toLocaleString('en-IN')}
-                  </div>
+              <div style={{ marginBottom: 16 }}>
+                <label className="adminLabel">Update Status</label>
+                <select
+                  className="adminSelect"
+                  value={selectedOrder.deliveryStatus || 'pending'}
+                  onChange={e => handleStatusUpdate(selectedOrder._id, e.target.value)}
+                >
+                  {statusOptions.map(s => (
+                    <option key={s} value={s}>{getStatusColor(s).label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ padding: '12px 0', borderTop: '1px solid var(--border-color)' }}>
+                <div className="adminHelp">Order ID</div>
+                <div style={{ fontWeight: 900 }}>#{selectedOrder._id.slice(-8).toUpperCase()}</div>
+              </div>
+
+              <div style={{ padding: '12px 0', borderTop: '1px solid var(--border-color)' }}>
+                <div className="adminHelp">Customer</div>
+                <div style={{ fontWeight: 900 }}>{selectedOrder.user?.name}</div>
+                <div className="adminHelp">{selectedOrder.user?.email}</div>
+              </div>
+
+              {selectedOrder.shippingAddress && (
+                <div style={{ padding: '12px 0', borderTop: '1px solid var(--border-color)' }}>
+                  <div className="adminHelp">Delivery Address</div>
+                  <div style={{ fontWeight: 800 }}>{selectedOrder.shippingAddress.name}</div>
+                  <div className="adminHelp">{selectedOrder.shippingAddress.addressLine}</div>
+                  <div className="adminHelp">{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} - {selectedOrder.shippingAddress.pincode}</div>
                 </div>
-              ))}
-              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', fontWeight: '700', fontSize: '18px' }}>
-                <span>Total</span>
-                <span>₹{selectedOrder.totalAmount?.toLocaleString('en-IN')}</span>
-              </div>
-            </div>
+              )}
 
-            <div style={{ marginTop: '20px' }}>
-              <button
-                onClick={() => handleDeleteOrder(selectedOrder._id)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  backgroundColor: '#fee2e2',
-                  color: '#991b1b',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#fecaca'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#fee2e2'}
-              >
-                Delete Order
-              </button>
+              <div style={{ padding: '12px 0', borderTop: '1px solid var(--border-color)' }}>
+                <div className="adminHelp" style={{ marginBottom: 8 }}>Items</div>
+                {selectedOrder.items?.map((item, idx) => (
+                  <div key={idx} className="adminCard" style={{ marginBottom: 10, boxShadow: 'none' }}>
+                    <div className="adminCard__section" style={{ padding: 12 }}>
+                      <div style={{ fontWeight: 900, marginBottom: 4 }}>{item.name || item.product?.name}</div>
+                      <div className="adminHelp">
+                        Qty: {item.qty} × ₹{item.price?.toLocaleString('en-IN')} = ₹{(item.qty * item.price).toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-color)', fontWeight: 900 }}>
+                  <span>Total</span>
+                  <span>₹{selectedOrder.totalAmount?.toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 14 }}>
+                <button
+                  type="button"
+                  className="adminBtn adminBtnDanger adminBtn--full"
+                  onClick={() => handleDeleteOrder(selectedOrder._id)}
+                >
+                  Delete Order
+                </button>
+              </div>
             </div>
           </div>
         )}
