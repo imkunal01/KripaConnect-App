@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { requestOtp, verifyOtp } from '../services/auth'
+import { requestOtp } from '../services/auth'
+import { useAuth } from '../hooks/useAuth.js'
 
 export default function OtpLogin({ onSuccess }) {
+  const { signInWithOtp } = useAuth()
   const [step, setStep] = useState('email') // 'email' or 'otp'
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
@@ -46,8 +48,10 @@ export default function OtpLogin({ onSuccess }) {
     setLoading(true)
     
     try {
-      const res = await verifyOtp(email, otp)
-      const payload = res?.data || {}
+      if (typeof signInWithOtp !== 'function') {
+        throw new Error('OTP login is unavailable. Please use password login.')
+      }
+      const payload = await signInWithOtp({ email, otp })
       onSuccess?.(payload)
     } catch (err) {
       setError(err.message || 'Invalid OTP')

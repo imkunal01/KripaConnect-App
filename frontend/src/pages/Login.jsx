@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
 import OtpLogin from '../components/OtpLogin.jsx'
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter.jsx'
 import './FormStyles.css'
 
 export default function Login() {
@@ -94,6 +95,12 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+            />
+
+            <PasswordStrengthMeter
+              password={password}
+              visible={password.length > 0}
+              title="Password tips"
             />
             
             <div className="form-extras">

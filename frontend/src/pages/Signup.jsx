@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter.jsx'
 import './FormStyles.css'
 
 export default function Signup() {
@@ -98,6 +99,12 @@ export default function Signup() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+          />
+
+          <PasswordStrengthMeter
+            password={password}
+            visible={true}
+            title="Password requirements"
           />
 
           <button className="btn-primary" type="submit" disabled={loading}>

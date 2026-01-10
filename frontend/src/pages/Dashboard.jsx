@@ -7,7 +7,7 @@ import Footer from '../components/Footer.jsx'
 import { listCategories } from '../services/categories'
 import { listProducts } from '../services/products'
 import ShopContext from '../context/ShopContext.jsx'
-import heroimg from '../assets/image.png'
+import heroimg from '../assets/auntyvibing.png'
 import heroimg2 from '../assets/heroimg.png'
 
 export default function Dashboard() {
@@ -86,7 +86,7 @@ export default function Dashboard() {
         {/* Minimal Hero */}
         <section className="dash-hero">
           <div className="dash-hero-left">
-            <h1>ELECTRIFY YOUR DAY</h1>
+            <h1>Apni Shop,Online</h1>
             <p>
               Shop for electronic products with us, guaranteed quality, fast delivery and arrived safely to the destination.
             </p>
@@ -218,14 +218,27 @@ export default function Dashboard() {
             </div>
 
             <div className="dash-scroll-row" aria-label="Best sellers">
-              {bestSellers.map((p) => (
-                <Link key={p._id} to={`/product/${p._id}`} className="dash-mini-card">
-                  <div className="dash-mini-img">
-                    {getImageUrl(p) ? <img src={getImageUrl(p)} alt={p.name} loading="lazy" /> : null}
+              {bestSellers.map((p, idx) => (
+                <Link
+                  key={p._id}
+                  to={`/product/${p._id}`}
+                  className="dash-mini-card"
+                  aria-label={`Best seller #${idx + 1}: ${p.name}`}
+                >
+                  <div className="dash-mini-media">
+                    <div className="dash-mini-badge" aria-hidden="true">#{idx + 1}</div>
+                    {getImageUrl(p) ? (
+                      <img src={getImageUrl(p)} alt={p.name} loading="lazy" />
+                    ) : (
+                      <div className="dash-mini-img-fallback" aria-hidden="true" />
+                    )}
                   </div>
                   <div className="dash-mini-body">
                     <div className="dash-mini-title">{p.name}</div>
-                    <div className="dash-mini-price">₹{formatPrice(p)}</div>
+                    <div className="dash-mini-meta">
+                      <div className="dash-mini-price">₹{formatPrice(p)}</div>
+                      <div className="dash-mini-cta" aria-hidden="true">View →</div>
+                    </div>
                   </div>
                 </Link>
               ))}

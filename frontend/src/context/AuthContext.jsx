@@ -1,5 +1,13 @@
 import { createContext, useEffect, useMemo, useRef, useState } from 'react'
-import { login as apiLogin, signup as apiSignup, logout as apiLogout, refresh as apiRefresh, profile as apiProfile, googleLogin as apiGoogleLogin } from '../services/auth'
+import {
+  login as apiLogin,
+  signup as apiSignup,
+  logout as apiLogout,
+  refresh as apiRefresh,
+  profile as apiProfile,
+  googleLogin as apiGoogleLogin,
+  verifyOtp as apiVerifyOtp,
+} from '../services/auth'
 
 function parseJwt(token) {
   try {
@@ -149,6 +157,29 @@ export function AuthProvider({ children }) {
     return payload
   }
 
+  async function signInWithOtp({ email, otp }) {
+    const res = await apiVerifyOtp(email, otp)
+    const payload = res?.data || {}
+
+    if (!payload?.token) {
+      throw new Error('OTP login failed. Please try again.')
+    }
+
+    setToken(payload.token)
+    setUser({ _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses })
+    setRole(payload.role)
+    await scheduleRefresh(payload.token)
+    saveStoredAuth({
+      token: payload.token,
+      user: { _id: payload._id, name: payload.name, email: payload.email, role: payload.role, savedAddresses: payload.savedAddresses },
+      role: payload.role,
+    })
+
+    // Hydrate full profile
+    await refreshMe(payload.token).catch(() => {})
+    return payload
+  }
+
   async function signUp({ name, email, password, role }) {
     const res = await apiSignup({ name, email, password, role })
     const payload = res?.data || {}
@@ -227,7 +258,7 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
   }, [])
 
-  const value = useMemo(() => ({ token, user, role, loading, signIn, signUp, signOut, googleSignIn, refreshMe }), [token, user, role, loading])
+  const value = useMemo(() => ({ token, user, role, loading, signIn, signInWithOtp, signUp, signOut, googleSignIn, refreshMe }), [token, user, role, loading])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 export default AuthContext

@@ -1,5 +1,3 @@
-/* Dashboard.css (Minimal) */
-
 .dash-page {
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -25,7 +23,6 @@
   padding: 18px;
 }
 
-/* --- Hero (matches reference layout, keeps site colors) --- */
 .dash-hero {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
@@ -34,7 +31,7 @@
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 18px;
-  padding: 44px 44px;
+  padding: 0px 44px;
   margin-bottom: 36px;
   position: relative;
   overflow: hidden;
@@ -123,11 +120,11 @@
 }
 
 .dash-hero-right img {
-  width: 100%;
-  max-width: 520px;
-  max-height: 360px;
-  object-fit: contain;
-  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.14));
+    width: 150%;
+    max-width: 620px;
+    max-height: 620px;
+    object-fit: contain;
+    filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.14));
 }
 
 .dash-hero-img-placeholder {
@@ -408,59 +405,134 @@
 
 /* --- Horizontal scroll row (Best sellers) --- */
 .dash-scroll-row {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 4px 2px 12px;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding: 4px 2px 2px;
 }
 
 .dash-mini-card {
-  flex: 0 0 auto;
-  width: 210px;
+  position: relative;
   border-radius: 18px;
   border: 1px solid var(--border-color);
-  background: var(--bg-primary);
+  background:
+    radial-gradient(700px 260px at 20% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 55%),
+    linear-gradient(180deg, var(--bg-primary), color-mix(in srgb, var(--bg-primary) 85%, var(--bg-secondary)));
   padding: 12px;
   display: grid;
-  grid-template-rows: 130px auto;
-  scroll-snap-align: start;
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  grid-template-rows: 150px auto;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
 .dash-mini-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.09);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 42px rgba(0,0,0,0.12);
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border-color));
 }
 
-.dash-mini-img {
-  display: flex;
+.dash-mini-media {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-secondary) 72%, var(--bg-primary));
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.dash-mini-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 10px;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.14));
+}
+
+.dash-mini-img-fallback {
+  width: 70%;
+  height: 70%;
+  border-radius: 12px;
+  border: 1px dashed var(--border-color);
+  background: rgba(0,0,0,0.02);
+}
+
+.dash-mini-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.dash-mini-img img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 65%, #000));
+  box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
 }
 
 .dash-mini-title {
-  margin-top: 8px;
-  font-size: 13px;
-  font-weight: 800;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 900;
   color: var(--text-primary);
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.dash-mini-meta {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .dash-mini-price {
-  margin-top: 4px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 900;
   color: var(--primary);
+}
+
+.dash-mini-cta {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.06);
+  border: 1px solid rgba(17, 24, 39, 0.10);
+}
+
+@media (max-width: 1024px) {
+  .dash-scroll-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .dash-scroll-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 2px 12px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dash-mini-card {
+    flex: 0 0 auto;
+    width: 260px;
+    scroll-snap-align: start;
+  }
 }
 
 /* --- Benefits --- */
@@ -767,7 +839,6 @@
   }
 
   .dash-mini-card {
-    width: 170px;
     border-radius: 16px;
   }
 
