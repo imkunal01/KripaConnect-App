@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.vercel.kripa_connect_app.twa",
+    "sha256_cert_fingerprints": [
+      "93:A4:49:E2:6D:2C:39:5C:30:EF:9D:FA:43:87:52:08:63:71:F5:A9:34:61:D3:9A:FD:8D:55:19:B0:38:EB:17"
+    ]
+  }
+}]
