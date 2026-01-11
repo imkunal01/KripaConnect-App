@@ -1,8 +1,7 @@
 {
   "name": "KripaConnect",
   "short_name": "KripaConnect",
-  "start_url": "/?source=twa",
-  "scope": "/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#E63946",

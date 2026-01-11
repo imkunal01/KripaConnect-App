@@ -11,10 +11,7 @@ import AppToaster from './components/AppToaster.jsx'
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    // Prefer /sw.js (TWA-friendly canonical SW URL); fallback to existing path.
-    navigator.serviceWorker.register("/sw.js").catch(() =>
-      navigator.serviceWorker.register("/service-worker.js")
-    );
+    navigator.serviceWorker.register("/service-worker.js");
   });
 }
 
