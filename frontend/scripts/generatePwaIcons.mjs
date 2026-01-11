@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import { fileURLToPath } from 'node:url';
 
 function crc32(buffer) {
   // Standard CRC32 (IEEE 802.3)
@@ -68,12 +69,28 @@ function parseHexColor(hex) {
   return [r, g, b, 255];
 }
 
-const repoRoot = process.cwd();
-const manifestPath = path.join(repoRoot, 'frontend', 'public', 'manifest.json');
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+
+// Support running from either repo root or the frontend folder.
+const cwd = process.cwd();
+const candidates = [
+  path.join(cwd, 'public', 'manifest.json'),
+  path.join(cwd, 'frontend', 'public', 'manifest.json'),
+  path.join(scriptDir, '..', 'public', 'manifest.json'),
+  path.join(scriptDir, '..', '..', 'public', 'manifest.json'),
+];
+
+const manifestPath = candidates.find((p) => fs.existsSync(p));
+if (!manifestPath) {
+  console.error('Could not locate manifest.json. Tried:');
+  for (const p of candidates) console.error(' -', p);
+  process.exit(1);
+}
+
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 const rgba = parseHexColor(manifest.theme_color);
 
-const outDir = path.join(repoRoot, 'frontend', 'public', 'icons');
+const outDir = path.join(path.dirname(manifestPath), 'icons');
 fs.mkdirSync(outDir, { recursive: true });
 
 fs.writeFileSync(path.join(outDir, 'icon-192.png'), pngSolid(192, rgba));

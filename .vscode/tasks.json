@@ -1,0 +1,173 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "TWA init (keystore + bubblewrap)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\02_init.cmd"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "TWA build APK",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\03_build.cmd"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "TWA build APK",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\03_build.cmd"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "TWA build signed release APK (Gradle)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\03_build.cmd"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Gradle assembleRelease (stacktrace)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd /d twa-app\\app & gradlew.bat assembleRelease --stacktrace"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Gradle assembleRelease (log)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd /d twa-app\\app & gradlew.bat assembleRelease --stacktrace --console=plain > ..\\dist\\gradle-build.log 2>&1"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Bubblewrap doctor (log)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd /d twa-app & npx @bubblewrap/cli doctor --log-level verbose > dist\\bubblewrap-doctor.log 2>&1"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Gradle assembleRelease (log full)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd /d twa-app\\app & gradlew.bat assembleRelease --no-daemon --stacktrace --console=plain > ..\\dist\\gradle-build-full.log 2>&1"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "TWA build signed release (log)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\03_build.cmd > twa-app\\dist\\03_build.log 2>&1"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "TWA package APK to dist",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\05_package_apk.cmd"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "TWA install to device",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\04_install.cmd"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "TWA install to device (log)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\04_install.cmd > twa-app\\dist\\04_install.log 2>&1"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "TWA rebuild signed release (after package fix)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\03_build.cmd > twa-app\\dist\\03_build_afterfix.log 2>&1"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "TWA package APK to dist (after fix)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"twa-app\\05_package_apk.cmd"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

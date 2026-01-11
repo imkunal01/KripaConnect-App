@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 
 if not exist "%~dp0dist" mkdir "%~dp0dist"
 
-set "SEARCH_ROOT=%~dp0app\android\app\build\outputs\apk"
+set "SEARCH_ROOT=%~dp0app\app\build\outputs\apk"
 if not exist "%SEARCH_ROOT%" (
   echo APK output folder not found: %SEARCH_ROOT%
   echo Run 03_build.cmd first.
