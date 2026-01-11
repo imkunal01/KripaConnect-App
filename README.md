@@ -3,7 +3,7 @@
 Monorepo containing:
 
 - **Backend**: Node.js + Express + MongoDB (REST API)
-- **Frontend**: React + Vite (PWA-ready) + optional Capacitor Android build
+- **Frontend**: React + Vite + optional Capacitor Android build
 
 This README documents the **features and functionality** implemented in both the backend and frontend, based on the code currently in this repo.
 
@@ -167,8 +167,7 @@ The frontend is a React + Vite app with routing and auth-protected pages.
 - On login, users are redirected to onboarding if they have no saved address.
 - Checkout auto-prefills address from `savedAddresses` (default/first).
 
-**PWA / Offline-leaning setup**
-- Registers a service worker from `frontend/public/service-worker.js`.
+
 
 ---
 
