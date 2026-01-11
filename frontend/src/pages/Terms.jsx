@@ -9,7 +9,7 @@ export default function Terms() {
       <main className="page-main">
         <section className="hero">
           <h1 className="hero-title">Terms & Conditions</h1>
-          <p className="hero-lead">Please review the terms governing use of BizLink.</p>
+          <p className="hero-lead">Please review the terms governing use of KripaConnect.</p>
         </section>
         <section className="section">
           <h3 className="section-title">Use of Service</h3>

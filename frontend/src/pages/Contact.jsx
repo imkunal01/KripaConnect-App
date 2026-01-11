@@ -15,14 +15,14 @@ export default function Contact() {
           <div className="card">
             <h3 className="section-title">Support</h3>
             <div className="list">
-              <span>Email: support@BizLink.example</span>
+              <span>Email: support@KripaConnect.example</span>
               <span>Hours: Mon–Sat, 9am–6pm IST</span>
             </div>
           </div>
           <div className="card">
             <h3 className="section-title">Partnerships</h3>
             <div className="list">
-              <span>Email: partners@BizLink.example</span>
+              <span>Email: partners@KripaConnect.example</span>
               <span>For retailers and B2B collaboration</span>
             </div>
           </div>

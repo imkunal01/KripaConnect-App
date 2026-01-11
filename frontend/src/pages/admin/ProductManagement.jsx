@@ -4,6 +4,20 @@ import { listProducts } from '../../services/products'
 import { listCategories } from '../../services/categories'
 import { createProductAdmin, updateProductAdmin, deleteProductAdmin } from '../../services/admin'
 
+function getMongoObjectIdTimeMs(id) {
+  if (typeof id !== 'string' || id.length < 8) return 0
+  const tsHex = id.slice(0, 8)
+  const seconds = Number.parseInt(tsHex, 16)
+  return Number.isFinite(seconds) ? seconds * 1000 : 0
+}
+
+function getDocCreatedTimeMs(doc) {
+  const createdAt = doc?.createdAt || doc?.created_at || doc?.createdOn
+  const t = createdAt ? Date.parse(createdAt) : NaN
+  if (Number.isFinite(t)) return t
+  return getMongoObjectIdTimeMs(doc?._id)
+}
+
 export default function ProductManagement() {
   const { token } = useAuth()
   const [products, setProducts] = useState([])
@@ -11,6 +25,7 @@ export default function ProductManagement() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
+  const [search, setSearch] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -36,7 +51,11 @@ export default function ProductManagement() {
         listProducts({ limit: 1000 }),
         listCategories()
       ])
-      setProducts(prods.items || [])
+      const items = prods.items || []
+      const sorted = Array.isArray(items)
+        ? items.slice().sort((a, b) => getDocCreatedTimeMs(b) - getDocCreatedTimeMs(a))
+        : []
+      setProducts(sorted)
       setCategories(cats || [])
     } catch (err) {
       console.error(err)
@@ -102,6 +121,15 @@ export default function ProductManagement() {
   }
 
   if (loading) return <div className="adminEmpty">Loading…</div>
+
+  const filteredProducts = products.filter(p => {
+    if (!search) return true
+    const s = search.toLowerCase()
+    return (
+      p.name?.toLowerCase().includes(s) ||
+      p.Category?.name?.toLowerCase().includes(s)
+    )
+  })
 
   return (
     <div className="adminPage">
@@ -296,59 +324,125 @@ export default function ProductManagement() {
         </div>
       )}
 
+      <div className="adminCard" style={{ marginBottom: 16 }}>
+        <div className="adminCard__section">
+          <label className="adminLabel">Search products</label>
+          <input
+            className="adminInput"
+            type="text"
+            placeholder="Search by product name or category…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="adminCard">
-        <div className="adminTableWrap">
-          <table className="adminTable">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map(product => {
-                const stockNumber = typeof product.stock === 'number' ? product.stock : Number(product.stock)
-                const stockColor = stockNumber < 10 ? 'var(--danger)' : stockNumber < 50 ? 'var(--text-secondary)' : 'var(--secondary)'
-                return (
-                  <tr key={product._id}>
-                    <td>
+        <div className="adminOnlyDesktop">
+          <div className="adminTableWrap">
+            <table className="adminTable">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Name</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.map(product => {
+                  const stockNumber = typeof product.stock === 'number' ? product.stock : Number(product.stock)
+                  const stockColor = stockNumber < 10 ? 'var(--danger)' : stockNumber < 50 ? 'var(--text-secondary)' : 'var(--secondary)'
+                  return (
+                    <tr key={product._id}>
+                      <td>
+                        <img
+                          src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
+                          alt={product.name}
+                          style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 12, border: '1px solid var(--border-color)' }}
+                        />
+                      </td>
+                      <td style={{ fontWeight: 800 }}>{product.name}</td>
+                      <td>₹{product.price?.toLocaleString('en-IN')}</td>
+                      <td>
+                        <span style={{ color: stockColor, fontWeight: 900 }}>{product.stock}</span>
+                      </td>
+                      <td>
+                        <span className={`adminBadge ${product.active ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
+                          {product.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="adminActions">
+                          <button type="button" className="adminBtn adminBtnPrimary adminBtn--sm" onClick={() => handleEdit(product)}>
+                            Edit
+                          </button>
+                          <button type="button" className="adminBtn adminBtnDanger adminBtn--sm" onClick={() => handleDelete(product._id)}>
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          {filteredProducts.length === 0 && <div className="adminEmpty">No products found</div>}
+        </div>
+
+        <div className="adminOnlyMobile">
+          {filteredProducts.length === 0 ? (
+            <div className="adminEmpty">No products found</div>
+          ) : (
+            <div className="adminMobileList">
+              {filteredProducts.map(product => (
+                <div key={product._id} className="adminMobileCard">
+                  <div className="adminMobileCardHeader">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                       <img
                         src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
                         alt={product.name}
-                        style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 12, border: '1px solid var(--border-color)' }}
+                        className="adminMobileThumb"
                       />
-                    </td>
-                    <td style={{ fontWeight: 800 }}>{product.name}</td>
-                    <td>₹{product.price?.toLocaleString('en-IN')}</td>
-                    <td>
-                      <span style={{ color: stockColor, fontWeight: 900 }}>{product.stock}</span>
-                    </td>
-                    <td>
-                      <span className={`adminBadge ${product.active ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
-                        {product.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="adminActions">
-                        <button type="button" className="adminBtn adminBtnPrimary adminBtn--sm" onClick={() => handleEdit(product)}>
-                          Edit
-                        </button>
-                        <button type="button" className="adminBtn adminBtnDanger adminBtn--sm" onClick={() => handleDelete(product._id)}>
-                          Delete
-                        </button>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="adminMobileCardTitle" title={product.name}>{product.name}</div>
+                        <div className="adminMobileCardSub" title={product.Category?.name || ''}>
+                          {product.Category?.name || 'Uncategorized'}
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                    </div>
+                    <span className={`adminBadge ${product.active ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
+                      {product.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  <div className="adminMobileCardBody">
+                    <div className="adminMobileMetaRow">
+                      <span className="adminHelp">Price</span>
+                      <span className="adminMobileMetaValue">₹{product.price?.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="adminMobileMetaRow">
+                      <span className="adminHelp">Stock</span>
+                      <span className="adminMobileMetaValue">{product.stock}</span>
+                    </div>
+                  </div>
+
+                  <div className="adminMobileActions">
+                    <button type="button" className="adminBtn adminBtnPrimary adminBtn--sm" onClick={() => handleEdit(product)}>
+                      Edit
+                    </button>
+                    <button type="button" className="adminBtn adminBtnDanger adminBtn--sm" onClick={() => handleDelete(product._id)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        {products.length === 0 && <div className="adminEmpty">No products found</div>}
       </div>
     </div>
   )

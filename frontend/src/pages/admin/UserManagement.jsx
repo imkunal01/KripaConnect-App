@@ -2,6 +2,20 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { getAllUsers, toggleBlockUser, updateUserRole, deleteUser } from '../../services/admin'
 
+function getMongoObjectIdTimeMs(id) {
+  if (typeof id !== 'string' || id.length < 8) return 0
+  const tsHex = id.slice(0, 8)
+  const seconds = Number.parseInt(tsHex, 16)
+  return Number.isFinite(seconds) ? seconds * 1000 : 0
+}
+
+function getDocCreatedTimeMs(doc) {
+  const createdAt = doc?.createdAt || doc?.created_at || doc?.createdOn
+  const t = createdAt ? Date.parse(createdAt) : NaN
+  if (Number.isFinite(t)) return t
+  return getMongoObjectIdTimeMs(doc?._id)
+}
+
 function formatDate(dateString) {
   if (!dateString) return 'N/A'
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -26,7 +40,10 @@ export default function UserManagement() {
     try {
       setLoading(true)
       const data = await getAllUsers(token)
-      setUsers(data)
+      const sorted = Array.isArray(data)
+        ? data.slice().sort((a, b) => getDocCreatedTimeMs(b) - getDocCreatedTimeMs(a))
+        : []
+      setUsers(sorted)
     } catch (err) {
       console.error(err)
     } finally {
@@ -120,8 +137,9 @@ export default function UserManagement() {
       </div>
 
       <div className="adminCard">
-        <div className="adminTableWrap">
-          <table className="adminTable">
+        <div className="adminOnlyDesktop">
+          <div className="adminTableWrap">
+            <table className="adminTable">
             <thead>
               <tr>
                 <th>User</th>
@@ -193,9 +211,86 @@ export default function UserManagement() {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
-        {filteredUsers.length === 0 && <div className="adminEmpty">No users found</div>}
+
+        <div className="adminOnlyMobile">
+          {filteredUsers.length === 0 ? (
+            <div className="adminEmpty">No users found</div>
+          ) : (
+            <div className="adminMobileList">
+              {filteredUsers.map(user => (
+                <div key={user._id} className="adminMobileCard">
+                  <div className="adminMobileCardHeader">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                      {user.profilePhoto ? (
+                        <img className="adminAvatar" src={user.profilePhoto} alt={user.name} />
+                      ) : (
+                        <div className="adminAvatarFallback">{user.name?.charAt(0)?.toUpperCase() || 'U'}</div>
+                      )}
+                      <div style={{ minWidth: 0 }}>
+                        <div className="adminMobileCardTitle" title={user.name}>{user.name}</div>
+                        <div className="adminMobileCardSub" title={user.email}>{user.email}</div>
+                      </div>
+                    </div>
+
+                    <span className={`adminBadge ${user.isBlocked ? 'adminBadge--danger' : 'adminBadge--ok'}`}>
+                      {user.isBlocked ? 'Blocked' : 'Active'}
+                    </span>
+                  </div>
+
+                  <div className="adminMobileCardBody">
+                    <div className="adminMobileMetaRow">
+                      <span className="adminHelp">Joined</span>
+                      <span className="adminMobileMetaValue">{formatDate(user.createdAt)}</span>
+                    </div>
+                    {user.phone && (
+                      <div className="adminMobileMetaRow">
+                        <span className="adminHelp">Phone</span>
+                        <span className="adminMobileMetaValue">{user.phone}</span>
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: 10 }}>
+                      <label className="adminLabel">Role</label>
+                      <select
+                        className="adminSelect"
+                        value={user.role}
+                        onChange={e => handleRoleChange(user._id, e.target.value)}
+                        disabled={user.role === 'admin'}
+                        style={{ opacity: user.role === 'admin' ? 0.7 : 1 }}
+                      >
+                        <option value="customer">Customer</option>
+                        <option value="retailer">Retailer</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="adminMobileActions">
+                    <button
+                      type="button"
+                      className={`adminBtn adminBtn--sm ${user.isBlocked ? 'adminBtnPrimary' : ''}`}
+                      onClick={() => handleToggleBlock(user._id)}
+                    >
+                      {user.isBlocked ? 'Unblock' : 'Block'}
+                    </button>
+                    <button
+                      type="button"
+                      className="adminBtn adminBtnDanger adminBtn--sm"
+                      onClick={() => handleDelete(user._id)}
+                      disabled={user.role === 'admin'}
+                      style={{ opacity: user.role === 'admin' ? 0.45 : 1, cursor: user.role === 'admin' ? 'not-allowed' : 'pointer' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import ShopContext from '../context/ShopContext.jsx'
-import Logo from '../assets/Logo.png'
+import Logo from '../assets/newLogo3.png'
 import './Navbar.css'
 import toast from 'react-hot-toast'
 
@@ -45,7 +45,7 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path
 
-  const modeLabel = mode === 'retailer' ? 'Retailer Mode (Bulk)' : 'Customer Mode'
+  const modeLabel = mode === 'retailer' ? 'Retailer(Bulk)' : 'Customer'
 
   function requestModeChange(nextMode) {
     if (!canSwitchMode) return
@@ -108,8 +108,9 @@ export default function Navbar() {
           MOBILE TOP BAR
       ======================== */}
       <nav className="navbar-top">
-        <Link to="/" className="brand-logo">
-          BizLink<div className="brand-dot"/>
+        <Link to="/" className="brand-logo" aria-label="Kripa Connect">
+          <img src={Logo} alt="Kripa Connect" className="brand-logo-img" />
+          <span className="brand-dot" aria-hidden="true" />
         </Link>
         <div className="navbar-top-right">
           {canSwitchMode && (
@@ -122,8 +123,8 @@ export default function Navbar() {
                 disabled={modeConfirmOpen || modeSwitchBusy}
                 title={modeConfirmOpen ? 'Confirm mode switch to continue' : undefined}
               >
-                <option value="customer">Customer Mode</option>
-                <option value="retailer">Retailer Mode (Bulk)</option>
+                <option value="customer">Customer</option>
+                <option value="retailer">Retailer(Bulk)</option>
               </select>
             </label>
           )}
@@ -205,8 +206,7 @@ export default function Navbar() {
           
           {/* Left: Logo */}
           <Link to="/" className="desk-logo">
-            {/* <img src={""} alt="Kripa Connect" className="logo-image" /> */}
-            BizLink
+            <img src={Logo} alt="Kripa Connect" className="logo-image" />
           </Link>
 
           {/* Center: Search */}

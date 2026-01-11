@@ -172,6 +172,8 @@
   .adminLayout {
     grid-template-columns: 1fr;
     gap: 12px;
+    /* The mobile navbar is a fixed "pill"; add top padding so admin UI starts below it. */
+    padding-top: calc(16px + max(1rem, env(safe-area-inset-top, 0px)) + 64px);
   }
 
   .adminMobileToggle {

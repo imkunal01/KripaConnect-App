@@ -71,7 +71,7 @@ export default function Login() {
         </button>
 
         <header className="auth-header">
-          <div className="brand">BizLink</div>
+          <div className="brand">KripaConnect</div>
           <div className="auth-toggle">
             <Link to="/login" className="toggle-btn active">Log In</Link>
             <Link to="/signup" className="toggle-btn">Sign Up</Link>

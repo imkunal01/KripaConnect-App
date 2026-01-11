@@ -62,9 +62,7 @@ body {
   }
 }
 
-#root {
- 
-}
+
 
 button {
   cursor: pointer;
@@ -84,10 +82,7 @@ a {
   display: grid;
   place-items: center;
   padding: 24px;
-  background:
-    radial-gradient(800px 400px at 50% 10%, rgba(var(--kc-primary-rgb), 0.10), transparent 60%),
-    radial-gradient(600px 360px at 10% 80%, rgba(16, 185, 129, 0.08), transparent 55%),
-    linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
+  background: white;  
 }
 
 .app-fallback__card {
@@ -190,4 +185,22 @@ a {
     font-size: 16px !important; /* Prevents zoom on iOS */
     min-height: 44px; /* Touch target */
   }
+}
+
+.waiting-screen{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  /* make it in center */
+  margin: auto;
+  right: 0;
+  bottom: 0;
+  
 }

@@ -116,7 +116,7 @@ export default function CheckoutPage() {
         order_id: razorpayOrder.id,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
-        name: 'BizLink®',
+        name: 'KripaConnect®',
         description: 'Order Payment',
         handler: async res => {
           try {

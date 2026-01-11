@@ -367,7 +367,7 @@
 /* Mobile */
 @media (max-width: 768px) {
   .profile-banner { height: 150px; }
-  .profile-container { margin-top: -80px; }
+  .profile-container { margin-top: -60px; }
   
   .profile-header-modern {
     flex-direction: column;

@@ -48,9 +48,9 @@ body {
   /* background: rgba(255, 255, 255, 0.85); */
 }
 .logo-image {
-  width: 58px;
-  height: 58px;
-  transition: transform 0.3s ease;
+    width: 110px;
+    height :auto;
+    transition: transform 0.3s ease;
 }
 
 .logo-image:hover {
@@ -68,12 +68,12 @@ body {
   gap: 0.25rem;
 }
 
-.brand-dot {
-  width: 8px;
-  height: 8px;
-  background-color: var(--primary);
-  border-radius: 50%;
-  box-shadow: 0 0 10px rgba(var(--kc-primary-rgb), 0.4);
+.brand-logo-img {
+  height: 45px;
+  width: auto;
+  max-width: 110px;
+  object-fit: contain;
+  display: block;
 }
 
 .navbar-top-right {
@@ -217,6 +217,11 @@ body {
 @media (max-width: 420px) {
   /* On very small screens the select already shows the mode; keep the header uncluttered. */
   .navbar-top .mode-label { display: none; }
+
+  .brand-logo-img {
+    height: 30px;
+    max-width: 140px;
+  }
 }
 
 /* =========================================

@@ -290,10 +290,10 @@
     font-size: 2rem;
   }
 
-  .page-header {
-    padding: 64px 0 26px;
-    margin-bottom: 22px;
-  }
+      .page-header {
+        padding: 75px 0 26px;
+        margin-bottom: 22px;
+    }
 
   .main-layout {
     gap: 18px;

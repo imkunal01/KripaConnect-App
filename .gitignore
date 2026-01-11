@@ -1,0 +1,16 @@
+# Root ignores
+
+# TWA internal build artifacts / signing keys
+/twa-app/app/
+/twa-app/dist/
+/twa-app/keystore/
+
+# Node
+**/node_modules/
+
+# Build outputs
+**/dist/
+**/build/
+
+# Logs
+**/*.log

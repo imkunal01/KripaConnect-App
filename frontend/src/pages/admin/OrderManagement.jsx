@@ -5,6 +5,20 @@ import OrderTimeline from '../../components/OrderTimeline'
 
 const statusOptions = ['pending', 'shipped', 'delivered', 'cancelled']
 
+function getMongoObjectIdTimeMs(id) {
+  if (typeof id !== 'string' || id.length < 8) return 0
+  const tsHex = id.slice(0, 8)
+  const seconds = Number.parseInt(tsHex, 16)
+  return Number.isFinite(seconds) ? seconds * 1000 : 0
+}
+
+function getDocCreatedTimeMs(doc) {
+  const createdAt = doc?.createdAt || doc?.created_at || doc?.orderDate || doc?.createdOn
+  const t = createdAt ? Date.parse(createdAt) : NaN
+  if (Number.isFinite(t)) return t
+  return getMongoObjectIdTimeMs(doc?._id)
+}
+
 function formatDate(dateString) {
   if (!dateString) return 'N/A'
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -68,7 +82,10 @@ export default function OrderManagement() {
     try {
       setLoading(true)
       const data = await getAllOrdersAdmin(token)
-      setOrders(data)
+      const sorted = Array.isArray(data)
+        ? data.slice().sort((a, b) => getDocCreatedTimeMs(b) - getDocCreatedTimeMs(a))
+        : []
+      setOrders(sorted)
     } catch (err) {
       console.error(err)
     } finally {
@@ -249,7 +266,15 @@ export default function OrderManagement() {
         </div>
 
         {selectedOrder && (
-          <div className="adminCard" style={{ maxHeight: 640, overflowY: 'auto' }}>
+          <>
+            <button
+              type="button"
+              className="adminOrderDetailsBackdrop"
+              onClick={() => setSelectedOrder(null)}
+              aria-label="Close order details"
+            />
+
+            <div className="adminCard adminOrderDetailsPanel" style={{ maxHeight: 640, overflowY: 'auto' }} role="dialog" aria-modal="true">
             <div className="adminCard__header">
               <h3 className="adminCard__title">Order Details</h3>
               <button type="button" className="adminBtn adminBtnGhost adminBtn--sm" onClick={() => setSelectedOrder(null)}>
@@ -323,7 +348,8 @@ export default function OrderManagement() {
                 </button>
               </div>
             </div>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>

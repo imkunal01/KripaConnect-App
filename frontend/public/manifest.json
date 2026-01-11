@@ -1,7 +1,8 @@
 {
-  "name": "BizLink",
-  "short_name": "BizLink",
-  "start_url": "/",
+  "name": "KripaConnect",
+  "short_name": "KripaConnect",
+  "start_url": "/?source=twa",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#E63946",

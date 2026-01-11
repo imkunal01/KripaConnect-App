@@ -57,7 +57,7 @@ export default function ResetPassword() {
       <div className="auth-wrapper">
         <div className="auth-left">
           <header className="auth-header">
-            <div className="brand">BizLink</div>
+            <div className="brand">KripaConnect</div>
           </header>
 
           <div className="welcome-text">
@@ -90,7 +90,7 @@ export default function ResetPassword() {
     <div className="auth-wrapper">
       <div className="auth-left">
         <header className="auth-header">
-          <div className="brand">BizLink</div>
+          <div className="brand">KripaConnect</div>
         </header>
 
         <div className="welcome-text">

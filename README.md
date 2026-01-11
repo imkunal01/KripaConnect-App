@@ -275,7 +275,7 @@ ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
 
 SENDGRID_API_KEY=SG.xxxxxx
 EMAIL_FROM_EMAIL=verified-sender@yourdomain.com
-EMAIL_FROM_NAME=BizLink
+EMAIL_FROM_NAME=KripaConnect
 
 RAZORPAY_KEY_ID=rzp_test_xxxxx
 RAZORPAY_KEY_SECRET=xxxxx

@@ -179,6 +179,111 @@
   overflow-x: auto;
 }
 
+/* Responsive helpers */
+.adminOnlyMobile {
+  display: none;
+}
+
+.adminOnlyDesktop {
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .adminOnlyMobile {
+    display: block;
+  }
+
+  .adminOnlyDesktop {
+    display: none;
+  }
+}
+
+/* Mobile card lists (users/products) */
+.adminMobileList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.adminMobileCard {
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  box-shadow: 0 10px 26px rgba(17, 24, 39, 0.06);
+  padding: 14px;
+}
+
+.adminMobileCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.adminMobileCardTitle {
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.adminMobileCardSub {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.adminMobileCardBody {
+  margin-top: 12px;
+}
+
+.adminMobileMetaRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.adminMobileMetaRow:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.adminMobileMetaValue {
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.adminMobileActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.adminMobileActions .adminBtn {
+  flex: 1;
+}
+
+.adminMobileThumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+  background: var(--gray-50);
+}
+
 .adminTable {
   width: 100%;
   border-collapse: separate;
@@ -350,6 +455,35 @@
   font-size: 1.05rem;
   color: var(--text-primary);
   margin-bottom: 6px;
+}
+
+/* Order details overlay on mobile */
+.adminOrderDetailsBackdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .adminOrderDetailsBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.45);
+    border: 0;
+    padding: 0;
+    z-index: 1190;
+  }
+
+  .adminOrderDetailsPanel {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    width: min(560px, 94vw);
+    max-height: 82vh;
+    overflow: auto;
+    z-index: 1200;
+    border-radius: 18px;
+  }
 }
 
 /* Stars */

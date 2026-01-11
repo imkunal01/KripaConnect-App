@@ -35,7 +35,7 @@ const AppFallback = () => (
       <div className="app-fallback__mark" aria-hidden="true">
         <div className="app-fallback__spinner" />
       </div>
-      <div className="app-fallback__title">Wait a moment…</div>
+      <div className="app-fallback__title"></div>
       <div className="app-fallback__subtitle">Loading</div>
       <div className="app-fallback__bar" aria-hidden="true">
         <div className="app-fallback__barFill" />
