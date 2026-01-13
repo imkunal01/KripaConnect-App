@@ -1,11 +1,14 @@
-#  — Full Stack Project
+# KripaConnect — Full Stack E-Commerce Platform
 
-Monorepo containing:
+A complete e-commerce solution with web and mobile support, featuring a modern React frontend, robust Node.js backend, and native Android app via Trusted Web Activity (TWA).
 
-- **Backend**: Node.js + Express + MongoDB (REST API)
-- **Frontend**: React + Vite + optional Capacitor Android build
+**Monorepo containing:**
 
-This README documents the **features and functionality** implemented in both the backend and frontend, based on the code currently in this repo.
+- **Backend**: Node.js + Express + MongoDB REST API
+- **Frontend**: React + Vite (PWA-ready)
+- **Mobile App**: Capacitor (iOS/Android) + TWA Android build
+
+This comprehensive platform includes customer shopping, B2B retailer portal, and full-featured admin dashboard with analytics.
 
 ---
 
@@ -25,6 +28,10 @@ This README documents the **features and functionality** implemented in both the
 - [Backend API Overview](#backend-api-overview)
 - [Security Notes](#security-notes)
 - [Useful Scripts](#useful-scripts)
+- [Mobile App (Android TWA)](#mobile-app-android-twa)
+- [Deployment](#deployment)
+- [Project Status & Roadmap](#project-status--roadmap)
+- [License](#license)
 
 ---
 
@@ -35,27 +42,147 @@ SKE/
   backend/
     index.js
     package.json
+    data/
+      products.json              # Sample product data
+    scripts/
+      checkPaymentStatus.js      # Payment verification utility
+      seedData.js                # Database seeding script
+      testRazorpay.js           # Razorpay integration test
+      testSendgridEmail.js      # Email service test
     src/
       server.js
       config/
+        db.js                    # MongoDB connection
       controllers/
+        adminController.js
+        adminOrderController.js
+        analyticsControllers.js
+        authController.js
+        cartController.js
+        categoryController.js
+        favoriteController.js
+        invoiceController.js
+        orderController.js
+        passwordResetController.js
+        paymentController.js
+        productController.js
+        retailerOrderController.js
+        reviewController.js
       middleware/
+        authMiddleware.js        # JWT + role-based protection
+        errorHandler.js
+        security.js              # Helmet, rate limiting, sanitization
+        uploadMiddleware.js      # Multer image uploads
+        validate.js
       models/
+        Category.js
+        Order.js
+        Product.js
+        Review.js
+        Transaction.js
+        User.js
       routes/
+        adminRoutes.js
+        analyticsRoutes.js
+        authRoutes.js
+        cartRoutes.js
+        categoryRoutes.js
+        favoriteRoutes.js
+        invoiceRoutes.js
+        orderRoutes.js
+        paymentRoutes.js
+        productRoutes.js
+        retailerRoutes.js
+        reviewRoutes.js
       services/
-      utils/
+        cloudinaryService.js     # Image storage
+        emailService.js          # SendGrid integration
+        invoiceService.js
+        pdfService.js            # PDFKit invoice generation
+        razorpayService.js       # Payment gateway
       validations/
+        authValidations.js
+        orderValidations.js
       validators/
+        ProductValidator.js
   frontend/
     package.json
     vite.config.js
+    capacitor.config.json        # Mobile app configuration
     public/
     src/
-      pages/
+      App.jsx
+      main.jsx
+      index.css
+      pages/                     # All route components
+        Dashboard.jsx            # Home page
+        Login.jsx
+        Signup.jsx
+        ForgotPassword.jsx
+        ResetPassword.jsx
+        Products.jsx
+        ProductDetails.jsx
+        Categories.jsx
+        Favorites.jsx
+        CartPage.jsx
+        CheckoutPage.jsx
+        SuccessScreen.jsx
+        ProfilePage.jsx
+        OnboardingPage.jsx
+        OrdersPage.jsx
+        OrderDetailsPage.jsx
+        B2B.jsx                  # Retailer dashboard
+        Admin.jsx                # Admin panel shell
+        admin/
+          AdminDashboard.jsx     # Analytics & overview
+          ProductManagement.jsx
+          OrderManagement.jsx
+          UserManagement.jsx
+          ReviewModeration.jsx
+        About.jsx
+        Services.jsx
+        FAQ.jsx
+        Contact.jsx
+        Privacy.jsx
+        Terms.jsx
+        Refund.jsx
+        NotFound.jsx
       components/
+        Navbar.jsx
+        Footer.jsx
+        ProtectedRoute.jsx
+        OrderTimeline.jsx
+        AddressForm.jsx
+        FavoritesButton.jsx
+        FiltersSidebar.jsx
+        AppToaster.jsx           # Toast notifications
+        ... (more components)
       context/
+        AuthContext.jsx          # Global auth state
+        ShopContext.jsx          # Cart & shop state
       hooks/
+        useAuth.js
+        ... (more hooks)
       services/
+        api.js                   # Base API client
+        auth.js
+        admin.js
+        products.js
+        categories.js
+        cart.js
+        orders.js
+        payments.js
+        favorites.js
+        reviews.js
+  twa-kripa-connect/            # Native Android TWA build
+    app/
+      build.gradle
+      src/
+    assetlinks.json             # Digital Asset Links for TWA
+    BUILD_DOCUMENTATION.md
+    INSTALLATION_GUIDE.md
+    UPLOAD_INSTRUCTIONS.md
+    twa-manifest.json
 ```
 
 ---
@@ -127,45 +254,110 @@ The backend is a REST API built with Express and MongoDB.
 
 ### Frontend Features
 
-The frontend is a React + Vite app with routing and auth-protected pages.
+The frontend is a modern React + Vite application with comprehensive routing, authentication, and role-based access control.
 
-**Core App Pages / UX**
-- Public:
-  - Home/Dashboard
-  - Products list + Product details
-  - Categories
-  - Favorites
-  - Cart
-  - Info pages (About/Services/FAQ/Contact/Privacy/Terms/Returns)
-- Auth:
-  - Sign up
-  - Login (password)
-  - Login via **Email OTP**
-  - Google Sign-in
-  - Forgot password + Reset password
-- Customer experience:
-  - Checkout (multi-step)
-  - Order success page
-  - Profile page
-  - Orders list + Order details
+**Public Pages**
+- **Home/Dashboard**: Hero section, featured products, categories, special offers
+- **Products**: Product listing with advanced filtering, sorting, and search
+- **Product Details**: Multi-image gallery, reviews, ratings, add to cart/favorites
+- **Categories**: Browse products by category
+- **Favorites**: Wishlist management
+- **Cart**: Shopping cart with quantity updates and price calculations
+- **Information Pages**: About, Services, FAQ, Contact, Privacy Policy, Terms & Conditions, Refund Policy
 
-**Checkout & Payments**
-- Supports **Cash on Delivery** and **Online Payment via Razorpay**.
-- For Razorpay payments:
-  - Creates Razorpay order via backend
-  - Opens Razorpay checkout
-  - Calls backend verify endpoint after successful payment
+**Authentication & Onboarding**
+- **Sign Up**: Email/password registration
+- **Login**: Multiple login options:
+  - Email/password authentication
+  - **Email OTP** passwordless login
+  - **Google Sign-In** integration
+- **Password Recovery**: Forgot password with email reset link
+- **Onboarding Flow**: First-time users set up shipping address
+- Auto-redirect logic for users without saved addresses
 
-**Role-based Sections**
-- Protected routes:
-  - Checkout, Profile, Onboarding, Orders
-- Role-specific routes:
-  - Admin panel (`/admin`) for `admin` role
-  - B2B page (`/b2b`) for `retailer` role
+**Customer Features (Protected Routes)**
+- **Profile Management**:
+  - Update personal information
+  - Upload profile photo
+  - Manage multiple shipping addresses
+  - View account statistics
+- **Checkout Process**:
+  - Multi-step checkout flow
+  - Address selection/creation
+  - Payment method selection (COD or Razorpay)
+  - Order review and confirmation
+- **Order Management**:
+  - Order history with status tracking
+  - Detailed order view with timeline
+  - Order cancellation
+  - Invoice download (when available)
+- **Shopping Experience**:
+  - Real-time cart updates
+  - Favorites/wishlist management
+  - Product reviews and ratings
 
-**Onboarding / Address Flow**
-- On login, users are redirected to onboarding if they have no saved address.
-- Checkout auto-prefills address from `savedAddresses` (default/first).
+**B2B Retailer Dashboard (`/b2b`)**
+- Retailer-specific order management
+- Bulk order tracking
+- Time-period filters (This Month, Last 3 Months, All Time)
+- Order statistics and analytics
+- Spending insights
+
+**Admin Panel (`/admin`)**
+- **Dashboard**: 
+  - Real-time statistics (revenue, orders, users, low stock)
+  - Interactive charts (revenue trends, order distribution)
+  - Low stock product alerts
+- **Product Management**:
+  - Create/edit/delete products
+  - Multi-image upload and management
+  - Category assignment
+  - Stock and pricing management
+- **Order Management**:
+  - View all orders with filtering
+  - Update order status
+  - Order timeline visualization
+  - Delete orders
+- **User Management**:
+  - List all users
+  - Block/unblock accounts
+  - Change user roles
+  - User statistics
+- **Review Moderation**:
+  - View all product reviews
+  - Approve/reject reviews
+  - Manage customer feedback
+
+**Payment Integration**
+- **Cash on Delivery (COD)** support
+- **Razorpay Online Payment**:
+  - Integrated checkout modal
+  - Payment verification
+  - Automatic order status updates
+  - Transaction tracking
+
+**UI/UX Features**
+- **Responsive Design**: Mobile-first approach, works on all devices
+- **Dark/Light Mode**: Theme support via CSS variables
+- **Toast Notifications**: Real-time feedback for user actions (React Hot Toast)
+- **Loading States**: Skeleton screens and spinners for better UX
+- **Form Validation**: Client-side validation with helpful error messages
+- **Icon System**: React Icons for consistent iconography
+- **Charts & Analytics**: Recharts for data visualization (admin dashboard)
+- **Lazy Loading**: Code splitting for optimal performance
+- **Protected Routes**: Role-based route protection (customer/retailer/admin)
+
+**Progressive Web App (PWA)**
+- PWA-ready with manifest and service worker support
+- App-like experience on mobile devices
+- Offline capability (when configured)
+- Add to home screen support
+
+**Mobile App Support**
+- **Capacitor Integration**: iOS/Android app capability
+- **TWA (Trusted Web Activity)**: Native Android app via Google's TWA technology
+- Native-like performance and appearance
+- Full mobile API access (camera, location, etc.)
 
 
 
@@ -174,21 +366,51 @@ The frontend is a React + Vite app with routing and auth-protected pages.
 ## Tech Stack
 
 **Backend**
-- Node.js, Express
-- MongoDB + Mongoose
-- JWT auth (`jsonwebtoken`)
-- SendGrid email (`@sendgrid/mail`)
-- Razorpay payments (`razorpay`)
-- Cloudinary image storage (`cloudinary`, `streamifier`)
-- PDF generation (`pdfkit`)
-- Security middleware: `helmet`, rate limiting, mongo sanitization
+- **Runtime**: Node.js with Express 5.x
+- **Database**: MongoDB + Mongoose ODM
+- **Authentication**: JWT (`jsonwebtoken`) with refresh token rotation
+- **Email Service**: SendGrid (`@sendgrid/mail`)
+- **Payment Gateway**: Razorpay SDK
+- **File Storage**: Cloudinary (multi-image upload with `streamifier`)
+- **File Upload**: Multer (multipart form-data handling)
+- **PDF Generation**: PDFKit (invoice generation)
+- **Security**: 
+  - Helmet.js (security headers)
+  - Express Rate Limit (DDoS protection)
+  - Mongo-sanitize (NoSQL injection prevention)
+  - XSS protection
+- **Utilities**:
+  - Cookie Parser (refresh token handling)
+  - Morgan (request logging)
+  - CORS (cross-origin resource sharing)
+  - Bcrypt (password hashing)
+  - Slugify (URL-friendly names)
+  - Express Validator (input validation)
 
 **Frontend**
-- React (Vite)
-- React Router
-- Google OAuth (`@react-oauth/google`)
-- Charts (`recharts`)
-- Capacitor (Android support)
+- **Framework**: React 19.x
+- **Build Tool**: Vite 7.x
+- **Routing**: React Router DOM 7.x
+- **Authentication**: 
+  - Google OAuth (`@react-oauth/google`)
+  - Custom JWT implementation
+- **UI/UX**:
+  - React Icons 5.x (icon library)
+  - React Hot Toast 2.x (notifications)
+  - Recharts 3.x (data visualization)
+  - Custom CSS with CSS variables for theming
+- **Mobile**:
+  - Capacitor 8.x (iOS/Android app support)
+  - Capacitor Browser plugin
+- **Developer Tools**:
+  - ESLint with React plugins
+  - TypeScript support (types only)
+
+**Mobile App (TWA)**
+- **Technology**: Trusted Web Activity (Google)
+- **Build Tool**: Bubblewrap CLI
+- **Target**: Android 5.0+ (API 21+)
+- **Features**: Native fullscreen, push notifications, offline support
 
 ---
 
@@ -392,24 +614,145 @@ Base URL: `http://localhost:5000`
 
 From `backend/`:
 
-- `npm start` — start API server.
-- `npm run seed` — seed sample product data.
-- `npm run test:razorpay` — test Razorpay configuration.
-- `npm run test:email` — test SendGrid email sending.
-- `npm run check:payment` — check payment status script.
+- `npm start` — Start API server
+- `npm run seed` — Seed sample product data to MongoDB
+- `npm run test:razorpay` — Test Razorpay configuration and credentials
+- `npm run test:email` — Test SendGrid email sending
+- `npm run check:payment` — Check Razorpay payment status for an order
 
 ### Frontend
 
 From `frontend/`:
 
-- `npm run dev` — start Vite dev server.
-- `npm run build` — build production bundle.
-- `npm run preview` — preview built bundle.
+- `npm run dev` — Start Vite development server (hot reload enabled)
+- `npm run build` — Build production bundle (optimized for deployment)
+- `npm run preview` — Preview production build locally
+- `npm run prebuild` — Generate PWA icons (runs automatically before build)
+
+### Mobile App (TWA)
+
+From `twa-kripa-connect/`:
+
+- `./gradlew assembleRelease` — Build signed release APK
+- `./gradlew installRelease` — Install APK on connected Android device
+- See [BUILD_DOCUMENTATION.md](twa-kripa-connect/BUILD_DOCUMENTATION.md) for detailed instructions
 
 ---
 
-## Notes / Deployment
+## Mobile App (Android TWA)
 
-- If deploying frontend on Vercel/Netlify, **set** `VITE_API_BASE_URL` to your backend URL.
-- For Razorpay webhooks, the backend webhook URL must be publicly reachable and configured in Razorpay dashboard.
+The project includes a native Android app built using **Trusted Web Activity (TWA)** technology.
+
+### What is TWA?
+
+Trusted Web Activity is a Google-approved way to wrap your web app into a native Android app that:
+- Opens in fullscreen (no browser UI)
+- Appears as a native app on the device
+- Can be distributed via Play Store or direct APK
+- Supports push notifications, location access, and other native features
+
+### Files & Documentation
+
+- **`twa-kripa-connect/`** — Android app source code
+- **`BUILD_DOCUMENTATION.md`** — Complete build and configuration guide
+- **`INSTALLATION_GUIDE.md`** — User installation instructions
+- **`UPLOAD_INSTRUCTIONS.md`** — Deploy `assetlinks.json` to verify app ownership
+- **`assetlinks.json`** — Digital Asset Links file (MUST be uploaded to `/.well-known/assetlinks.json` on your domain)
+
+### Quick Setup
+
+1. Upload `assetlinks.json` to your website at `https://your-domain.com/.well-known/assetlinks.json`
+2. Build the APK: `cd twa-kripa-connect && ./gradlew assembleRelease`
+3. Install or distribute: `adb install app/build/outputs/apk/release/app-release.apk`
+
+For detailed instructions, see [twa-kripa-connect/BUILD_DOCUMENTATION.md](twa-kripa-connect/BUILD_DOCUMENTATION.md).
+
+---
+
+## Deployment
+
+### Backend Deployment
+
+**Recommended Platforms**: Render, Railway, Heroku, AWS EC2
+
+**Environment Setup:**
+1. Set all required environment variables (see [Backend .env](#backend-env))
+2. Ensure `MONGO_URI` points to a cloud MongoDB instance (MongoDB Atlas recommended)
+3. Configure `FRONTEND_URL` to your production frontend URL
+4. Add production URLs to `ALLOWED_ORIGINS`
+5. Set up Razorpay webhook URL in Razorpay dashboard
+
+**Important:**
+- Set `NODE_ENV=production`
+- Enable `trust proxy` for proper HTTPS detection on platforms like Render/Heroku
+- Whitelist your frontend domain in CORS configuration
+
+### Frontend Deployment
+
+**Recommended Platforms**: Vercel, Netlify, Cloudflare Pages
+
+**Environment Setup:**
+1. Set `VITE_API_BASE_URL` to your backend URL (e.g., `https://your-api.onrender.com`)
+2. Set `VITE_GOOGLE_CLIENT_ID` for Google OAuth
+3. Run `npm run build` to generate production bundle
+4. Deploy the `dist/` folder
+
+**Vercel Configuration:**
+- The project includes `vercel.json` for proper SPA routing
+- Vercel preview deployments are automatically whitelisted in backend CORS
+
+**Important:**
+- Do NOT commit `.env` files to version control
+- Use platform-specific environment variable settings
+- Test Razorpay in production mode after deployment
+
+### Razorpay Webhook Configuration
+
+1. Log in to Razorpay Dashboard
+2. Go to Settings → Webhooks
+3. Add webhook URL: `https://your-backend.com/api/payments/webhook`
+4. Select events: `payment.captured`, `payment.failed`
+5. Copy the webhook secret to `RAZORPAY_WEBHOOK_SECRET` in backend `.env`
+
+### Database Backup
+
+- Regular MongoDB backups are recommended
+- Use MongoDB Atlas automated backups for production
+- Keep transaction records for audit purposes
+
+---
+
+## Project Status & Roadmap
+
+### ✅ Completed Features
+- Full authentication system (email/password, OTP, OAuth)
+- Complete product catalog with categories
+- Shopping cart and favorites
+- Checkout with Razorpay integration
+- Order management and tracking
+- Admin dashboard with analytics
+- B2B retailer portal
+- PWA support
+- Android TWA app
+- Invoice generation
+- Review system
+- Email notifications
+
+### 🚧 Potential Enhancements
+- WhatsApp order notifications
+- Multi-language support (i18n)
+- Advanced product filters (price range, ratings)
+- Inventory management improvements
+- SMS OTP as alternative to email OTP
+- Enhanced analytics (customer lifetime value, cohort analysis)
+- Bulk product import/export
+- Discount codes and promotions system
+- Subscription/recurring orders for B2B
+- iOS app (via Capacitor)
+
+---
+
+## License
+
+This project is proprietary. All rights reserved.
 

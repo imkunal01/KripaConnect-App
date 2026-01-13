@@ -40,6 +40,11 @@
 
 * {
   box-sizing: border-box;
+  /* Remove browser tap highlights & callouts */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  /* Remove 300ms tap delay */
+  touch-action: manipulation;
 }
 
 body {
@@ -52,6 +57,22 @@ body {
   background-color: var(--bg-secondary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Disable overscroll bounce for native feel */
+  overscroll-behavior: none;
+  /* Prevent text selection on touch */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection only in inputs and content areas */
+input,
+textarea,
+[contenteditable],
+.selectable {
+  -webkit-user-select: auto;
+  -moz-user-select: auto;
+  user-select: auto;
 }
 
 /* Prevent fixed mobile navbar/dock from covering page content */
@@ -171,6 +192,77 @@ a {
   .app-fallback__barFill {
     animation: none;
   }
+}
+
+/* Native-like press feedback for all interactive elements */
+button:not(:disabled),
+a,
+[role="button"],
+.clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.05s ease-out, opacity 0.05s ease-out;
+  will-change: transform, opacity;
+}
+
+button:not(:disabled):active,
+a:active,
+[role="button"]:active,
+.clickable:active {
+  transform: scale(0.96);
+  opacity: 0.8;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Page transition improvements */
+#root {
+  min-height: 100vh;
+  background: var(--bg-secondary);
+}
+
+.page-enter {
+  opacity: 0;
+}
+
+.page-enter-active {
+  opacity: 1;
+  transition: opacity 120ms ease-in;
+}
+
+.page-exit {
+  opacity: 1;
+}
+
+.page-exit-active {
+  opacity: 0;
+  transition: opacity 80ms ease-out;
+}
+
+/* Skeleton loader utility */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.skeleton {
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    var(--gray-200) 0%,
+    var(--gray-50) 20%,
+    var(--gray-200) 40%,
+    var(--gray-200) 100%
+  );
+  background-size: 800px 100px;
+  border-radius: 4px;
 }
 
 /* Touch-friendly inputs on mobile */

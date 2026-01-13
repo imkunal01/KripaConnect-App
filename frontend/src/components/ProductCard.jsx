@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import ShopContext from '../context/ShopContext.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
+import { usePreventRageTap } from '../hooks/usePreventRageTap.js'
 import './ProductCard.css'
 
 export default function ProductCard({ product, favorite }) {
@@ -10,6 +11,8 @@ export default function ProductCard({ product, favorite }) {
   const { role } = useAuth()
   const { mode } = usePurchaseMode()
   const [isHovered, setIsHovered] = useState(false)
+  const [isAdding, withPreventAdd] = usePreventRageTap({ minDelay: 200 })
+  const [isTogglingFav, withPreventFav] = usePreventRageTap({ minDelay: 200 })
   const inStock = (product.stock || 0) > 0
 
   const isRetailer = role === 'retailer'
@@ -26,8 +29,9 @@ export default function ProductCard({ product, favorite }) {
     >
       {/* Wishlist Icon - Top Right */}
       <button
-        onClick={() => toggleFavorite(product._id)}
+        onClick={withPreventFav(async () => toggleFavorite(product._id))}
         className={`product-card-wishlist ${favorite ? 'active' : ''}`}
+        disabled={isTogglingFav}
       >
         {favorite ? '❤️' : '🤍'}
       </button>
@@ -75,11 +79,11 @@ export default function ProductCard({ product, favorite }) {
       </div>
 
       <button
-        onClick={() => addToCart(product, 1)}
-        disabled={!inStock || !canQuickAdd}
+        onClick={withPreventAdd(async () => addToCart(product, 1))}
+        disabled={!inStock || !canQuickAdd || isAdding}
         className="product-card-button"
       >
-        {!inStock ? 'Out of Stock' : !canQuickAdd ? `Min ${minBulkQty} units` : 'Add to Cart'}
+        {!inStock ? 'Out of Stock' : !canQuickAdd ? `Min ${minBulkQty} units` : isAdding ? 'Adding...' : 'Add to Cart'}
       </button>
     </div>
   )

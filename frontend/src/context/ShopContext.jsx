@@ -55,10 +55,40 @@ export function ShopProvider({ children }) {
   }, [token])
 
   const addToCart = useCallback(async (product, qty = 1) => {
+    // INSTANT UI UPDATE - no awaits before this
+    const tempItem = {
+      productId: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.images?.[0]?.url,
+      qty,
+      stock: product.stock,
+      regularPrice: product.regularPrice,
+      retailerPrice: product.retailerPrice,
+      bulkPrice: product.bulkPrice,
+      minBulkQty: product.minBulkQty,
+      isBulkPrice: false
+    }
+
+    // Update UI INSTANTLY
+    setCart(prev => {
+      const idx = prev.findIndex(i => i.productId === product._id)
+      if (idx >= 0) {
+        const updated = [...prev]
+        updated[idx] = { ...updated[idx], qty: updated[idx].qty + qty }
+        return updated
+      }
+      return [...prev, tempItem]
+    })
+
+    // Show success immediately
+    toast.success('Added to cart')
+
+    // Then sync with backend
     if (token) {
       try {
         const res = await apiAddToCart(product._id, qty, token, mode)
-        // Optimistically update cart from response instead of refetching
+        // Update with real data from server
         if (res.data?.item) {
           const newItem = mapCartItem(res.data.item)
           setCart(prev => {
@@ -68,28 +98,25 @@ export function ShopProvider({ children }) {
               updated[idx] = { ...updated[idx], ...newItem }
               return updated
             }
-            return [...prev, newItem]
+            return prev
           })
         }
-
-        toast.success('Added to cart')
       } catch (err) {
         console.error('Add to cart failed:', err)
+        // Rollback on error
+        setCart(prev => {
+          const idx = prev.findIndex(i => i.productId === product._id)
+          if (idx >= 0) {
+            const updated = [...prev]
+            updated[idx].qty -= qty
+            if (updated[idx].qty <= 0) return prev.filter((_, i) => i !== idx)
+            return updated
+          }
+          return prev.filter(i => i.productId !== product._id)
+        })
         toast.error(err?.message || 'Failed to add to cart')
         throw err
       }
-    } else {
-      setCart(prev => {
-        const idx = prev.findIndex(i => i.productId === product._id)
-        if (idx >= 0) {
-          const next = [...prev]
-          next[idx] = { ...next[idx], qty: next[idx].qty + qty }
-          return next
-        }
-        return [...prev, { productId: product._id, name: product.name, price: product.price, image: product.images?.[0]?.url, qty }]
-      })
-
-      toast.success('Added to cart')
     }
   }, [token, mode])
 
@@ -137,28 +164,26 @@ export function ShopProvider({ children }) {
   }, [token, mode])
 
   const toggleFavorite = useCallback(async (productId) => {
+    const exists = favorites.includes(productId)
+    
+    // INSTANT UI UPDATE - no conditions, no awaits
+    setFavorites(prev => exists ? prev.filter(id => id !== productId) : [...prev, productId])
+    toast.success(exists ? 'Removed from wishlist' : 'Added to wishlist')
+
+    // Then sync with backend
     if (token) {
-      const exists = favorites.includes(productId)
-      // Optimistically update UI
-      setFavorites(prev => exists ? prev.filter(id => id !== productId) : [...prev, productId])
       try {
         if (exists) {
           await removeFavorite(productId, token)
-          toast.success('Removed from wishlist')
         } else {
           await addFavorite(productId, token)
-          toast.success('Added to wishlist')
         }
       } catch (err) {
-        // Revert on error
+        // Rollback on error
         setFavorites(prev => exists ? [...prev, productId] : prev.filter(id => id !== productId))
         toast.error(err?.message || 'Wishlist update failed')
         throw err
       }
-    } else {
-      const exists = favorites.includes(productId)
-      setFavorites(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId])
-      toast.success(exists ? 'Removed from wishlist' : 'Added to wishlist')
     }
   }, [token, favorites])
 

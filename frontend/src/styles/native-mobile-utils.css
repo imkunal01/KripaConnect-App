@@ -1,0 +1,328 @@
+/**
+ * Native Mobile Utilities
+ * Quick reference classes for native-like behavior
+ */
+
+/* ========================================
+   TOUCH FEEDBACK UTILITIES
+   ======================================== */
+
+/* Native press effect - use on any clickable element */
+.native-press {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.05s ease-out, opacity 0.05s ease-out;
+  will-change: transform, opacity;
+}
+
+.native-press:active:not(:disabled) {
+  transform: scale(0.96);
+  opacity: 0.8;
+}
+
+/* Stronger press effect for primary actions */
+.native-press-strong:active:not(:disabled) {
+  transform: scale(0.92);
+  opacity: 0.7;
+}
+
+/* Subtle press effect for cards/items */
+.native-press-subtle:active:not(:disabled) {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+/* Button loading state */
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.7;
+  position: relative;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* ========================================
+   SKELETON LOADERS
+   ======================================== */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 0%,
+    #f9fafb 20%,
+    #e5e7eb 40%,
+    #e5e7eb 100%
+  );
+  background-size: 800px 100px;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -468px 0; }
+  100% { background-position: 468px 0; }
+}
+
+/* Dark mode skeleton */
+@media (prefers-color-scheme: dark) {
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #374151 0%,
+      #4b5563 20%,
+      #374151 40%,
+      #374151 100%
+    );
+  }
+}
+
+/* ========================================
+   PAGE TRANSITIONS
+   ======================================== */
+
+/* Fade in new pages */
+.page-fade-in {
+  animation: fadeIn 0.12s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Prevent white flash on navigation */
+.page-container {
+  min-height: 100vh;
+  background: var(--bg-secondary, #f9fafb);
+}
+
+/* ========================================
+   TOUCH TARGET SIZING
+   ======================================== */
+
+/* Minimum touch target (44x44px) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================================
+   TEXT SELECTION CONTROL
+   ======================================== */
+
+/* Allow text selection in specific areas */
+.selectable,
+.selectable * {
+  -webkit-user-select: auto !important;
+  -moz-user-select: auto !important;
+  user-select: auto !important;
+}
+
+/* Prevent text selection everywhere else (set in body by default) */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* ========================================
+   SMOOTH SCROLLING
+   ======================================== */
+
+/* Native smooth scroll */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar while maintaining functionality */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ========================================
+   DISABLED STATE
+   ======================================== */
+
+button:disabled,
+.btn-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ========================================
+   SAFE AREA SUPPORT (Notches)
+   ======================================== */
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+/* GPU acceleration for animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Content visibility for long lists */
+.lazy-render {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
+}
+
+/* ========================================
+   BUTTON STATE VARIANTS
+   ======================================== */
+
+.btn-success {
+  background-color: #10b981 !important;
+  color: white;
+}
+
+.btn-error {
+  background-color: #ef4444 !important;
+  color: white;
+}
+
+.btn-processing {
+  background-color: #6b7280 !important;
+  color: white;
+}
+
+/* ========================================
+   ANIMATION UTILITIES
+   ======================================== */
+
+/* Pop animation for favorites */
+.pop {
+  animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Shake animation for errors */
+.shake {
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+/* Pulse animation for loading */
+.pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+.focus-visible:focus-visible {
+  outline: 2px solid var(--primary, #FF3D3D);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   USAGE EXAMPLES
+   ======================================== */
+
+/*
+
+<!-- Native press on buttons -->
+<button class="native-press">Click me</button>
+
+<!-- Loading state -->
+<button class="btn-loading" disabled>Processing...</button>
+
+<!-- Skeleton loader -->
+<div class="skeleton" style="width: 100%; height: 200px;"></div>
+
+<!-- Page container -->
+<div class="page-container page-fade-in">
+  <!-- content -->
+</div>
+
+<!-- Selectable text area -->
+<div class="selectable">
+  <p>This text can be selected</p>
+</div>
+
+<!-- Safe area padding -->
+<div class="safe-area-top safe-area-bottom">
+  <!-- content with notch support -->
+</div>
+
+<!-- Animated favorite -->
+<button class="native-press pop">❤️</button>
+
+*/
