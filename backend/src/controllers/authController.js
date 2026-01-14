@@ -3,6 +3,7 @@ const generateToken = require('../utils/generateToken');
 const generateRefreshToken = require('../utils/generateRefreshToken');
 const jwt = require('jsonwebtoken');
 const https = require('https');
+const { getOrSetCache, invalidateCache } = require('../utils/cacheUtils');
 
 // Helper for cookie options
 const getCookieOptions = (req) => {
@@ -92,7 +93,17 @@ const loginUser = async (req, res)=>{
 
 const getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select("-password");
+        const cacheKey = `user:profile:${req.user._id}`;
+        
+        const user = await getOrSetCache(
+            cacheKey,
+            300, // 5 minutes
+            async () => {
+                return await User.findById(req.user._id).select("-password").lean();
+            },
+            true
+        );
+        
         if (user) res.json(user);
         else res.status(404).json({ message: "User not found" });
     } catch (error) {
@@ -175,6 +186,9 @@ const updateProfile = async (req, res) => {
         
         await user.save();
         const updatedUser = await User.findById(user._id).select("-password");
+        
+        // Invalidate user profile cache
+        await invalidateCache(`user:profile:${req.user._id}`);
 
         // If role changed, return a fresh access token so frontend permissions update immediately
         if (role !== undefined && prevRole !== user.role) {
@@ -205,6 +219,9 @@ const uploadProfilePhoto = async (req, res) => {
 
     user.profilePhoto = url;
     await user.save();
+
+    // Invalidate user profile cache
+    await invalidateCache(`user:profile:${req.user._id}`);
 
     const updatedUser = await User.findById(user._id).select("-password");
     res.json(updatedUser);

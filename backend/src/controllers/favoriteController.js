@@ -1,24 +1,38 @@
 const User = require("../models/User");
 const Product = require("../models/Product");
+const { getOrSetCache, invalidateCache } = require('../utils/cacheUtils');
 
 async function getFavorites(req, res) {
   try {
-    const user = await User.findById(req.user._id)
-      .select("favorites")
-      .populate("favorites", "name price images stock")
-      .lean();
+    const cacheKey = `favorites:user:${req.user._id}`;
     
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const items = await getOrSetCache(
+      cacheKey,
+      600, // 10 minutes
+      async () => {
+        const user = await User.findById(req.user._id)
+          .select("favorites")
+          .populate("favorites", "name price images stock")
+          .lean();
+        
+        if (!user) return null;
+        
+        // Filter out any null products (deleted products)
+        const validFavorites = (user.favorites || []).filter(p => p && p._id);
+        return validFavorites.map(p => ({ 
+          _id: p._id, 
+          name: p.name, 
+          price: p.price, 
+          images: p.images, 
+          stock: p.stock 
+        }));
+      },
+      true
+    );
     
-    // Filter out any null products (deleted products)
-    const validFavorites = (user.favorites || []).filter(p => p && p._id);
-    const items = validFavorites.map(p => ({ 
-      _id: p._id, 
-      name: p.name, 
-      price: p.price, 
-      images: p.images, 
-      stock: p.stock 
-    }));
+    if (items === null) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
     
     res.json({ success: true, data: items });
   } catch (err) {
@@ -40,6 +54,9 @@ async function addFavorite(req, res) {
       $addToSet: { favorites: productId }
     });
     
+    // Invalidate favorites cache
+    await invalidateCache(`favorites:user:${req.user._id}`);
+    
     res.json({ success: true, productId });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -55,6 +72,9 @@ async function removeFavorite(req, res) {
     await User.findByIdAndUpdate(req.user._id, {
       $pull: { favorites: productId }
     });
+    
+    // Invalidate favorites cache
+    await invalidateCache(`favorites:user:${req.user._id}`);
     
     res.json({ success: true, productId });
   } catch (err) {

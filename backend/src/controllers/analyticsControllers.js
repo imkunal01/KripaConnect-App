@@ -1,30 +1,37 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const User = require("../models/User");
+const { getOrSetCache } = require('../utils/cacheUtils');
 
 // 🔹 1. OVERVIEW STATS
 exports.getOverview = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalOrders = await Order.countDocuments();
-    const totalProducts = await Product.countDocuments();
-    const lowStock = await Product.countDocuments({ stock: { $lt: 10 } });
+    const data = await getOrSetCache(
+      'analytics:overview',
+      300, // 5 minutes
+      async () => {
+        const totalUsers = await User.countDocuments();
+        const totalOrders = await Order.countDocuments();
+        const totalProducts = await Product.countDocuments();
+        const lowStock = await Product.countDocuments({ stock: { $lt: 10 } });
 
-    const revenueAgg = await Order.aggregate([
-      { $match: { deliveryStatus: "delivered" } },
-      { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } },
-    ]);
+        const revenueAgg = await Order.aggregate([
+          { $match: { deliveryStatus: "delivered" } },
+          { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } },
+        ]);
 
-    res.json({
-      success: true,
-      data: {
-        totalUsers,
-        totalOrders,
-        totalProducts,
-        lowStock,
-        totalRevenue: revenueAgg.length ? revenueAgg[0].totalRevenue : 0,
+        return {
+          totalUsers,
+          totalOrders,
+          totalProducts,
+          lowStock,
+          totalRevenue: revenueAgg.length ? revenueAgg[0].totalRevenue : 0,
+        };
       },
-    });
+      true
+    );
+
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -33,16 +40,23 @@ exports.getOverview = async (req, res) => {
 // 🔹 2. REVENUE BY DAY (for chart)
 exports.getRevenueStats = async (req, res) => {
   try {
-    const revenue = await Order.aggregate([
-      { $match: { deliveryStatus: "delivered" } },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          total: { $sum: "$totalAmount" },
-        },
+    const revenue = await getOrSetCache(
+      'analytics:revenue',
+      300, // 5 minutes
+      async () => {
+        return await Order.aggregate([
+          { $match: { deliveryStatus: "delivered" } },
+          {
+            $group: {
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+              total: { $sum: "$totalAmount" },
+            },
+          },
+          { $sort: { "_id": 1 } },
+        ]);
       },
-      { $sort: { "_id": 1 } },
-    ]);
+      true
+    );
 
     res.json({ success: true, data: revenue });
   } catch (err) {
@@ -53,14 +67,21 @@ exports.getRevenueStats = async (req, res) => {
 // 🔹 3. ORDER STATUS DISTRIBUTION
 exports.getOrderStats = async (req, res) => {
   try {
-    const stats = await Order.aggregate([
-      {
-        $group: {
-          _id: "$deliveryStatus",
-          count: { $sum: 1 },
-        },
+    const stats = await getOrSetCache(
+      'analytics:orders',
+      120, // 2 minutes
+      async () => {
+        return await Order.aggregate([
+          {
+            $group: {
+              _id: "$deliveryStatus",
+              count: { $sum: 1 },
+            },
+          },
+        ]);
       },
-    ]);
+      true
+    );
 
     res.json({ success: true, data: stats });
   } catch (err) {
@@ -71,19 +92,26 @@ exports.getOrderStats = async (req, res) => {
 // 🔹 4. TOP SELLING PRODUCTS
 exports.getTopProducts = async (req, res) => {
   try {
-    const top = await Order.aggregate([
-      { $unwind: "$items" },
-      {
-        $group: {
-          _id: "$items.product",
-          totalSold: { $sum: "$items.qty" },
-        },
-      },
-      { $sort: { totalSold: -1 } },
-      { $limit: 10 },
-    ]);
+    const populated = await getOrSetCache(
+      'analytics:top-products',
+      300, // 5 minutes
+      async () => {
+        const top = await Order.aggregate([
+          { $unwind: "$items" },
+          {
+            $group: {
+              _id: "$items.product",
+              totalSold: { $sum: "$items.qty" },
+            },
+          },
+          { $sort: { totalSold: -1 } },
+          { $limit: 10 },
+        ]);
 
-    const populated = await Product.populate(top, { path: "_id", select: "name images price" });
+        return await Product.populate(top, { path: "_id", select: "name images price" });
+      },
+      true
+    );
 
     res.json({ success: true, data: populated });
   } catch (err) {
@@ -94,18 +122,25 @@ exports.getTopProducts = async (req, res) => {
 // 🔹 5. MONTHLY USER GROWTH
 exports.getUserGrowth = async (req, res) => {
   try {
-    const users = await User.aggregate([
-      {
-        $group: {
-          _id: {
-            month: { $month: "$createdAt" },
-            year: { $year: "$createdAt" },
+    const users = await getOrSetCache(
+      'analytics:user-growth',
+      300, // 5 minutes
+      async () => {
+        return await User.aggregate([
+          {
+            $group: {
+              _id: {
+                month: { $month: "$createdAt" },
+                year: { $year: "$createdAt" },
+              },
+              count: { $sum: 1 },
+            },
           },
-          count: { $sum: 1 },
-        },
+          { $sort: { "_id.year": 1, "_id.month": 1 } },
+        ]);
       },
-      { $sort: { "_id.year": 1, "_id.month": 1 } },
-    ]);
+      true
+    );
 
     res.json({ success: true, data: users });
   } catch (err) {
@@ -116,9 +151,16 @@ exports.getUserGrowth = async (req, res) => {
 // 🔹 6. LOW STOCK ALERTS
 exports.getLowStock = async (req, res) => {
   try {
-    const products = await Product.find({ stock: { $lt: 10 } })
-      .select("name stock images")
-      .lean();
+    const products = await getOrSetCache(
+      'analytics:low-stock',
+      120, // 2 minutes
+      async () => {
+        return await Product.find({ stock: { $lt: 10 } })
+          .select("name stock images")
+          .lean();
+      },
+      true
+    );
 
     res.json({ success: true, data: products });
   } catch (err) {

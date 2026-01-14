@@ -2,6 +2,7 @@ const Product = require("../models/Product");
 const Category = require("../models/Category");
 const slugify = require("slugify");
 const { uploadBuffer, deleteById } = require("../services/cloudinaryService");
+const { getOrSetCache, invalidatePattern, invalidateCache, hashQueryParams } = require('../utils/cacheUtils');
 
 /* =====================================
    🔧 TAG NORMALIZER (CRITICAL FIX)
@@ -86,6 +87,10 @@ async function createProduct(req, res) {
     }
 
     await product.save();
+    
+    // Invalidate all product list caches
+    await invalidatePattern('products:list:*');
+    
     res.status(201).json(product);
 
   } catch (err) {
@@ -115,7 +120,15 @@ async function listProducts(req, res) {
       sort
     } = req.query;
 
-    const filter = { active: true };
+    // Generate cache key based on query params
+    const queryHash = hashQueryParams(req.query);
+    const cacheKey = `products:list:${queryHash}`;
+
+    const result = await getOrSetCache(
+      cacheKey,
+      300, // 5 minutes
+      async () => {
+        const filter = { active: true };
 
     /* ---- Search ---- */
     const searchText = search || q;
@@ -169,16 +182,21 @@ async function listProducts(req, res) {
 
     if (sort) query = query.sort(sort);
 
-    // Run queries in parallel for better performance
-    const [items, total] = await Promise.all([
-      query.exec(),
-      Product.countDocuments(filter)
-    ]);
+        // Run queries in parallel for better performance
+        const [items, total] = await Promise.all([
+          query.exec(),
+          Product.countDocuments(filter)
+        ]);
 
-    res.json({
-      items,
-      meta: { page: Number(page), limit: limitNum, total }
-    });
+        return {
+          items,
+          meta: { page: Number(page), limit: limitNum, total }
+        };
+      },
+      true // Log cache hits/misses
+    );
+
+    res.json(result);
 
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -190,9 +208,18 @@ async function listProducts(req, res) {
    ===================================== */
 async function getProduct(req, res) {
   try {
-    const product = await Product.findById(req.params.id)
-      .populate("Category", "name slug")
-      .lean();
+    const cacheKey = `product:${req.params.id}`;
+    
+    const product = await getOrSetCache(
+      cacheKey,
+      1800, // 30 minutes
+      async () => {
+        return await Product.findById(req.params.id)
+          .populate("Category", "name slug")
+          .lean();
+      },
+      true
+    );
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -253,6 +280,13 @@ async function updateProduct(req, res) {
     }
 
     await product.save();
+    
+    // Invalidate product detail and list caches
+    await Promise.all([
+      invalidateCache(`product:${req.params.id}`),
+      invalidatePattern('products:list:*')
+    ]);
+    
     res.json(product);
 
   } catch (err) {
@@ -283,6 +317,13 @@ async function deleteProduct(req, res) {
     }
 
     await product.deleteOne();
+    
+    // Invalidate product detail and list caches
+    await Promise.all([
+      invalidateCache(`product:${req.params.id}`),
+      invalidatePattern('products:list:*')
+    ]);
+    
     res.json({ message: "Product deleted" });
 
   } catch (err) {
@@ -309,6 +350,10 @@ async function removeImage(req, res) {
     );
 
     await product.save();
+    
+    // Invalidate product detail cache (image changed)
+    await invalidateCache(`product:${productId}`);
+    
     res.json({ message: "Image removed", product });
 
   } catch (err) {

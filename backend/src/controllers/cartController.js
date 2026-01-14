@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Product = require("../models/Product");
+const { getCache, setCache, invalidateCache } = require('../utils/cacheUtils');
 
 function normalizePurchaseMode(value, isRetailer) {
   if (!isRetailer) return "customer";
@@ -49,6 +50,17 @@ async function getCart(req, res) {
   try {
     const isRetailer = req.user.role === "retailer";
     const effectivePurchaseMode = normalizePurchaseMode(req.query?.purchaseMode, isRetailer);
+    const cacheKey = `cart:user:${req.user._id}`;
+    
+    // Try Redis first
+    let cachedCart = await getCache(cacheKey);
+    
+    if (cachedCart) {
+      // Cache hit - return cached cart
+      return res.json({ success: true, data: cachedCart });
+    }
+    
+    // Cache miss - fetch from MongoDB
     const user = await User.findById(req.user._id)
       .select("cart")
       .populate("cart.product", "name price images stock retailer_price price_bulk min_bulk_qty")
@@ -65,7 +77,12 @@ async function getCart(req, res) {
       });
     }
     
-    res.json({ success: true, data: mapCartItems(validItems, isRetailer, effectivePurchaseMode) });
+    const cartData = mapCartItems(validItems, isRetailer, effectivePurchaseMode);
+    
+    // Store in Redis for next time (no TTL for active carts)
+    await setCache(cacheKey, cartData, 86400); // 24 hours
+    
+    res.json({ success: true, data: cartData });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -103,6 +120,9 @@ async function addItem(req, res) {
       user.cart.push({ product: productId, qty: Math.min(requestedQty, product.stock) });
     }
     await user.save();
+    
+    // Invalidate cart cache
+    await invalidateCache(`cart:user:${req.user._id}`);
     
     // Return the added/updated item directly to avoid extra API call
     let price = product.price;
@@ -171,6 +191,9 @@ async function updateItem(req, res) {
     }
     await user.save();
     
+    // Invalidate cart cache
+    await invalidateCache(`cart:user:${req.user._id}`);
+    
     // Return updated item info to avoid extra API call
     if (removed) {
       return res.json({ success: true, removed: true, productId });
@@ -213,6 +236,10 @@ async function removeItem(req, res) {
     await User.findByIdAndUpdate(req.user._id, {
       $pull: { cart: { product: productId } }
     });
+    
+    // Invalidate cart cache
+    await invalidateCache(`cart:user:${req.user._id}`);
+    
     res.json({ success: true, productId });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

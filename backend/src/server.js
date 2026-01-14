@@ -5,11 +5,15 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 
 const connectDB = require("./config/db");
+const { createRedisClient } = require("./config/redis");
 const errorHandler = require("./middleware/errorHandler");
 const { helmet, apiLimiter, sanitizeRequest } = require("./middleware/security");
 
 dotenv.config();
 connectDB();
+
+// Initialize Redis client
+createRedisClient();
 
 const app = express();
 

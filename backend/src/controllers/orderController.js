@@ -2,6 +2,7 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const User = require("../models/User");
 const { sendMail } = require("../services/emailService");
+const { invalidateMultipleKeys, invalidateCache } = require('../utils/cacheUtils');
 
 function normalizePurchaseMode(value, isRetailer) {
   if (!isRetailer) return "customer";
@@ -90,6 +91,18 @@ const createOrder = async (req, res) => {
       console.warn("Email send failed:", e.message);
     }
 
+    // Invalidate analytics and cart caches
+    await Promise.all([
+      invalidateMultipleKeys([
+        'analytics:overview',
+        'analytics:revenue',
+        'analytics:orders',
+        'analytics:top-products',
+        'analytics:low-stock'
+      ]),
+      invalidateCache(`cart:user:${req.user._id}`)
+    ]);
+
     res.status(201).json(order);
   } catch (err) {
     console.error(err);
@@ -160,6 +173,13 @@ const updateOrderStatus = async (req, res) => {
     order.deliveryStatus = status;
     await order.save();
 
+    // Invalidate analytics caches (status change affects stats)
+    await invalidateMultipleKeys([
+      'analytics:overview',
+      'analytics:revenue',
+      'analytics:orders'
+    ]);
+
     res.json({ message: "Order status updated", order });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -172,6 +192,15 @@ const deleteOrder = async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     await order.deleteOne();
+    
+    // Invalidate all analytics caches
+    await invalidateMultipleKeys([
+      'analytics:overview',
+      'analytics:revenue',
+      'analytics:orders',
+      'analytics:top-products'
+    ]);
+    
     res.json({ message: "Order deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -196,6 +225,12 @@ const cancelOrder = async (req, res) => {
 
     order.deliveryStatus = "cancelled";
     await order.save();
+    
+    // Invalidate analytics caches (cancellation affects order stats)
+    await invalidateMultipleKeys([
+      'analytics:overview',
+      'analytics:orders'
+    ]);
     
     res.json({ message: "Order cancelled successfully", order });
   } catch (err) {
