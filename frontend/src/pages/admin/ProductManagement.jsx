@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { listProducts } from '../../services/products'
-import { listCategories } from '../../services/categories'
-import { createProductAdmin, updateProductAdmin, deleteProductAdmin } from '../../services/admin'
+import { createProductAdmin, updateProductAdmin, deleteProductAdmin, listSubcategoriesAdmin, listCategoriesAdmin } from '../../services/admin'
 
 function getMongoObjectIdTimeMs(id) {
   if (typeof id !== 'string' || id.length < 8) return 0
@@ -22,6 +21,7 @@ export default function ProductManagement() {
   const { token } = useAuth()
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
+  const [subcategories, setSubcategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
@@ -30,6 +30,7 @@ export default function ProductManagement() {
     name: '',
     description: '',
     category: '',
+    subcategory: '',
     price: '',
     retailer_price: '',
     price_bulk: '',
@@ -49,14 +50,16 @@ export default function ProductManagement() {
       setLoading(true)
       const [prods, cats] = await Promise.all([
         listProducts({ limit: 1000 }),
-        listCategories()
+        listCategoriesAdmin(token)
       ])
+      const subs = await listSubcategoriesAdmin(token)
       const items = prods.items || []
       const sorted = Array.isArray(items)
         ? items.slice().sort((a, b) => getDocCreatedTimeMs(b) - getDocCreatedTimeMs(a))
         : []
       setProducts(sorted)
       setCategories(cats || [])
+      setSubcategories(Array.isArray(subs) ? subs : [])
     } catch (err) {
       console.error(err)
     } finally {
@@ -70,6 +73,7 @@ export default function ProductManagement() {
       name: product.name || '',
       description: product.description || '',
       category: product.Category?._id || '',
+      subcategory: product.subcategory_id?._id || product.subcategory_id || '',
       price: product.price || '',
       retailer_price: product.retailer_price || '',
       price_bulk: product.price_bulk || '',
@@ -99,7 +103,9 @@ export default function ProductManagement() {
         min_bulk_qty: formData.min_bulk_qty ? Number(formData.min_bulk_qty) : undefined,
         stock: Number(formData.stock),
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
-        category: formData.category || undefined
+        category: formData.category || undefined,
+        category_id: formData.category || undefined,
+        subcategory_id: formData.subcategory || undefined
       }
 
       if (editingProduct) {
@@ -110,7 +116,7 @@ export default function ProductManagement() {
       setShowForm(false)
       setEditingProduct(null)
       setFormData({
-        name: '', description: '', category: '', price: '', retailer_price: '',
+        name: '', description: '', category: '', subcategory: '', price: '', retailer_price: '',
         price_bulk: '', min_bulk_qty: '', stock: '', tags: '', active: true
       })
       setImages([])
@@ -145,7 +151,7 @@ export default function ProductManagement() {
             onClick={() => {
               setEditingProduct(null)
               setFormData({
-                name: '', description: '', category: '', price: '', retailer_price: '',
+                name: '', description: '', category: '', subcategory: '', price: '', retailer_price: '',
                 price_bulk: '', min_bulk_qty: '', stock: '', tags: '', active: true
               })
               setImages([])
@@ -203,13 +209,33 @@ export default function ProductManagement() {
                   <select
                     className="adminSelect"
                     value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                    onChange={e => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
+                    required
                   >
                     <option value="">Select Category</option>
                     {categories.map(cat => (
                       <option key={cat._id} value={cat._id}>{cat.name}</option>
                     ))}
                   </select>
+                </div>
+
+                <div style={{ marginBottom: 12 }}>
+                  <label className="adminLabel">Subcategory</label>
+                  <select
+                    className="adminSelect"
+                    value={formData.subcategory}
+                    onChange={e => setFormData({ ...formData, subcategory: e.target.value })}
+                    required
+                    disabled={!formData.category}
+                  >
+                    <option value="">Select Subcategory</option>
+                    {subcategories
+                      .filter(sub => String(sub.category_id?._id || sub.category_id) === String(formData.category))
+                      .map(sub => (
+                        <option key={sub._id} value={sub._id}>{sub.name}</option>
+                      ))}
+                  </select>
+                  {!formData.category && <div className="adminHelp" style={{ marginTop: 6 }}>Select a category first.</div>}
                 </div>
 
                 <div className="adminFieldRow adminFieldRow--2" style={{ marginBottom: 12 }}>

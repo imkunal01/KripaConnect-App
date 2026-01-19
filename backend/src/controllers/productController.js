@@ -47,6 +47,9 @@ async function createProduct(req, res) {
       name,
       description,
       category,
+      subcategory,
+      category_id,
+      subcategory_id,
       price,
       retailer_price,
       price_bulk,
@@ -68,6 +71,8 @@ async function createProduct(req, res) {
       slug,
       description,
       Category: category || undefined,
+      category_id: category_id || category || undefined,
+      subcategory_id: subcategory_id || undefined,
       price,
       retailer_price,
       price_bulk,
@@ -145,6 +150,14 @@ async function listProducts(req, res) {
       filter.Category = ids.length > 1 ? { $in: ids } : ids[0];
     }
 
+    /* ---- Subcategory ---- */
+    if (subcategory) {
+      const subIds = Array.isArray(subcategory)
+        ? subcategory
+        : String(subcategory).split(",").map(s => s.trim());
+      filter.subcategory_id = subIds.length > 1 ? { $in: subIds } : subIds[0];
+    }
+
     /* ---- Price ---- */
     const minVal = minPrice ?? min;
     const maxVal = maxPrice ?? max;
@@ -174,7 +187,7 @@ async function listProducts(req, res) {
 
     // Use lean() for faster read-only queries and select only needed fields
     let query = Product.find(filter)
-      .select("name slug description price retailer_price price_bulk min_bulk_qty stock images tags active Category")
+      .select("name slug description price retailer_price price_bulk min_bulk_qty stock images tags active Category category_id subcategory_id")
       .populate("Category", "name slug")
       .skip(skip)
       .limit(limitNum)
@@ -216,6 +229,7 @@ async function getProduct(req, res) {
       async () => {
         return await Product.findById(req.params.id)
           .populate("Category", "name slug")
+          .populate("subcategory_id", "name slug")
           .lean();
       },
       true
@@ -266,6 +280,8 @@ async function updateProduct(req, res) {
 
     if (updates.category !== undefined) product.Category = updates.category;
     if (updates.Category !== undefined) product.Category = updates.Category;
+    if (updates.category_id !== undefined) product.category_id = updates.category_id || undefined;
+    if (updates.subcategory_id !== undefined) product.subcategory_id = updates.subcategory_id || undefined;
 
     if (updates.tags !== undefined) {
       product.tags = normalizeTags(updates.tags);

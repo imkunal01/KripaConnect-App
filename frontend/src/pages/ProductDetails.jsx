@@ -212,7 +212,8 @@ export default function ProductDetails() {
                       <p className="description-text">{product.description || "No specific description available."}</p>
                       <ul className="specs-list">
                         <li><strong>SKU:</strong> {product._id.slice(-6).toUpperCase()}</li>
-                        <li><strong>Category:</strong> Electronics</li>
+                        <li><strong>Category:</strong> {product.Category?.name || 'Uncategorized'}</li>
+                        <li><strong>Subcategory:</strong> {product.subcategory_id?.name || '—'}</li>
                         <li><strong>Warranty:</strong> 1 Year Manufacturer</li>
                       </ul>
                     </div>

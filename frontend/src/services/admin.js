@@ -168,3 +168,149 @@ export async function deleteReview(reviewId, token) {
   return res.data
 }
 
+// Category Management (admin)
+export async function listCategoriesAdmin(token) {
+  const res = await apiFetch('/api/admin/categories', { token })
+  return res.data || []
+}
+
+export async function createCategoryAdmin(categoryData, logoFile, token) {
+  const formData = new FormData()
+
+  Object.keys(categoryData).forEach(key => {
+    if (categoryData[key] !== undefined && categoryData[key] !== null) {
+      formData.append(key, categoryData[key])
+    }
+  })
+
+  if (logoFile) {
+    formData.append('logo', logoFile)
+  }
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+  const res = await fetch(`${BASE_URL}/api/admin/categories`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ message: 'Failed to create category' }))
+    const error = new Error(data.message || 'Failed to create category')
+    error.status = res.status
+    throw error
+  }
+
+  return { ok: true, data: await res.json() }
+}
+
+export async function updateCategoryStatusAdmin(categoryId, status, token) {
+  const res = await apiFetch(`/api/admin/categories/${categoryId}/status`, {
+    method: 'PATCH',
+    body: { status },
+    token
+  })
+  return res.data
+}
+
+export async function updateCategoryAdmin(categoryId, categoryData, logoFile, token) {
+  const formData = new FormData()
+
+  Object.keys(categoryData).forEach(key => {
+    if (categoryData[key] !== undefined && categoryData[key] !== null && categoryData[key] !== '') {
+      formData.append(key, categoryData[key])
+    }
+  })
+
+  if (logoFile) {
+    formData.append('logo', logoFile)
+  }
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+  const res = await fetch(`${BASE_URL}/api/admin/categories/${categoryId}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ message: 'Failed to update category' }))
+    const error = new Error(data.message || 'Failed to update category')
+    error.status = res.status
+    throw error
+  }
+
+  return { ok: true, data: await res.json() }
+}
+
+// Subcategory Management (admin)
+export async function listSubcategoriesAdmin(token, params = {}) {
+  const query = new URLSearchParams(params).toString()
+  const res = await apiFetch(`/api/admin/subcategories${query ? `?${query}` : ''}`, { token })
+  return res.data || []
+}
+
+export async function createSubcategoryAdmin(subcategoryData, logoFile, token) {
+  const formData = new FormData()
+
+  Object.keys(subcategoryData).forEach(key => {
+    if (subcategoryData[key] !== undefined && subcategoryData[key] !== null) {
+      formData.append(key, subcategoryData[key])
+    }
+  })
+
+  if (logoFile) {
+    formData.append('logo', logoFile)
+  }
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+  const res = await fetch(`${BASE_URL}/api/admin/subcategories`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ message: 'Failed to create subcategory' }))
+    const error = new Error(data.message || 'Failed to create subcategory')
+    error.status = res.status
+    throw error
+  }
+
+  return { ok: true, data: await res.json() }
+}
+
+export async function updateSubcategoryAdmin(subcategoryId, subcategoryData, logoFile, token) {
+  const formData = new FormData()
+
+  Object.keys(subcategoryData).forEach(key => {
+    if (subcategoryData[key] !== undefined && subcategoryData[key] !== null && subcategoryData[key] !== '') {
+      formData.append(key, subcategoryData[key])
+    }
+  })
+
+  if (logoFile) {
+    formData.append('logo', logoFile)
+  }
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+  const res = await fetch(`${BASE_URL}/api/admin/subcategories/${subcategoryId}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ message: 'Failed to update subcategory' }))
+    const error = new Error(data.message || 'Failed to update subcategory')
+    error.status = res.status
+    throw error
+  }
+
+  return { ok: true, data: await res.json() }
+}
+

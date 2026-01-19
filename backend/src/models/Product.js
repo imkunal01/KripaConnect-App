@@ -6,6 +6,8 @@ const productSchema = new mongoose.Schema({
     slug: { type: String, required: true, unique: true, index: true},
     description: { type: String, default: ""},
     Category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: false },
+    category_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: false },
+    subcategory_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Subcategory', required: false },
     price: { type: Number, required: true },
     retailer_price : { type: Number, required: true },
     price_bulk : { type: Number, required: false },
@@ -23,6 +25,8 @@ const productSchema = new mongoose.Schema({
 
 // Indexes for filtering and sorting
 productSchema.index({ Category: 1 });
+productSchema.index({ category_id: 1 });
+productSchema.index({ subcategory_id: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ stock: 1 });
 productSchema.index({ active: 1 });

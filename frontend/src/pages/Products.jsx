@@ -51,6 +51,7 @@ export default function Products() {
      =============================== */
   const search = params.get('search') || ''
   const category = params.get('category') || ''
+  const subcategory = params.get('subcategory') || ''
   const minPrice = params.get('minPrice') || ''
   const maxPrice = params.get('maxPrice') || ''
   const sort = params.get('sort') || ''
@@ -67,6 +68,7 @@ export default function Products() {
         const data = await listProducts({
           search,
           category,
+          subcategory,
           minPrice,
           maxPrice,
           sort,
@@ -81,7 +83,7 @@ export default function Products() {
     }, 400)
 
     return () => clearTimeout(t)
-  }, [search, category, minPrice, maxPrice, sort, brand, availability])
+  }, [search, category, subcategory, minPrice, maxPrice, sort, brand, availability])
 
   /* ===============================
      ✅ FIXED Brand Options
@@ -122,7 +124,7 @@ export default function Products() {
         <aside className="sidebar-desktop">
           <div className="sticky-wrapper">
             <FiltersSidebar
-              params={{ category, min: minPrice, max: maxPrice, availability, brand }}
+              params={{ category, subcategory, min: minPrice, max: maxPrice, availability, brand }}
               onChange={updateParams}
               brandOptions={brandOptions}
             />
@@ -191,7 +193,7 @@ export default function Products() {
 
           <div className="drawer-content">
             <FiltersSidebar
-              params={{ category, min: minPrice, max: maxPrice, availability, brand }}
+              params={{ category, subcategory, min: minPrice, max: maxPrice, availability, brand }}
               onChange={updateParams}
               brandOptions={brandOptions}
             />

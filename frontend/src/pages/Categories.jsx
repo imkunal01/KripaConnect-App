@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listCategories } from '../services/categories'
+import { listSubcategories } from '../services/subcategories'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
@@ -7,20 +8,32 @@ import './Categories.css'
 
 export default function Categories() {
   const [items, setItems] = useState([])
+  const [subcategories, setSubcategories] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function run() {
       setLoading(true)
       try {
-        const data = await listCategories()
-        setItems(Array.isArray(data) ? data : [])
+        const [cats, subs] = await Promise.all([
+          listCategories(),
+          listSubcategories()
+        ])
+        setItems(Array.isArray(cats) ? cats : [])
+        setSubcategories(Array.isArray(subs) ? subs : [])
       } finally {
         setLoading(false)
       }
     }
     run()
   }, [])
+
+  const subByCategory = subcategories.reduce((acc, sub) => {
+    const key = sub.category_id
+    if (!acc[key]) acc[key] = []
+    acc[key].push(sub)
+    return acc
+  }, {})
 
   return (
     <div className="categories-page">
@@ -45,10 +58,32 @@ export default function Categories() {
         ) : (
           <div className="categories-grid">
             {items.map(c => (
-              <Link key={c._id} to={`/products?category=${c._id}`} className="category-card">
-                <div className="category-icon">📦</div>
-                <div className="category-name">{c.name}</div>
-              </Link>
+              <div key={c._id} className="category-card">
+                <Link to={`/products?category=${c._id}`} className="category-link">
+                  {c.logo ? (
+                    <img className="category-logo" src={c.logo} alt={c.name} />
+                  ) : (
+                    <div className="category-icon">📦</div>
+                  )}
+                  <div className="category-name">{c.name}</div>
+                </Link>
+                <div className="subcategory-list">
+                  {(subByCategory[c._id] || []).map(sub => (
+                    <Link
+                      key={sub._id}
+                      to={`/products?category=${c._id}&subcategory=${sub._id}`}
+                      className="subcategory-chip"
+                    >
+                      {sub.logo ? (
+                        <img className="subcategory-logo" src={sub.logo} alt={sub.name} />
+                      ) : (
+                        <span className="subcategory-dot" aria-hidden="true">•</span>
+                      )}
+                      <span>{sub.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}

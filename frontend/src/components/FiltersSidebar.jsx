@@ -1,22 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listCategories } from '../services/categories'
+import { listSubcategories } from '../services/subcategories'
 import './FiltersSidebar.css'
 
 export default function FiltersSidebar({ params, onChange, brandOptions }) {
-  const [cats, setCats] = useState([])  
-  useEffect(() => { listCategories().then(setCats).catch(() => setCats([])) }, [])
+  const [cats, setCats] = useState([])
+  const [subs, setSubs] = useState([])
+  useEffect(() => {
+    listCategories().then(setCats).catch(() => setCats([]))
+    listSubcategories().then(setSubs).catch(() => setSubs([]))
+  }, [])
 
   const [min, setMin] = useState(params.min || '')
   const [max, setMax] = useState(params.max || '')
   const [availability, setAvailability] = useState(params.availability || '')
   const [category, setCategory] = useState(params.category || '')
+  const [subcategory, setSubcategory] = useState(params.subcategory || '')
   const [brands, setBrands] = useState(params.brand ? params.brand.split(',') : [])
 
 
   const brandList = useMemo(() => Array.from(new Set(brandOptions || [])).slice(0, 12), [brandOptions])
 
   function apply() {
-    onChange({ category, min, max, availability, brand: brands.join(',') })
+    onChange({ category, subcategory, min, max, availability, brand: brands.join(',') })
   }
 
   return (
@@ -25,11 +31,28 @@ export default function FiltersSidebar({ params, onChange, brandOptions }) {
         <div className="filters-label">Category</div>
         <select
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) => {
+            setCategory(e.target.value)
+            setSubcategory('')
+          }}
           className="filters-select"
         >
           <option value="">All</option>
           {cats.map(c => (<option key={c._id} value={c._id}>{c.name}</option>))}
+        </select>
+      </div>
+      <div className="filters-group">
+        <div className="filters-label">Subcategory</div>
+        <select
+          value={subcategory}
+          onChange={(e) => setSubcategory(e.target.value)}
+          className="filters-select"
+          disabled={!category}
+        >
+          <option value="">All</option>
+          {subs
+            .filter(s => String(s.category_id) === String(category))
+            .map(s => (<option key={s._id} value={s._id}>{s.name}</option>))}
         </select>
       </div>
       <div className="filters-group">

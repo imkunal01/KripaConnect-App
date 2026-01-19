@@ -2,14 +2,14 @@ const Category = require('../models/Category');
 const slugify = require('slugify');
 const { getOrSetCache, invalidateCache } = require('../utils/cacheUtils');
 
-// Get all categories - use lean() for faster read-only query
+// Get all active categories - use lean() for faster read-only query
 exports.getCategories = async (req, res) => {
   try {
     const categories = await getOrSetCache(
       'categories:all',
       86400, // 24 hours
       async () => {
-        return await Category.find({}).sort({ name: 1 }).lean();
+        return await Category.find({ status: 'active' }).sort({ name: 1 }).lean();
       },
       true // Log cache hits/misses in dev
     );
