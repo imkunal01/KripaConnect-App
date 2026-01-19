@@ -134,10 +134,16 @@
 }
 
 /* --- Apply Button --- */
+.filters-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .filters-apply-button {
   width: 100%;
   padding: 12px;
-  margin-top: 10px;
   background-color: var(--filter-text-main);
   color: #fff;
   font-size: 0.9rem;
@@ -155,6 +161,29 @@
 }
 
 .filters-apply-button:active {
+  transform: translateY(0);
+}
+
+.filters-clear-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #ffffff;
+  color: var(--filter-text-main);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid var(--filter-border);
+  border-radius: var(--filter-radius);
+  cursor: pointer;
+  transition: all var(--filter-transition);
+}
+
+.filters-clear-button:hover {
+  background-color: #f9fafb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.filters-clear-button:active {
   transform: translateY(0);
 }
 .filters-select {

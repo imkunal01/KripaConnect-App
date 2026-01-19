@@ -115,6 +115,7 @@ async function listProducts(req, res) {
       q,
       search,
       category,
+      subcategory,
       categories,
       min,
       max,

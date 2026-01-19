@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { listProducts } from '../services/products'
 import FiltersSidebar from '../components/FiltersSidebar.jsx'
 import SearchBar from '../components/SearchBar.jsx'
@@ -9,42 +9,15 @@ import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import './Products.css'
 
-/* ===============================
-   🔧 Brand / Tag Sanitizer
-   =============================== */
-function cleanBrand(value) {
-  if (!value) return []
-
-  // Convert anything to string first
-  let v = String(value).trim()
-
-  // Try parsing JSON once
-  try {
-    const parsed = JSON.parse(v)
-    if (Array.isArray(parsed)) {
-      return parsed.flatMap(cleanBrand)
-    }
-    if (typeof parsed === 'string') {
-      v = parsed
-    }
-  } catch {
-    // ignore JSON errors
-  }
-
-  // Remove wrapping quotes
-  v = v.replace(/^["']+|["']+$/g, '').trim()
-
-  // Split comma-separated strings
-  return v
-    ? v.split(',').map(x => x.trim()).filter(Boolean)
-    : []
-}
-
 export default function Products() {
   const [params, setParams] = useSearchParams()
+  const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [searchDraft, setSearchDraft] = useState('')
+  const [suggestions, setSuggestions] = useState([])
+  const [suggestLoading, setSuggestLoading] = useState(false)
 
   /* ===============================
      URL Params
@@ -55,8 +28,11 @@ export default function Products() {
   const minPrice = params.get('minPrice') || ''
   const maxPrice = params.get('maxPrice') || ''
   const sort = params.get('sort') || ''
-  const brand = params.get('brand') || ''
   const availability = params.get('availability') || ''
+
+  useEffect(() => {
+    setSearchDraft(search)
+  }, [search])
 
   /* ===============================
      Data Fetching
@@ -72,7 +48,6 @@ export default function Products() {
           minPrice,
           maxPrice,
           sort,
-          brand,
           availability,
           limit: 24,
         })
@@ -83,15 +58,28 @@ export default function Products() {
     }, 400)
 
     return () => clearTimeout(t)
-  }, [search, category, subcategory, minPrice, maxPrice, sort, brand, availability])
+  }, [search, category, subcategory, minPrice, maxPrice, sort, availability])
 
-  /* ===============================
-     ✅ FIXED Brand Options
-     =============================== */
-  const brandOptions = useMemo(() => {
-    const brands = items.flatMap(p => cleanBrand(p.tags))
-    return Array.from(new Set(brands))
-  }, [items])
+  useEffect(() => {
+    const q = searchDraft.trim()
+    if (q.length < 2) {
+      setSuggestions([])
+      setSuggestLoading(false)
+      return
+    }
+    setSuggestLoading(true)
+    const t = setTimeout(async () => {
+      try {
+        const data = await listProducts({ search: q, limit: 6 })
+        setSuggestions(data.items || [])
+      } catch {
+        setSuggestions([])
+      } finally {
+        setSuggestLoading(false)
+      }
+    }, 250)
+    return () => clearTimeout(t)
+  }, [searchDraft])
 
   /* ===============================
      Helper: Update URL Params
@@ -124,9 +112,8 @@ export default function Products() {
         <aside className="sidebar-desktop">
           <div className="sticky-wrapper">
             <FiltersSidebar
-              params={{ category, subcategory, min: minPrice, max: maxPrice, availability, brand }}
+              params={{ category, subcategory, minPrice, maxPrice, availability }}
               onChange={updateParams}
-              brandOptions={brandOptions}
             />
           </div>
         </aside>
@@ -144,8 +131,12 @@ export default function Products() {
 
             <div className="search-container">
               <SearchBar
-                value={search}
+                value={searchDraft}
                 onChange={(val) => updateParams({ search: val })}
+                onInputChange={(val) => setSearchDraft(val)}
+                suggestions={suggestions}
+                loadingSuggestions={suggestLoading}
+                onSelectSuggestion={(item) => navigate(`/product/${item._id}`)}
               />
             </div>
 
@@ -193,9 +184,8 @@ export default function Products() {
 
           <div className="drawer-content">
             <FiltersSidebar
-              params={{ category, subcategory, min: minPrice, max: maxPrice, availability, brand }}
+              params={{ category, subcategory, minPrice, maxPrice, availability }}
               onChange={updateParams}
-              brandOptions={brandOptions}
             />
           </div>
 

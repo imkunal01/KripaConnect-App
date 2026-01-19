@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { listCategories } from '../services/categories'
 import { listSubcategories } from '../services/subcategories'
 import './FiltersSidebar.css'
 
-export default function FiltersSidebar({ params, onChange, brandOptions }) {
+export default function FiltersSidebar({ params, onChange }) {
   const [cats, setCats] = useState([])
   const [subs, setSubs] = useState([])
   useEffect(() => {
@@ -11,18 +11,23 @@ export default function FiltersSidebar({ params, onChange, brandOptions }) {
     listSubcategories().then(setSubs).catch(() => setSubs([]))
   }, [])
 
-  const [min, setMin] = useState(params.min || '')
-  const [max, setMax] = useState(params.max || '')
+  const [min, setMin] = useState(params.minPrice || '')
+  const [max, setMax] = useState(params.maxPrice || '')
   const [availability, setAvailability] = useState(params.availability || '')
   const [category, setCategory] = useState(params.category || '')
   const [subcategory, setSubcategory] = useState(params.subcategory || '')
-  const [brands, setBrands] = useState(params.brand ? params.brand.split(',') : [])
-
-
-  const brandList = useMemo(() => Array.from(new Set(brandOptions || [])).slice(0, 12), [brandOptions])
 
   function apply() {
-    onChange({ category, subcategory, min, max, availability, brand: brands.join(',') })
+    onChange({ category, subcategory, minPrice: min, maxPrice: max, availability })
+  }
+
+  function clearAll() {
+    setCategory('')
+    setSubcategory('')
+    setMin('')
+    setMax('')
+    setAvailability('')
+    onChange({ category: '', subcategory: '', minPrice: '', maxPrice: '', availability: '' })
   }
 
   return (
@@ -75,25 +80,6 @@ export default function FiltersSidebar({ params, onChange, brandOptions }) {
         </div>
       </div>
       <div className="filters-group">
-        <div className="filters-label">Brand</div>
-        <div className="filters-brands-list">
-          {brandList.map(b => (
-            <label key={b} className="filters-brand-item">
-              <input
-                type="checkbox"
-                checked={brands.includes(b)}
-                onChange={(e) => {
-                  const checked = e.target.checked
-                  setBrands(prev => checked ? [...prev, b] : prev.filter(x => x !== b))
-                }}
-                className="filters-brand-checkbox"
-              />
-              <span className="filters-brand-label">{b}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-      <div className="filters-group">
         <div className="filters-label">Availability</div>
         <select
           value={availability}
@@ -105,9 +91,14 @@ export default function FiltersSidebar({ params, onChange, brandOptions }) {
           <option value="out">Out of Stock</option>
         </select>
       </div>
-      <button onClick={apply} className="filters-apply-button">
-        Apply Filters
-      </button>
+      <div className="filters-actions">
+        <button onClick={apply} className="filters-apply-button">
+          Apply Filters
+        </button>
+        <button onClick={clearAll} className="filters-clear-button">
+          Clear All
+        </button>
+      </div>
     </div>
   )
 }
