@@ -6,6 +6,7 @@ const mongoSanitize = require("mongo-sanitize");
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200,                 // limit each IP to 200 requests
+  skip: (req) => req.path === "/api/cron/ping" || req.path === "/healthz",
   message: {
     success: false,
     message: "Too many requests, please try again later.",

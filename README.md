@@ -249,6 +249,9 @@ The backend is a REST API built with Express and MongoDB.
 **Operational / Platform**
 - CORS allowlist + support for Vercel preview deployments (`*.vercel.app`).
 - Health check homepage (`GET /`) with server stats.
+- Lightweight machine health endpoint (`GET /healthz`) for monitors.
+- Cron-safe ping endpoint (`GET /api/cron/ping`) for services like cronjob.org.
+  - Optional protection: set `CRON_SECRET` and call `/api/cron/ping?key=YOUR_SECRET`.
 
 ---
 

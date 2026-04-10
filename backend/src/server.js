@@ -89,6 +89,39 @@ app.use(
 app.use(morgan("dev"));
 app.use(cookieParser());
 
+/* =========================
+   CRON / LIVENESS ENDPOINTS
+========================= */
+
+// Simple machine-readable health endpoint for uptime monitors.
+app.get("/healthz", (req, res) => {
+  return res.status(200).json({
+    ok: true,
+    service: "backend",
+    time: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+  });
+});
+
+// Dedicated endpoint for external cron pings (e.g. cronjob.org).
+// If CRON_SECRET is set, pass it as ?key=... or x-cron-key header.
+app.get("/api/cron/ping", (req, res) => {
+  const expectedKey = process.env.CRON_SECRET;
+  if (expectedKey) {
+    const providedKey = req.query.key || req.headers["x-cron-key"];
+    if (!providedKey || String(providedKey) !== String(expectedKey)) {
+      return res.status(401).json({ ok: false, message: "Unauthorized cron key" });
+    }
+  }
+
+  return res.status(200).json({
+    ok: true,
+    message: "cron ping received",
+    time: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+  });
+});
+
 app.use(
   helmet({
     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
