@@ -1,0 +1,11 @@
+KripaConnect — production-grade full-stack JavaScript e-commerce platform for B2C customers, B2B retailers, and admins. Built with a React PWA/TWA frontend and Node.js/Express backend (MongoDB, optional Redis), it implements role-based JWT auth (access + httpOnly refresh), Google + email-OTP login, secure input sanitization and rate limiting, Razorpay payments with webhook verification, PDF invoicing, Cloudinary image pipeline, and transaction audit trails. I recently added a RAG-based search + smart recommendation pipeline using hybrid vector + text search with contextual re-ranking. Deployed on Vercel (frontend) and Render (backend), the architecture is container/AWS-ready and maps easily to Next.js/Nest.js, MySQL, and AWS workflows.
+
+Technical highlights (quick)
+
+Modern JS stack: React (lazy-loading, PWA/TWA) + Node/Express APIs.
+Auth & security: Dual JWT flow, Google OAuth, email OTP, Helmet, mongo-sanitize, per-route rate limits.
+Payments & integrations: Razorpay order + signature verification, webhooks, SendGrid emails, Cloudinary.
+Search & recommendations: RAG retrieval with embeddings + hybrid vector/text search and contextual re-ranking for personalized suggestions.
+Data & caching: Mongoose models (users/products/orders/reviews), optional Redis caching; idempotent webhook handling and audit logs.
+Ops-ready: Vercel/Render deployment, Docker/container friendly, ready for AWS/ECS/EKS and MySQL/Nest.js migrations.
+Collaboration: tests/seed scripts, documentation, and API-first design for team development.
