@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { profile, updateProfile, uploadProfilePhoto } from '../services/auth'
+import { profile, updateProfile, uploadProfilePhoto, requestRetailerRole } from '../services/auth'
 import AddressForm from '../components/AddressForm.jsx'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './ProfilePage.css'
+
+/* eslint-disable react/prop-types */
 
 function getDefaultAddress(user) {
   const list = Array.isArray(user?.savedAddresses) ? user.savedAddresses : []
@@ -29,6 +31,102 @@ function isAddressComplete(a) {
   return !!(v.name && v.phone && v.addressLine && v.city && v.state && v.pincode)
 }
 
+function RetailerRequestPanel({ user, requestingRetailer, onRequestRetailerRole }) {
+  const [showForm, setShowForm] = useState(false)
+  const [formData, setFormData] = useState({
+    shopName: '', ownerName: '', phone: '', shopAddress: '', businessProof: ''
+  })
+
+  if (user?.role !== 'customer') return null
+
+  const isCooldown = user.retailerRequestCooldown && new Date() < new Date(user.retailerRequestCooldown)
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onRequestRetailerRole(formData)
+  }
+
+  return (
+    <div style={{ marginBottom: 10, width: '100%' }}>
+      {user.retailerRequestStatus === 'pending' ? (
+        <span className="adminBadge adminBadge--ok">Retailer request pending review</span>
+      ) : isCooldown ? (
+        <span className="adminBadge adminBadge--danger">
+          Request rejected. You can apply again in {Math.round((new Date(user.retailerRequestCooldown) - new Date()) / 60000)} mins
+        </span>
+      ) : !showForm ? (
+        <button className="btn-edit-mode" onClick={() => setShowForm(true)} disabled={requestingRetailer}>
+          Request Retailer Access
+        </button>
+      ) : (
+        <form onSubmit={handleSubmit} className="form-grid" style={{ marginTop: 16 }}>
+          <h4 style={{ gridColumn: '1 / -1', margin: '0 0 10px', color: 'var(--profile-text)' }}>Apply for Retailer Role</h4>
+          <div className="form-group">
+            <label>Shop Name</label>
+            <input className="input-modern" required placeholder="Enter shop name" value={formData.shopName} onChange={e => setFormData({...formData, shopName: e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Owner Name</label>
+            <input className="input-modern" required placeholder="Enter owner name" value={formData.ownerName} onChange={e => setFormData({...formData, ownerName: e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Phone Number</label>
+            <input className="input-modern" required placeholder="Enter shop phone" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Business Proof (URL/GST)</label>
+            <input className="input-modern" placeholder="Enter business proof" value={formData.businessProof} onChange={e => setFormData({...formData, businessProof: e.target.value})} />
+          </div>
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            <label>Shop Address</label>
+            <textarea className="input-modern" required rows={3} placeholder="Full shop address" value={formData.shopAddress} onChange={e => setFormData({...formData, shopAddress: e.target.value})} />
+          </div>
+          <div className="edit-actions" style={{ gridColumn: '1 / -1', marginTop: 8 }}>
+            <button type="submit" className="btn-save" disabled={requestingRetailer}>
+              {requestingRetailer ? 'Submitting...' : 'Submit Request'}
+            </button>
+            <button type="button" className="btn-cancel" onClick={() => setShowForm(false)} disabled={requestingRetailer}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
+function ProfileQuickActions({ user, navigate, signOut, requestingRetailer, onRequestRetailerRole }) {
+  return (
+    <div className="actions-section">
+      <h3>Quick Actions</h3>
+      <div className="action-cards">
+        <button className="action-card" onClick={() => navigate('/orders')}>
+          <span className="ac-icon">📦</span>
+          <div className="ac-text">
+            <strong>My Orders</strong>
+            <small>Track & Return</small>
+          </div>
+          <span className="ac-arrow">&rarr;</span>
+        </button>
+
+        <RetailerRequestPanel
+          user={user}
+          requestingRetailer={requestingRetailer}
+          onRequestRetailerRole={onRequestRetailerRole}
+        />
+
+        <button className="action-card logout" onClick={() => signOut()}>
+          <span className="ac-icon">🚪</span>
+          <div className="ac-text">
+            <strong>Logout</strong>
+            <small>Sign out of device</small>
+          </div>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const { token, signOut } = useAuth()
   const navigate = useNavigate()
@@ -50,6 +148,7 @@ export default function ProfilePage() {
   const [addressData, setAddressData] = useState({})
   const [photoPreview, setPhotoPreview] = useState(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [requestingRetailer, setRequestingRetailer] = useState(false)
 
   useEffect(() => {
     if (!token) {
@@ -186,6 +285,21 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleRequestRetailerRole(payload) {
+    try {
+      setRequestingRetailer(true)
+      setError('')
+      const res = await requestRetailerRole(payload, token)
+      setUser(res.data)
+      setSuccess('Retailer request submitted!')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err.message || 'Failed to submit retailer request')
+    } finally {
+      setRequestingRetailer(false)
+    }
+  }
+
   const handleCancel = () => {
     setEditing(false)
     setFormData({ name: user.name || '', phone: user.phone || '' })
@@ -250,7 +364,7 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              <div className="header-info">
+              <div className="header-info" aria-label="User Information">
                 <div className="header-top">
                   <h1 className="user-name">{user.name}</h1>
                   <span className={`role-badge ${user.role === 'retailer' ? 'badge-gold' : 'badge-blue'}`}>
@@ -258,16 +372,13 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <p className="user-email">{user.email}</p>
+                <RetailerRequestPanel user={user} requestingRetailer={requestingRetailer} onRequestRetailerRole={handleRequestRetailerRole} />
                 {success && <div className="alert-toast success">✓ {success}</div>}
                 {error && <div className="alert-toast error">⚠ {error}</div>}
               </div>
 
               <div className="header-actions">
-                {!editing ? (
-                  <button className="btn-edit-mode" onClick={() => setEditing(true)}>
-                    Edit Profile
-                  </button>
-                ) : (
+                {editing ? (
                   <div className="edit-actions">
                     <button className="btn-cancel" onClick={handleCancel} disabled={saving}>
                       Cancel
@@ -276,6 +387,10 @@ export default function ProfilePage() {
                       {saving ? 'Saving...' : 'Save Changes'}
                     </button>
                   </div>
+                ) : (
+                  <button className="btn-edit-mode" onClick={() => setEditing(true)}>
+                    Edit Profile
+                  </button>
                 )}
               </div>
             </div>
@@ -290,9 +405,10 @@ export default function ProfilePage() {
                 <h3>Account Details</h3>
                 <div className="form-grid">
                   <div className="form-group">
-                    <label>Full Name</label>
+                    <label htmlFor="profile-name">Full Name</label>
                     {editing ? (
                       <input
+                        id="profile-name"
                         type="text"
                         name="name"
                         value={formData.name}
@@ -305,9 +421,10 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Phone Number</label>
+                    <label htmlFor="profile-phone">Phone Number</label>
                     {editing ? (
                       <input
+                        id="profile-phone"
                         type="tel"
                         name="phone"
                         value={formData.phone}
@@ -321,7 +438,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Email Address</label>
+                    <div className="adminLabel">Email Address</div>
                     <div className="value-display disabled">{user.email}</div>
                   </div>
                 </div>
@@ -349,27 +466,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Right: Quick Actions & Stats */}
-              <div className="actions-section">
-                <h3>Quick Actions</h3>
-                <div className="action-cards">
-                  <button className="action-card" onClick={() => navigate('/orders')}>
-                    <span className="ac-icon">📦</span>
-                    <div className="ac-text">
-                      <strong>My Orders</strong>
-                      <small>Track & Return</small>
-                    </div>
-                    <span className="ac-arrow">&rarr;</span>
-                  </button>
-
-                  <button className="action-card logout" onClick={() => signOut()}>
-                    <span className="ac-icon">🚪</span>
-                    <div className="ac-text">
-                      <strong>Logout</strong>
-                      <small>Sign out of device</small>
-                    </div>
-                  </button>
-                </div>
-              </div>
+              <ProfileQuickActions user={user} navigate={navigate} signOut={signOut} requestingRetailer={requestingRetailer} onRequestRetailerRole={handleRequestRetailerRole} />
 
             </div>
           </div>

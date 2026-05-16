@@ -51,6 +51,11 @@ export async function deleteUser(userId, token) {
   return res.data
 }
 
+export async function clearRetailerCooldown(userId, token) {
+  const res = await apiFetch(`/api/admin/users/role/${userId}/clear-cooldown`, { method: 'PUT', token })
+  return res.data
+}
+
 // Order Management
 export async function getAllOrdersAdmin(token) {
   const res = await apiFetch('/api/admin/orders', { token })

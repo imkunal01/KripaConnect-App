@@ -13,6 +13,7 @@ const adminSubcategoryController = require("../controllers/adminSubcategoryContr
 router.get("/users", protect, adminOnly, adminController.getAllUsers);
 router.put("/users/block/:id", protect, adminOnly, adminController.toggleBlockUser);
 router.put("/users/role/:id", protect, adminOnly, adminController.updateUserRole);
+router.put("/users/role/:id/clear-cooldown", protect, adminOnly, adminController.clearRetailerCooldown);
 router.delete("/users/:id", protect, adminOnly, adminController.deleteUser);
 router.get("/stats", protect, adminOnly, adminController.getStats);
 

@@ -2,7 +2,7 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const generateRefreshToken = require('../utils/generateRefreshToken');
 const jwt = require('jsonwebtoken');
-const https = require('https');
+const https = require('node:https');
 const { getOrSetCache, invalidateCache } = require('../utils/cacheUtils');
 
 // Helper for cookie options
@@ -111,6 +111,79 @@ const getUserProfile = async (req, res) => {
     }
 };
 
+// Helper to validate and apply savedAddress to a user document
+function applySavedAddressToUser(user, savedAddress) {
+    const a = savedAddress || {};
+
+    const normalized = {
+        name: (a.name || user.name || '').toString().trim(),
+        phone: (a.phone || user.phone || '').toString().trim(),
+        addressLine: (a.addressLine || '').toString().trim(),
+        city: (a.city || '').toString().trim(),
+        state: (a.state || '').toString().trim(),
+        pincode: (a.pincode || '').toString().trim(),
+        default: true,
+    };
+
+    const missing = [];
+    if (!normalized.name) missing.push('name');
+    if (!normalized.phone) missing.push('phone');
+    if (!normalized.addressLine) missing.push('addressLine');
+    if (!normalized.city) missing.push('city');
+    if (!normalized.state) missing.push('state');
+    if (!normalized.pincode) missing.push('pincode');
+    if (missing.length) {
+        const err = new Error(`Missing address fields: ${missing.join(', ')}`);
+        err.code = 'MISSING_ADDRESS_FIELDS';
+        throw err;
+    }
+
+    // Keep user.phone in sync if address has phone
+    if (normalized.phone && user.phone !== normalized.phone) user.phone = normalized.phone;
+
+    user.savedAddresses = Array.isArray(user.savedAddresses) ? user.savedAddresses : [];
+
+    // Find current default BEFORE clearing flags
+    const existingDefaultIdx = user.savedAddresses.findIndex(addr => addr.default === true);
+
+    // Ensure only one default
+    user.savedAddresses.forEach(addr => { addr.default = false; });
+
+    if (existingDefaultIdx >= 0) {
+        const existing = user.savedAddresses[existingDefaultIdx];
+        // Mongoose subdoc: assign fields directly
+        existing.name = normalized.name;
+        existing.phone = normalized.phone;
+        existing.addressLine = normalized.addressLine;
+        existing.city = normalized.city;
+        existing.state = normalized.state;
+        existing.pincode = normalized.pincode;
+        existing.default = true;
+    } else {
+        user.savedAddresses.push(normalized);
+    }
+}
+
+function validateSavedAddressFields(savedAddress, user) {
+    const a = savedAddress || {};
+    const normalized = {
+        name: (a.name || user.name || '').toString().trim(),
+        phone: (a.phone || user.phone || '').toString().trim(),
+        addressLine: (a.addressLine || '').toString().trim(),
+        city: (a.city || '').toString().trim(),
+        state: (a.state || '').toString().trim(),
+        pincode: (a.pincode || '').toString().trim(),
+    };
+    const missing = [];
+    if (!normalized.name) missing.push('name');
+    if (!normalized.phone) missing.push('phone');
+    if (!normalized.addressLine) missing.push('addressLine');
+    if (!normalized.city) missing.push('city');
+    if (!normalized.state) missing.push('state');
+    if (!normalized.pincode) missing.push('pincode');
+    return missing;
+}
+
 const updateProfile = async (req, res) => {
     try {
         const { name, phone, role, savedAddress } = req.body;
@@ -120,7 +193,7 @@ const updateProfile = async (req, res) => {
         }
 
         const prevRole = user.role;
-        
+
         if (name) user.name = name;
         if (phone !== undefined) user.phone = phone;
 
@@ -132,61 +205,17 @@ const updateProfile = async (req, res) => {
             user.role = role;
         }
 
-        // Optional: save/update the user's default shipping address
-        // Body: { savedAddress: { name, phone, addressLine, city, state, pincode } }
         if (savedAddress) {
-            const a = savedAddress || {};
-
-            const normalized = {
-                name: (a.name || user.name || '').toString().trim(),
-                phone: (a.phone || user.phone || '').toString().trim(),
-                addressLine: (a.addressLine || '').toString().trim(),
-                city: (a.city || '').toString().trim(),
-                state: (a.state || '').toString().trim(),
-                pincode: (a.pincode || '').toString().trim(),
-                default: true,
-            };
-
-            const missing = [];
-            if (!normalized.name) missing.push('name');
-            if (!normalized.phone) missing.push('phone');
-            if (!normalized.addressLine) missing.push('addressLine');
-            if (!normalized.city) missing.push('city');
-            if (!normalized.state) missing.push('state');
-            if (!normalized.pincode) missing.push('pincode');
+            const missing = validateSavedAddressFields(savedAddress, user);
             if (missing.length) {
                 return res.status(400).json({ message: `Missing address fields: ${missing.join(', ')}` });
             }
-
-            // Keep user.phone in sync if address has phone
-            if (normalized.phone && user.phone !== normalized.phone) user.phone = normalized.phone;
-
-            user.savedAddresses = Array.isArray(user.savedAddresses) ? user.savedAddresses : [];
-
-            // Find current default BEFORE clearing flags
-            const existingDefaultIdx = user.savedAddresses.findIndex(addr => addr.default === true);
-
-            // Ensure only one default
-            user.savedAddresses.forEach(addr => { addr.default = false; });
-
-            if (existingDefaultIdx >= 0) {
-                const existing = user.savedAddresses[existingDefaultIdx];
-                // Mongoose subdoc: assign fields directly
-                existing.name = normalized.name;
-                existing.phone = normalized.phone;
-                existing.addressLine = normalized.addressLine;
-                existing.city = normalized.city;
-                existing.state = normalized.state;
-                existing.pincode = normalized.pincode;
-                existing.default = true;
-            } else {
-                user.savedAddresses.push(normalized);
-            }
+            applySavedAddressToUser(user, savedAddress);
         }
-        
+
         await user.save();
         const updatedUser = await User.findById(user._id).select("-password");
-        
+
         // Invalidate user profile cache
         await invalidateCache(`user:profile:${req.user._id}`);
 
@@ -196,6 +225,49 @@ const updateProfile = async (req, res) => {
             return res.json({ ...updatedUser.toObject(), token: access })
         }
 
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const requestRetailerRole = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.role === 'retailer' || user.role === 'admin') {
+            return res.status(400).json({ message: 'Retailer request is only available for customer accounts' });
+        }
+
+        if (user.retailerRequestCooldown && new Date() < user.retailerRequestCooldown) {
+            return res.status(400).json({ message: 'Your previous request was rejected. Please try again after the cooldown period.' });
+        }
+
+        const { shopName, ownerName, phone, shopAddress, businessProof } = req.body;
+        if (!shopName || !ownerName || !phone || !shopAddress) {
+            return res.status(400).json({ message: 'Missing required retailer details (shopName, ownerName, phone, shopAddress)' });
+        }
+
+        user.retailerDetails = {
+            shopName,
+            ownerName,
+            phone,
+            shopAddress,
+            businessProof: businessProof || ''
+        };
+
+        user.retailerRequestStatus = 'pending';
+        user.retailerRequestedAt = new Date();
+        user.retailerReviewedAt = null;
+        user.retailerRequestCooldown = null;
+        await user.save();
+
+        await invalidateCache(`user:profile:${req.user._id}`);
+
+        const updatedUser = await User.findById(user._id).select('-password');
         res.json(updatedUser);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -242,7 +314,9 @@ const logoutUser = async (req, res) => {
                 await user.save()
             }
         }
-    } catch (_) {}
+    } catch (err) {
+        console.error('[Logout] Error:', err);
+    }
     res.clearCookie('refreshToken', getCookieOptions(req))
     res.status(200).json({ message: 'Logged out' })
 }
@@ -310,27 +384,27 @@ const googleAuth = async (req, res) => {
         let info;
         if (credential) {
             info = await tokeninfo(credential)
-            if (!info || info.aud !== process.env.GOOGLE_CLIENT_ID || info.email_verified !== 'true') {
+            if (!info || info?.aud !== process.env.GOOGLE_CLIENT_ID || info?.email_verified !== 'true') {
                 return res.status(401).json({ message: 'Invalid token' })
             }
         } else if (accessToken) {
             info = await fetchUserInfo(accessToken)
-            if (!info || !info.email_verified) {
+            const verified = info?.email_verified === true || info?.email_verified === 'true'
+            if (!info || !verified) {
                 return res.status(401).json({ message: 'Invalid access token' })
             }
         }
 
-        const email = info.email
+        const email = info?.email
         let user = await User.findOne({ email })
         const isNewUser = !user
         if (!user) {
             const pwd = Math.random().toString(36).slice(-12)
             user = await User.create({ name: info.name || email.split('@')[0], email, password: pwd, role: role || 'customer', profilePhoto: info.picture })
-        } else {
-            if (!user.profilePhoto && info.picture) {
-                user.profilePhoto = info.picture
-                await user.save()
-            }
+        }
+        if (user.profilePhoto == null && info?.picture) {
+            user.profilePhoto = info.picture
+            await user.save()
         }
         const access = generateToken(user._id, user.role, user.tokenVersion)
         const refresh = generateRefreshToken(user._id, user.tokenVersion)
@@ -341,4 +415,4 @@ const googleAuth = async (req, res) => {
     }
 }
 
-module.exports = { registerUser, loginUser, getUserProfile, updateProfile, uploadProfilePhoto, logoutUser, refreshAccessToken, googleAuth };
+module.exports = { registerUser, loginUser, getUserProfile, updateProfile, requestRetailerRole, uploadProfilePhoto, logoutUser, refreshAccessToken, googleAuth };
