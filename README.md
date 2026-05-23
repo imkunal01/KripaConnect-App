@@ -11,7 +11,7 @@ A complete e-commerce solution with web and mobile support, featuring a modern R
 This comprehensive platform includes customer shopping, B2B retailer portal, and full-featured admin dashboard with analytics.
 
 ---
-
+Enter into Virtual Envirements - (Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned) ; (& c:\Users\Kunal\Desktop\Projects\SKE\RAG_kc\.venv\Scripts\Activate.ps1)
 ## Table of Contents
 
 - [Project Structure](#project-structure)
