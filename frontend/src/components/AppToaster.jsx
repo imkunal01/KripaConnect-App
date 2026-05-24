@@ -3,42 +3,42 @@ import { Toaster } from 'react-hot-toast'
 export default function AppToaster() {
   return (
     <Toaster
-      position="top-right"
+      position="bottom-center"
       gutter={12}
+      containerStyle={{
+        bottom: 80, // ensures it sits above the mobile dock nav pill
+      }}
       toastOptions={{
         duration: 2800,
 
         style: {
-          background: '#ffffff',
-          color: '#1f2937', // slate-800
-          borderRadius: '14px',
-          padding: '12px 14px',
-          fontSize: '14px',
+          background: 'rgba(17, 24, 39, 0.9)', // almost solid dark gray
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          color: '#ffffff',
+          borderRadius: '999px', // sleeker pill shape
+          padding: '14px 24px',
+          fontSize: '14.5px',
           fontWeight: 500,
+          letterSpacing: '0.01em',
           lineHeight: '1.4',
-          maxWidth: '340px',
-          borderLeft: '5px solid var(--primary)',
+          maxWidth: '400px',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
           boxShadow:
-            '0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05)',
+            '0 20px 25px -5px rgba(0,0,0,0.2), 0 10px 10px -5px rgba(0,0,0,0.1)',
         },
 
         success: {
           iconTheme: {
-            primary: 'var(--primary)',
-            secondary: '#ffffff',
-          },
-          style: {
-            borderLeft: '5px solid #15803d', // subtle green for success
+            primary: '#4ade80', // vibrant green
+            secondary: '#111827',
           },
         },
 
         error: {
           iconTheme: {
-            primary: '#b91c1c',
-            secondary: '#ffffff',
-          },
-          style: {
-            borderLeft: '5px solid #b91c1c',
+            primary: '#f87171', // vibrant red
+            secondary: '#111827',
           },
         },
 
