@@ -1,42 +1,73 @@
-/* FiltersSidebar.css */
-
 :root {
   --filter-bg: #ffffff;
-  --filter-border: #e5e7eb;
+  --filter-border: #e2e8f0;
   --filter-text-main: #111827;
-  --filter-text-muted: #6b7280;
-  --filter-input-bg: #f9fafb;
-  --filter-accent: #000000;
-  --filter-radius: 8px;
-  --filter-transition: 0.2s ease;
+  --filter-text-muted: #64748b;
+  --filter-input-bg: #f8fafc;
+  --filter-radius: 14px;
 }
 
 .filters-sidebar {
-  width: 280px; /* Adjust based on your layout */
+  width: 280px;
   background-color: var(--filter-bg);
-  padding: 24px;
-  border-right: 1px solid var(--filter-border);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 18px;
+  border: 1px solid var(--filter-border);
+  border-radius: 22px;
+  box-shadow: 0 18px 46px rgba(15, 23, 42, 0.08);
   box-sizing: border-box;
 }
 
-/* --- Groups --- */
+.filters-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--filter-border);
+}
+
+.filters-kicker {
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.filters-title {
+  color: var(--filter-text-main);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.filters-reset-link {
+  padding: 0;
+  background: transparent;
+  color: var(--filter-text-muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.filters-reset-link:hover {
+  color: var(--primary);
+}
+
 .filters-group {
-  margin-bottom: 28px;
+  margin-bottom: 18px;
 }
 
 .filters-label {
-  font-size: 0.875rem; /* 14px */
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 900;
   color: var(--filter-text-main);
-  margin-bottom: 12px;
-  letter-spacing: -0.01em;
+  margin-bottom: 8px;
 }
 
-/* --- Inputs & Selects Shared Styles --- */
 .filters-select,
 .filters-price-input {
   width: 100%;
+  min-height: 44px;
   padding: 10px 12px;
   font-size: 0.9rem;
   color: var(--filter-text-main);
@@ -44,192 +75,73 @@
   border: 1px solid var(--filter-border);
   border-radius: var(--filter-radius);
   outline: none;
-  transition: all var(--filter-transition);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   box-sizing: border-box;
-  appearance: none; /* Removes default OS styling */
 }
 
-/* Add a custom arrow for selects to keep it minimal */
 .filters-select {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.5rem center;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 10px center;
   background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
-  padding-right: 2.5rem;
+  background-size: 18px;
+  padding-right: 34px;
   cursor: pointer;
+}
+
+.filters-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.filters-select:hover,
+.filters-price-input:hover {
+  border-color: #cbd5e1;
+  background-color: #ffffff;
 }
 
 .filters-select:focus,
 .filters-price-input:focus {
-  border-color: var(--filter-text-muted);
-  background-color: #fff;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+  border-color: rgba(var(--kc-primary-rgb), 0.55);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(var(--kc-primary-rgb), 0.1);
 }
 
-/* --- Price Inputs Layout --- */
 .filters-price-inputs {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-/* --- Brand Checkboxes --- */
-.filters-brands-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 300px;
-  overflow-y: hidden;
-  /* Custom thin scrollbar */
-
-}
-
-.filters-brand-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.filters-brand-checkbox {
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--filter-border);
-  border-radius: 4px;
-  background-color: #fff;
-  cursor: pointer;
-  position: relative;
-  transition: all var(--filter-transition);
-  margin: 0;
-}
-
-.filters-brand-checkbox:checked {
-  background-color: var(--filter-accent);
-  border-color: var(--filter-accent);
-}
-
-/* Checkmark using pseudo-element */
-.filters-brand-checkbox:checked::after {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 2px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-.filters-brand-label {
-  font-size: 0.9rem;
-  color: var(--filter-text-muted);
-  transition: color var(--filter-transition);
-}
-
-.filters-brand-item:hover .filters-brand-label {
-  color: var(--filter-text-main);
-}
-
-/* --- Apply Button --- */
-.filters-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 10px;
+}
+
+.filters-actions {
+  display: grid;
+  margin-top: 6px;
 }
 
 .filters-apply-button {
   width: 100%;
+  min-height: 46px;
   padding: 12px;
-  background-color: var(--filter-text-main);
+  background-color: var(--primary);
   color: #fff;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.92rem;
+  font-weight: 900;
   border: none;
-  border-radius: var(--filter-radius);
+  border-radius: 999px;
   cursor: pointer;
-  transition: all var(--filter-transition);
+  box-shadow: 0 12px 24px rgba(var(--kc-primary-rgb), 0.2);
 }
 
 .filters-apply-button:hover {
-  background-color: #000;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: var(--primary-dark);
 }
 
-.filters-apply-button:active {
-  transform: translateY(0);
-}
-
-.filters-clear-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #ffffff;
-  color: var(--filter-text-main);
-  font-size: 0.9rem;
-  font-weight: 500;
-  border: 1px solid var(--filter-border);
-  border-radius: var(--filter-radius);
-  cursor: pointer;
-  transition: all var(--filter-transition);
-}
-
-.filters-clear-button:hover {
-  background-color: #f9fafb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-.filters-clear-button:active {
-  transform: translateY(0);
-}
-.filters-select {
-  width: 100%;
-  padding: 10px 12px;
-  padding-right: 30px; /* Make room for the arrow */
-  font-size: 0.9rem;
-  color: var(--filter-text-main);
-  background-color: var(--filter-input-bg);
-  border: 1px solid var(--filter-border);
-  border-radius: var(--filter-radius);
-  outline: none;
-  cursor: pointer;
-  
-  /* REMOVE default browser styles */
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  /* Custom minimalist arrow SVG */
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 10px center;
-  background-repeat: no-repeat;
-  background-size: 1.2em 1.2em;
-  
-  transition: all var(--filter-transition);
-}
-
-.filters-select:hover {
-  border-color: #d1d5db; /* Slightly darker grey on hover */
-  background-color: #ffffff; /* Light up background on hover */
-}
-
-.filters-select:focus {
-  border-color: var(--filter-text-main); /* Black border when active */
-  background-color: #ffffff;
-  box-shadow: 0 0 0 1px var(--filter-text-main); /* Sharp focus ring */
-}
-.filters-select option {
-  background-color: #ffffff;
-  color: var(--filter-text-main);
-  padding: 12px;
-  font-size: 0.9rem;
-}
-
-/* Disabled options (if you ever have them) */
-.filters-select option:disabled {
-  color: var(--filter-text-muted);
+@media (max-width: 1023px) {
+  .filters-sidebar {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+  }
 }

@@ -1,5 +1,5 @@
 const express = require("express");
-const { registerUser, loginUser, getUserProfile, updateProfile, uploadProfilePhoto, logoutUser, refreshAccessToken, googleAuth } = require("../controllers/authController.js");
+const { registerUser, loginUser, getUserProfile, updateProfile, requestRetailerRole, uploadProfilePhoto, logoutUser, refreshAccessToken, googleAuth } = require("../controllers/authController.js");
 const { requestPasswordReset, resetPassword, requestLoginOtp, verifyLoginOtp } = require("../controllers/passwordResetController.js");
 const { protect } = require("../middleware/authMiddleware.js");
 const validate = require('../middleware/validate.js')
@@ -12,6 +12,7 @@ router.post("/register", registerValidation, validate, registerUser);
 router.post("/login", loginValidation, validate, loginUser);
 router.get("/profile", protect, getUserProfile);
 router.put("/profile", protect, updateProfile);
+router.post("/retailer-request", protect, requestRetailerRole);
 router.post("/profile/photo", protect, upload.single('photo'), uploadProfilePhoto);
 router.post("/logout", logoutUser);
 router.post("/refresh", refreshAccessToken);

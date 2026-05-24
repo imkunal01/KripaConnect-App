@@ -17,6 +17,14 @@ export default function FiltersSidebar({ params, onChange }) {
   const [category, setCategory] = useState(params.category || '')
   const [subcategory, setSubcategory] = useState(params.subcategory || '')
 
+  useEffect(() => {
+    setCategory(params.category || '')
+    setSubcategory(params.subcategory || '')
+    setMin(params.minPrice || '')
+    setMax(params.maxPrice || '')
+    setAvailability(params.availability || '')
+  }, [params.category, params.subcategory, params.minPrice, params.maxPrice, params.availability])
+
   function apply() {
     onChange({ category, subcategory, minPrice: min, maxPrice: max, availability })
   }
@@ -32,6 +40,16 @@ export default function FiltersSidebar({ params, onChange }) {
 
   return (
     <div className="filters-sidebar">
+      <div className="filters-heading">
+        <div>
+          <div className="filters-kicker">Refine</div>
+          <div className="filters-title">Shopping filters</div>
+        </div>
+        <button type="button" onClick={clearAll} className="filters-reset-link">
+          Reset
+        </button>
+      </div>
+
       <div className="filters-group">
         <div className="filters-label">Category</div>
         <select
@@ -93,10 +111,7 @@ export default function FiltersSidebar({ params, onChange }) {
       </div>
       <div className="filters-actions">
         <button onClick={apply} className="filters-apply-button">
-          Apply Filters
-        </button>
-        <button onClick={clearAll} className="filters-clear-button">
-          Clear All
+          Show Products
         </button>
       </div>
     </div>

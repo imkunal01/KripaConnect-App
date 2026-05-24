@@ -23,6 +23,21 @@ const userSchema = new mongoose.Schema({
         enum: ['customer', 'retailer','admin' ],
         default: 'customer'
     },
+    retailerRequestStatus: {
+        type: String,
+        enum: ['none', 'pending', 'rejected'],
+        default: 'none'
+    },
+    retailerDetails: {
+        shopName: { type: String },
+        ownerName: { type: String },
+        phone: { type: String },
+        shopAddress: { type: String },
+        businessProof: { type: String }
+    },
+    retailerRequestedAt: { type: Date },
+    retailerReviewedAt: { type: Date },
+    retailerRequestCooldown: { type: Date, default: null },
     profilePhoto: { type: String },
     isBlocked: { type: Boolean, default: false },
     tokenVersion: { type: Number, default: 0 },

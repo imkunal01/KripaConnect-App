@@ -51,6 +51,11 @@ export async function deleteUser(userId, token) {
   return res.data
 }
 
+export async function clearRetailerCooldown(userId, token) {
+  const res = await apiFetch(`/api/admin/users/role/${userId}/clear-cooldown`, { method: 'PUT', token })
+  return res.data
+}
+
 // Order Management
 export async function getAllOrdersAdmin(token) {
   const res = await apiFetch('/api/admin/orders', { token })
@@ -312,5 +317,78 @@ export async function updateSubcategoryAdmin(subcategoryId, subcategoryData, log
   }
 
   return { ok: true, data: await res.json() }
+}
+
+// Banner Management (admin)
+export async function listBannersAdmin(token) {
+  const res = await apiFetch('/api/admin/banners', { token })
+  return res.data || []
+}
+
+export async function createBannerAdmin(bannerData, imageFile, token) {
+  const formData = new FormData()
+
+  Object.keys(bannerData).forEach(key => {
+    if (bannerData[key] !== undefined && bannerData[key] !== null) {
+      formData.append(key, bannerData[key])
+    }
+  })
+
+  if (imageFile) {
+    formData.append('image', imageFile)
+  }
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+  const res = await fetch(`${BASE_URL}/api/admin/banners`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ message: 'Failed to create banner' }))
+    const error = new Error(data.message || 'Failed to create banner')
+    error.status = res.status
+    throw error
+  }
+
+  return { ok: true, data: await res.json() }
+}
+
+export async function updateBannerAdmin(bannerId, bannerData, imageFile, token) {
+  const formData = new FormData()
+
+  Object.keys(bannerData).forEach(key => {
+    if (bannerData[key] !== undefined && bannerData[key] !== null) {
+      formData.append(key, bannerData[key])
+    }
+  })
+
+  if (imageFile) {
+    formData.append('image', imageFile)
+  }
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+  const res = await fetch(`${BASE_URL}/api/admin/banners/${bannerId}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ message: 'Failed to update banner' }))
+    const error = new Error(data.message || 'Failed to update banner')
+    error.status = res.status
+    throw error
+  }
+
+  return { ok: true, data: await res.json() }
+}
+
+export async function deleteBannerAdmin(bannerId, token) {
+  const res = await apiFetch(`/api/admin/banners/${bannerId}`, { method: 'DELETE', token })
+  return res.data
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import './SearchBar.css'   // 
+import { FaSearch, FaTimes } from 'react-icons/fa'
+import './SearchBar.css'
 
 export default function SearchBar({
   value,
@@ -26,7 +27,9 @@ export default function SearchBar({
 
   return (
     <div className="search-wrap">
-      <span className="search-icon">🔍</span>
+      <span className="search-icon">
+        <FaSearch aria-hidden="true" />
+      </span>
 
       <input
         className="search-input"
@@ -36,7 +39,7 @@ export default function SearchBar({
           setText(next)
           onInputChange?.(next)
         }}
-        placeholder="Search products"
+        placeholder="Search products, brands, appliances"
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 120)}
       />
@@ -49,15 +52,16 @@ export default function SearchBar({
             onInputChange?.('')
           }}
           aria-label="Clear search"
+          type="button"
         >
-          ✕
+          <FaTimes aria-hidden="true" />
         </button>
       )}
 
       {showSuggestions && (
         <div className="search-suggestions" role="listbox">
           {loadingSuggestions && (
-            <div className="search-suggestion-loading">Searching…</div>
+            <div className="search-suggestion-loading">Searching...</div>
           )}
           {!loadingSuggestions && suggestions.length === 0 && (
             <div className="search-suggestion-empty">No suggestions</div>
@@ -79,7 +83,7 @@ export default function SearchBar({
               <div className="search-suggestion-meta">
                 <div className="search-suggestion-title">{item.name}</div>
                 {typeof item.price !== 'undefined' && (
-                  <div className="search-suggestion-price">₹{Number(item.price).toLocaleString('en-IN')}</div>
+                  <div className="search-suggestion-price">Rs {Number(item.price).toLocaleString('en-IN')}</div>
                 )}
               </div>
             </button>

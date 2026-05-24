@@ -28,6 +28,10 @@ export async function updateProfile(data, token) {
   return apiFetch('/api/auth/profile', { method: 'PUT', body: data, token })
 }
 
+export async function requestRetailerRole(payload, token) {
+  return apiFetch('/api/auth/retailer-request', { method: 'POST', body: payload, token })
+}
+
 export async function uploadProfilePhoto(file, token) {
   const formData = new FormData()
   formData.append('photo', file)

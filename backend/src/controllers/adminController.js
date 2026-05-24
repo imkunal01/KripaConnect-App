@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const { invalidateCache } = require("../utils/cacheUtils");
 
 // Get all users (without password) - use lean() for faster read-only query
 const getAllUsers = async (req, res) => {
@@ -20,6 +21,8 @@ const toggleBlockUser = async (req, res) => {
 
     user.isBlocked = !user.isBlocked;
     await user.save();
+
+    await invalidateCache(`user:profile:${user._id}`);
 
     res.json({
       success: true,
@@ -43,10 +46,39 @@ const updateUserRole = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
+    if (user.retailerRequestStatus === 'pending' && role === 'customer') {
+      user.retailerRequestStatus = 'rejected';
+      user.retailerRequestCooldown = new Date(Date.now() + 60 * 60 * 1000); // 1 hour cool down
+    } else {
+      user.retailerRequestStatus = 'none';
+      user.retailerRequestCooldown = null;
+    }
+
     user.role = role;
+    user.retailerRequestedAt = null;
+    user.retailerReviewedAt = new Date();
     await user.save();
 
+    await invalidateCache(`user:profile:${user._id}`);
+
     res.json({ success: true, message: "User role updated", data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const clearRetailerCooldown = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    user.retailerRequestCooldown = null;
+    user.retailerRequestStatus = 'none';
+    await user.save();
+
+    await invalidateCache(`user:profile:${user._id}`);
+
+    res.json({ success: true, message: "Cooldown cleared", data: user });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -63,6 +95,7 @@ const deleteUser = async (req, res) => {
       return res.status(400).json({ success: false, message: "You can't delete yourself" });
     }
 
+    await invalidateCache(`user:profile:${user._id}`);
     await user.deleteOne();
     res.json({ success: true, message: "User deleted successfully" });
   } catch (error) {
@@ -96,6 +129,7 @@ module.exports = {
   getAllUsers,
   toggleBlockUser,
   updateUserRole,
+  clearRetailerCooldown,
   deleteUser,
   getStats,
 };

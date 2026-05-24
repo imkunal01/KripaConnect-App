@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
-import { getAllUsers, toggleBlockUser, updateUserRole, deleteUser } from '../../services/admin'
+import { getAllUsers, toggleBlockUser, updateUserRole, deleteUser, clearRetailerCooldown } from '../../services/admin'
 
 function getMongoObjectIdTimeMs(id) {
   if (typeof id !== 'string' || id.length < 8) return 0
@@ -11,7 +11,7 @@ function getMongoObjectIdTimeMs(id) {
 
 function getDocCreatedTimeMs(doc) {
   const createdAt = doc?.createdAt || doc?.created_at || doc?.createdOn
-  const t = createdAt ? Date.parse(createdAt) : NaN
+  const t = createdAt ? Date.parse(createdAt) : Number.NaN
   if (Number.isFinite(t)) return t
   return getMongoObjectIdTimeMs(doc?._id)
 }
@@ -80,6 +80,15 @@ export default function UserManagement() {
     }
   }
 
+  async function handleClearCooldown(userId) {
+    try {
+      await clearRetailerCooldown(userId, token)
+      await loadUsers()
+    } catch (err) {
+      alert(err.message || 'Failed to clear cooldown')
+    }
+  }
+
   const filteredUsers = users.filter(user => {
     if (filter === 'customer' && user.role !== 'customer') return false
     if (filter === 'retailer' && user.role !== 'retailer') return false
@@ -93,6 +102,8 @@ export default function UserManagement() {
     }
     return true
   })
+
+  const retailerRequests = users.filter(user => user.retailerRequestStatus === 'pending' || user.retailerRequestStatus === 'rejected')
 
   if (loading) return <div className="adminEmpty">Loading…</div>
 
@@ -109,8 +120,9 @@ export default function UserManagement() {
         <div className="adminCard__section">
           <div className="adminFieldRow adminFieldRow--2" style={{ alignItems: 'end' }}>
             <div>
-              <label className="adminLabel">Search</label>
+              <label className="adminLabel" htmlFor="user-search">Search</label>
               <input
+                id="user-search"
                 className="adminInput"
                 type="text"
                 placeholder="Search by name or email…"
@@ -119,8 +131,9 @@ export default function UserManagement() {
               />
             </div>
             <div>
-              <label className="adminLabel">Filter</label>
+              <label className="adminLabel" htmlFor="user-filter">Filter</label>
               <select
+                id="user-filter"
                 className="adminSelect"
                 value={filter}
                 onChange={e => setFilter(e.target.value)}
@@ -135,6 +148,86 @@ export default function UserManagement() {
           </div>
         </div>
       </div>
+
+      {retailerRequests.length > 0 && (
+        <div className="adminCard" style={{ marginBottom: 16 }}>
+          <div className="adminCard__section">
+            <h2 className="adminPageHeader__title" style={{ fontSize: 20, marginBottom: 8 }}>Retailer Requests</h2>
+            <div className="adminMobileList">
+              {retailerRequests.map(user => (
+                <div key={user._id} className="adminMobileCard">
+                  <div className="adminMobileCardHeader">
+                    <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+                      {user.profilePhoto ? (
+                        <img className="adminAvatar" src={user.profilePhoto} alt={user.name} />
+                      ) : (
+                        <div className="adminAvatarFallback">{user.name?.charAt(0)?.toUpperCase() || 'U'}</div>
+                      )}
+                      <div>
+                        <div className="adminMobileCardTitle" title={user.name}>{user.name}</div>
+                        <div className="adminMobileCardSub" title={user.email}>{user.email}</div>
+                      </div>
+                    </div>
+                    <span className={`adminBadge ${user.retailerRequestStatus === 'pending' ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
+                      {user.retailerRequestStatus === 'pending' ? 'Pending' : 'Rejected'}
+                    </span>
+                  </div>
+                  <div className="adminMobileCardBody">
+                    <div className="adminMobileMetaRow">
+                      <span className="adminHelp">Requested</span>
+                      <span className="adminMobileMetaValue">{formatDate(user.retailerRequestedAt || user.createdAt)}</span>
+                    </div>
+                    {user.phone && (
+                      <div className="adminMobileMetaRow">
+                        <span className="adminHelp">Phone</span>
+                        <span className="adminMobileMetaValue">{user.phone}</span>
+                      </div>
+                    )}
+                    {user.retailerDetails && (
+                      <div style={{ marginTop: 12, padding: 12, backgroundColor: 'var(--kc-bg-alt)', borderRadius: 6, fontSize: 13 }}>
+                        <div style={{ marginBottom: 4 }}><strong>Shop Name:</strong> {user.retailerDetails.shopName}</div>
+                        <div style={{ marginBottom: 4 }}><strong>Owner:</strong> {user.retailerDetails.ownerName}</div>
+                        <div style={{ marginBottom: 4 }}><strong>Shop Phone:</strong> {user.retailerDetails.phone}</div>
+                        <div style={{ marginBottom: 4 }}><strong>Address:</strong> {user.retailerDetails.shopAddress}</div>
+                        {user.retailerDetails.businessProof && (
+                          <div><strong>Proof:</strong> {user.retailerDetails.businessProof}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="adminMobileActions" style={{ borderTop: '1px solid var(--kc-border)', paddingTop: 12, marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="adminBtn adminBtnPrimary adminBtn--sm"
+                      onClick={() => handleRoleChange(user._id, 'retailer')}
+                    >
+                      Approve Retailer
+                    </button>
+                    {user.retailerRequestStatus === 'pending' && (
+                      <button
+                        type="button"
+                        className="adminBtn adminBtn--sm"
+                        onClick={() => handleRoleChange(user._id, 'customer')}
+                      >
+                        Reject Request
+                      </button>
+                    )}
+                    {user.retailerRequestStatus === 'rejected' && user.retailerRequestCooldown && (
+                      <button
+                        type="button"
+                        className="adminBtn adminBtn--sm"
+                        onClick={() => handleClearCooldown(user._id)}
+                      >
+                        Clear Cooldown
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="adminCard">
         <div className="adminOnlyDesktop">
@@ -253,7 +346,7 @@ export default function UserManagement() {
                     )}
 
                     <div style={{ marginTop: 10 }}>
-                      <label className="adminLabel">Role</label>
+                      <div className="adminLabel">Role</div>
                       <select
                         className="adminSelect"
                         value={user.role}

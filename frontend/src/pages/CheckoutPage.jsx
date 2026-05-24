@@ -38,7 +38,7 @@ export default function CheckoutPage() {
     if (!token) return
     const list = Array.isArray(user?.savedAddresses) ? user.savedAddresses : []
     if (user && list.length === 0) {
-      navigate('/onboarding?next=/checkout', { replace: true })
+      navigate('/address-setup?next=/checkout', { replace: true })
     }
   }, [token, user, navigate])
 
@@ -107,7 +107,7 @@ export default function CheckoutPage() {
       const { keyId, razorpayOrder } = pay.data
 
       // Check if Razorpay script is loaded
-      if (!window.Razorpay) {
+      if (!globalThis.Razorpay) {
         throw new Error('Payment gateway could not be loaded. Please disable ad blockers and try again.')
       }
 
@@ -139,7 +139,7 @@ export default function CheckoutPage() {
         }
       }
 
-      const rzp = new window.Razorpay(options)
+      const rzp = new globalThis.Razorpay(options)
       
       rzp.on('payment.failed', function (response) {
         console.error('Payment failed:', response.error)
@@ -190,7 +190,7 @@ export default function CheckoutPage() {
                 <div className="saved-list">
                   {user.savedAddresses.map((a, i) => (
                     <button
-                      key={i}
+                      key={`${a.phone || 'p'}-${(a.addressLine||'').slice(0,20)}-${i}`}
                       className={`saved-item ${
                         JSON.stringify(address) === JSON.stringify(a)
                           ? 'active'
@@ -270,7 +270,7 @@ export default function CheckoutPage() {
               </button>
             ) : (
               <button
-                className="primary-btn"
+                className="primary-btn" 
                 disabled={placing}
                 onClick={handlePlaceOrderClick}
               >
@@ -287,8 +287,8 @@ export default function CheckoutPage() {
       </main>
 
       {bulkConfirmOpen && (
-        <div className="checkout-confirm-overlay" role="dialog" aria-modal="true" aria-label="Confirm bulk order">
-          <div className="checkout-confirm-modal">
+        <dialog className="checkout-confirm-overlay" aria-modal="true" aria-label="Confirm bulk order" open>
+          <div className="checkout-confirm-modal" role="document">
             <h3 className="checkout-confirm-title">Confirm Retailer Bulk Order</h3>
             <p className="checkout-confirm-text">
               This looks like a large bulk order ({totals.totalQty} units). Please confirm you intend to place a{' '}
@@ -320,7 +320,7 @@ export default function CheckoutPage() {
               </button>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
 
       <Footer />

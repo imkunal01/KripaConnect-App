@@ -1,19 +1,20 @@
 import { useState } from 'react'
+import { FaChevronDown } from 'react-icons/fa'
 import './SortBar.css'
 
 const OPTIONS = [
   { label: 'Recommended', value: '' },
-  { label: 'Price: Low → High', value: 'price' },
-  { label: 'Price: High → Low', value: '-price' },
-  { label: 'Name: A → Z', value: 'name' },
-  { label: 'Name: Z → A', value: '-name' },
+  { label: 'Price: Low to High', value: 'price' },
+  { label: 'Price: High to Low', value: '-price' },
+  { label: 'Name: A to Z', value: 'name' },
+  { label: 'Name: Z to A', value: '-name' },
   { label: 'Newest First', value: '-createdAt' },
 ]
 
 export default function SortBar({ value, onChange }) {
   const [open, setOpen] = useState(false)
 
-  const active = OPTIONS.find(o => o.value === value)?.label || 'Sort'
+  const active = OPTIONS.find(o => o.value === value)?.label || 'Recommended'
 
   function handleSelect(v) {
     onChange(v)
@@ -28,7 +29,9 @@ export default function SortBar({ value, onChange }) {
         onClick={() => setOpen(o => !o)}
       >
         <span>{active}</span>
-        <span className={`chev ${open ? 'up' : ''}`}>▾</span>
+        <span className={`chev ${open ? 'up' : ''}`}>
+          <FaChevronDown aria-hidden="true" />
+        </span>
       </button>
 
       {open && (
@@ -36,6 +39,7 @@ export default function SortBar({ value, onChange }) {
           {OPTIONS.map(opt => (
             <button
               key={opt.value}
+              type="button"
               className={`sort-dd-item ${value === opt.value ? 'active' : ''}`}
               onClick={() => handleSelect(opt.value)}
             >
