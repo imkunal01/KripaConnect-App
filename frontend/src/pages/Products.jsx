@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { FaSlidersH } from 'react-icons/fa'
 import { listProducts } from '../services/products'
+import { listBanners } from '../services/banners'
+import { listCategories } from '../services/categories'
 import FiltersSidebar from '../components/FiltersSidebar.jsx'
 import SearchBar from '../components/SearchBar.jsx'
 import SortBar from '../components/SortBar.jsx'
 import ProductGrid from '../components/ProductGrid.jsx'
+import ProductHeroCarousel from '../components/ProductHeroCarousel.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import './Products.css'
@@ -18,6 +22,9 @@ export default function Products() {
   const [searchDraft, setSearchDraft] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [suggestLoading, setSuggestLoading] = useState(false)
+  const [banners, setBanners] = useState([])
+  const [dealProducts, setDealProducts] = useState([])
+  const [categories, setCategories] = useState([])
 
   /* ===============================
      URL Params
@@ -33,6 +40,18 @@ export default function Products() {
   useEffect(() => {
     setSearchDraft(search)
   }, [search])
+
+  useEffect(() => {
+    Promise.all([
+      listBanners().catch(() => []),
+      listProducts({ brand: 'discount,sale,featured,offer', limit: 6 }).catch(() => ({ items: [] })),
+      listCategories().catch(() => []),
+    ]).then(([bannerItems, dealData, categoryItems]) => {
+      setBanners(Array.isArray(bannerItems) ? bannerItems : [])
+      setDealProducts(dealData.items || [])
+      setCategories(Array.isArray(categoryItems) ? categoryItems : [])
+    })
+  }, [])
 
   /* ===============================
      Data Fetching
@@ -97,16 +116,6 @@ export default function Products() {
     <div className="page-wrapper">
       <Navbar />
 
-      {/* Header */}
-      <header className="page-header">
-        <div className="header-content">
-          <h1 className="page-title">Explore Collection</h1>
-          <p className="page-subtitle">
-            Curated premium electronics for your workspace.
-          </p>
-        </div>
-      </header>
-
       <div className="container main-layout">
         {/* Sidebar (Desktop) */}
         <aside className="sidebar-desktop">
@@ -120,12 +129,40 @@ export default function Products() {
 
         {/* Product Feed */}
         <main className="product-feed">
+          <ProductHeroCarousel banners={banners} fallbackProducts={dealProducts} />
+
+          {categories.length > 0 && (
+            <div className="category-strip" aria-label="Product categories">
+              <button
+                type="button"
+                className={`category-strip__item ${!category ? 'is-active' : ''}`}
+                onClick={() => updateParams({ category: '', subcategory: '' })}
+              >
+                All
+              </button>
+              {categories.map(cat => (
+                <button
+                  key={cat._id}
+                  type="button"
+                  className={`category-strip__item ${category === cat._id ? 'is-active' : ''}`}
+                  onClick={() => updateParams({ category: cat._id, subcategory: '' })}
+                >
+                  {cat.logo && <img src={cat.logo} alt="" />}
+                  <span>{cat.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Controls */}
           <div className="controls-bar">
             <button
               className="btn-filter-mobile"
               onClick={() => setFiltersOpen(true)}
+              type="button"
+              aria-label="Open filters"
             >
+              <FaSlidersH aria-hidden="true" />
               <span>Filters</span>
             </button>
 

@@ -8,6 +8,7 @@ const adminController = require("../controllers/adminController");
 const adminOrderController = require("../controllers/adminOrderController");
 const adminCategoryController = require("../controllers/adminCategoryController");
 const adminSubcategoryController = require("../controllers/adminSubcategoryController");
+const bannerController = require("../controllers/bannerController");
 
 // USER MANAGEMENT
 router.get("/users", protect, adminOnly, adminController.getAllUsers);
@@ -34,5 +35,11 @@ router.patch("/categories/:id/status", protect, adminOnly, adminCategoryControll
 router.get("/subcategories", protect, adminOnly, adminSubcategoryController.listSubcategoriesAdmin);
 router.post("/subcategories", protect, adminOnly, upload.single("logo"), adminSubcategoryController.createSubcategoryAdmin);
 router.put("/subcategories/:id", protect, adminOnly, upload.single("logo"), adminSubcategoryController.updateSubcategoryAdmin);
+
+// BANNER MANAGEMENT
+router.get("/banners", protect, adminOnly, bannerController.listBannersAdmin);
+router.post("/banners", protect, adminOnly, upload.single("image"), bannerController.createBannerAdmin);
+router.put("/banners/:id", protect, adminOnly, upload.single("image"), bannerController.updateBannerAdmin);
+router.delete("/banners/:id", protect, adminOnly, bannerController.deleteBannerAdmin);
 
 module.exports = router;

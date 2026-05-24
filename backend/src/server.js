@@ -144,6 +144,7 @@ app.use(sanitizeRequest);
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/banners", require("./routes/bannerRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/subcategories", require("./routes/subcategoryRoutes"));

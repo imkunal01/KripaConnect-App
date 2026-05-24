@@ -5,12 +5,13 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import AdminDashboard from './admin/AdminDashboard'
 import ProductManagement from './admin/ProductManagement'
+import BannerManagement from './admin/BannerManagement'
 import CategoryManagement from './admin/CategoryManagement'
 import SubcategoryManagement from './admin/SubcategoryManagement'
 import OrderManagement from './admin/OrderManagement'
 import UserManagement from './admin/UserManagement'
 import ReviewModeration from './admin/ReviewModeration'
-import { FaBars, FaChartPie, FaBoxOpen, FaTags, FaSitemap, FaShoppingBag, FaUsers, FaStar, FaSignOutAlt } from 'react-icons/fa'
+import { FaBars, FaChartPie, FaBoxOpen, FaImages, FaTags, FaSitemap, FaShoppingBag, FaUsers, FaStar, FaSignOutAlt } from 'react-icons/fa'
 import './Admin.css'
 import './admin/AdminUI.css'
 
@@ -42,6 +43,7 @@ export default function Admin() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <FaChartPie />, component: AdminDashboard },
     { id: 'products', label: 'Products', icon: <FaBoxOpen />, component: ProductManagement },
+    { id: 'banners', label: 'Banners', icon: <FaImages />, component: BannerManagement },
     { id: 'categories', label: 'Categories', icon: <FaTags />, component: CategoryManagement },
     { id: 'subcategories', label: 'Subcategories', icon: <FaSitemap />, component: SubcategoryManagement },
     { id: 'orders', label: 'Orders', icon: <FaShoppingBag />, component: OrderManagement },
