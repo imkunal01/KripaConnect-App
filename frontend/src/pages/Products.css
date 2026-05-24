@@ -86,6 +86,8 @@
 
 /* --- Controls Bar --- */
 .controls-bar {
+  position: relative;
+  z-index: 50;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -312,7 +314,7 @@
     align-items: center;
     gap: 8px;
     position: relative;
-    z-index: 1;
+    z-index: 50;
     margin: 14px 0 18px;
     padding: 7px;
     border-radius: 999px;

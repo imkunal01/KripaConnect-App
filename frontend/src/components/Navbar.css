@@ -1,6 +1,4 @@
 /* Navbar.css */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap');
-
 :root {
   --primary: var(--kc-primary);
   --primary-light: var(--kc-primary-light);

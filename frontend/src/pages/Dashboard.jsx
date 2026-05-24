@@ -29,18 +29,17 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [cats, newest, discount, best, top] = await Promise.all([
+        const [cats, newest, discount, best] = await Promise.all([
           listCategories().catch(() => []),
           listProducts({ sort: '-createdAt', limit: 9 }).catch(() => ({ items: [] })),
           listProducts({ sort: 'price', limit: 3 }).catch(() => ({ items: [] })),
-          listProducts({ sort: '-sold', limit: 10 }).catch(() => ({ items: [] })),
-          listProducts({ sort: '-sold', limit: 1 }).catch(() => ({ items: [] }))
+          listProducts({ sort: '-sold', limit: 10 }).catch(() => ({ items: [] }))
         ])
 
         const newestItems = newest.items || []
         const discountItems = discount.items || []
         const bestItems = best.items || []
-        const topItem = (top.items || [])[0]
+        const topItem = bestItems[0]
 
         setProducts(newestItems)
         setDiscountProducts(discountItems)

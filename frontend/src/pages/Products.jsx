@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FaSlidersH } from 'react-icons/fa'
 import { listProducts } from '../services/products'
 import { listBanners } from '../services/banners'
 import { listCategories } from '../services/categories'
+import { listSubcategories } from '../services/subcategories'
 import FiltersSidebar from '../components/FiltersSidebar.jsx'
 import SearchBar from '../components/SearchBar.jsx'
 import SortBar from '../components/SortBar.jsx'
@@ -25,6 +26,7 @@ export default function Products() {
   const [banners, setBanners] = useState([])
   const [dealProducts, setDealProducts] = useState([])
   const [categories, setCategories] = useState([])
+  const [subcategories, setSubcategories] = useState([])
 
   /* ===============================
      URL Params
@@ -37,6 +39,11 @@ export default function Products() {
   const sort = params.get('sort') || ''
   const availability = params.get('availability') || ''
 
+  const activeFilters = useMemo(
+    () => ({ category, subcategory, minPrice, maxPrice, availability }),
+    [category, subcategory, minPrice, maxPrice, availability]
+  )
+
   useEffect(() => {
     setSearchDraft(search)
   }, [search])
@@ -46,10 +53,12 @@ export default function Products() {
       listBanners().catch(() => []),
       listProducts({ brand: 'discount,sale,featured,offer', limit: 6 }).catch(() => ({ items: [] })),
       listCategories().catch(() => []),
-    ]).then(([bannerItems, dealData, categoryItems]) => {
+      listSubcategories().catch(() => []),
+    ]).then(([bannerItems, dealData, categoryItems, subcategoryItems]) => {
       setBanners(Array.isArray(bannerItems) ? bannerItems : [])
       setDealProducts(dealData.items || [])
       setCategories(Array.isArray(categoryItems) ? categoryItems : [])
+      setSubcategories(Array.isArray(subcategoryItems) ? subcategoryItems : [])
     })
   }, [])
 
@@ -103,14 +112,35 @@ export default function Products() {
   /* ===============================
      Helper: Update URL Params
      =============================== */
-  function updateParams(next) {
+  const updateParams = useCallback((next) => {
     const merged = new URLSearchParams(params)
+    let changed = false
+
     Object.entries(next).forEach(([k, v]) => {
-      if (v === undefined || v === null || v === '') merged.delete(k)
-      else merged.set(k, v)
+      const nextValue = v === undefined || v === null ? '' : String(v)
+      const currentValue = merged.get(k) || ''
+
+      if (nextValue === '') {
+        if (merged.has(k)) {
+          merged.delete(k)
+          changed = true
+        }
+      } else if (currentValue !== nextValue) {
+        merged.set(k, nextValue)
+        changed = true
+      }
     })
+
+    if (!changed) return
     setParams(merged)
-  }
+  }, [params, setParams])
+
+  const handleSearchChange = useCallback((val) => updateParams({ search: val }), [updateParams])
+  const handleSearchInputChange = useCallback((val) => setSearchDraft(val), [])
+  const handleSuggestionSelect = useCallback((item) => navigate(`/product/${item._id}`), [navigate])
+  const handleSortChange = useCallback((val) => updateParams({ sort: val }), [updateParams])
+  const handleFiltersOpen = useCallback(() => setFiltersOpen(true), [])
+  const handleFiltersClose = useCallback(() => setFiltersOpen(false), [])
 
   return (
     <div className="page-wrapper">
@@ -121,8 +151,11 @@ export default function Products() {
         <aside className="sidebar-desktop">
           <div className="sticky-wrapper">
             <FiltersSidebar
-              params={{ category, subcategory, minPrice, maxPrice, availability }}
+              key={`desktop-${category}-${subcategory}-${minPrice}-${maxPrice}-${availability}`}
+              params={activeFilters}
               onChange={updateParams}
+              categories={categories}
+              subcategories={subcategories}
             />
           </div>
         </aside>
@@ -158,7 +191,7 @@ export default function Products() {
           <div className="controls-bar">
             <button
               className="btn-filter-mobile"
-              onClick={() => setFiltersOpen(true)}
+              onClick={handleFiltersOpen}
               type="button"
               aria-label="Open filters"
             >
@@ -169,18 +202,18 @@ export default function Products() {
             <div className="search-container">
               <SearchBar
                 value={searchDraft}
-                onChange={(val) => updateParams({ search: val })}
-                onInputChange={(val) => setSearchDraft(val)}
+                onChange={handleSearchChange}
+                onInputChange={handleSearchInputChange}
                 suggestions={suggestions}
                 loadingSuggestions={suggestLoading}
-                onSelectSuggestion={(item) => navigate(`/product/${item._id}`)}
+                onSelectSuggestion={handleSuggestionSelect}
               />
             </div>
 
             <div className="sort-container">
               <SortBar
                 value={sort}
-                onChange={(val) => updateParams({ sort: val })}
+                onChange={handleSortChange}
               />
             </div>
           </div>
@@ -209,25 +242,28 @@ export default function Products() {
       {/* Mobile Filter Drawer */}
       <div
         className={`drawer-overlay ${filtersOpen ? 'open' : ''}`}
-        onClick={() => setFiltersOpen(false)}
+        onClick={handleFiltersClose}
       >
         <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
           <div className="drawer-header">
             <h3>Filters</h3>
-            <button className="btn-close" onClick={() => setFiltersOpen(false)}>
+            <button className="btn-close" onClick={handleFiltersClose}>
               ✕
             </button>
           </div>
 
           <div className="drawer-content">
             <FiltersSidebar
-              params={{ category, subcategory, minPrice, maxPrice, availability }}
+              key={`drawer-${category}-${subcategory}-${minPrice}-${maxPrice}-${availability}`}
+              params={activeFilters}
               onChange={updateParams}
+              categories={categories}
+              subcategories={subcategories}
             />
           </div>
 
           <div className="drawer-footer">
-            <button className="btn-apply" onClick={() => setFiltersOpen(false)}>
+            <button className="btn-apply" onClick={handleFiltersClose}>
               Show Results
             </button>
           </div>

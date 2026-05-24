@@ -233,12 +233,15 @@ export function AuthProvider({ children }) {
         }, 0)
       : null
 
-    // Then validate/refresh token from backend.
-    // Until this finishes, `loading` stays true and ProtectedRoute
-    // will show a loading screen instead of redirecting.
-    refreshAccess().finally(() => {
+    // Only validate/refresh when a local access token exists. Anonymous visitors
+    // should not create background auth traffic on every page load.
+    if (token) {
+      refreshAccess().finally(() => {
+        setTimeout(() => setLoading(false), 0)
+      })
+    } else {
       setTimeout(() => setLoading(false), 0)
-    })
+    }
 
     return () => {
       if (scheduleTimer) clearTimeout(scheduleTimer)

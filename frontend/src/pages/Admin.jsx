@@ -1,19 +1,20 @@
-import { useState, useEffect } from 'react'
+import { Suspense, lazy, useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import AdminDashboard from './admin/AdminDashboard'
-import ProductManagement from './admin/ProductManagement'
-import BannerManagement from './admin/BannerManagement'
-import CategoryManagement from './admin/CategoryManagement'
-import SubcategoryManagement from './admin/SubcategoryManagement'
-import OrderManagement from './admin/OrderManagement'
-import UserManagement from './admin/UserManagement'
-import ReviewModeration from './admin/ReviewModeration'
 import { FaBars, FaChartPie, FaBoxOpen, FaImages, FaTags, FaSitemap, FaShoppingBag, FaUsers, FaStar, FaSignOutAlt } from 'react-icons/fa'
 import './Admin.css'
 import './admin/AdminUI.css'
+
+const AdminDashboard = lazy(() => import('./admin/AdminDashboard'))
+const ProductManagement = lazy(() => import('./admin/ProductManagement'))
+const BannerManagement = lazy(() => import('./admin/BannerManagement'))
+const CategoryManagement = lazy(() => import('./admin/CategoryManagement'))
+const SubcategoryManagement = lazy(() => import('./admin/SubcategoryManagement'))
+const OrderManagement = lazy(() => import('./admin/OrderManagement'))
+const UserManagement = lazy(() => import('./admin/UserManagement'))
+const ReviewModeration = lazy(() => import('./admin/ReviewModeration'))
 
 export default function Admin() {
   const { user, role, token, signOut } = useAuth()
@@ -138,7 +139,9 @@ export default function Admin() {
           </div>
 
           <div className="adminContent">
-            <ActiveComponent />
+            <Suspense fallback={<div className="adminEmpty">Loading section...</div>}>
+              <ActiveComponent />
+            </Suspense>
           </div>
         </main>
       </div>

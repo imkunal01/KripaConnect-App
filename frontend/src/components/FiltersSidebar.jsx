@@ -3,27 +3,28 @@ import { listCategories } from '../services/categories'
 import { listSubcategories } from '../services/subcategories'
 import './FiltersSidebar.css'
 
-export default function FiltersSidebar({ params, onChange }) {
-  const [cats, setCats] = useState([])
-  const [subs, setSubs] = useState([])
+export default function FiltersSidebar({ params, onChange, categories, subcategories }) {
+  const [fetchedCats, setFetchedCats] = useState([])
+  const [fetchedSubs, setFetchedSubs] = useState([])
+
   useEffect(() => {
-    listCategories().then(setCats).catch(() => setCats([]))
-    listSubcategories().then(setSubs).catch(() => setSubs([]))
-  }, [])
+    if (categories) return
+    listCategories().then(setFetchedCats).catch(() => setFetchedCats([]))
+  }, [categories])
+
+  useEffect(() => {
+    if (subcategories) return
+    listSubcategories().then(setFetchedSubs).catch(() => setFetchedSubs([]))
+  }, [subcategories])
+
+  const cats = categories || fetchedCats
+  const subs = subcategories || fetchedSubs
 
   const [min, setMin] = useState(params.minPrice || '')
   const [max, setMax] = useState(params.maxPrice || '')
   const [availability, setAvailability] = useState(params.availability || '')
   const [category, setCategory] = useState(params.category || '')
   const [subcategory, setSubcategory] = useState(params.subcategory || '')
-
-  useEffect(() => {
-    setCategory(params.category || '')
-    setSubcategory(params.subcategory || '')
-    setMin(params.minPrice || '')
-    setMax(params.maxPrice || '')
-    setAvailability(params.availability || '')
-  }, [params.category, params.subcategory, params.minPrice, params.maxPrice, params.availability])
 
   function apply() {
     onChange({ category, subcategory, minPrice: min, maxPrice: max, availability })

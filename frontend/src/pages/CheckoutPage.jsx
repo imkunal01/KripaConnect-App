@@ -12,6 +12,32 @@ import { createRazorpayOrder, verifyPayment } from '../services/payments'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import './CheckoutPage.css'
 
+let razorpayScriptPromise
+
+function loadRazorpayScript() {
+  if (globalThis.Razorpay) return Promise.resolve(true)
+  if (razorpayScriptPromise) return razorpayScriptPromise
+
+  razorpayScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-razorpay-checkout]')
+    if (existing) {
+      existing.addEventListener('load', () => resolve(true), { once: true })
+      existing.addEventListener('error', () => reject(new Error('Payment gateway could not be loaded.')), { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    script.dataset.razorpayCheckout = 'true'
+    script.onload = () => resolve(true)
+    script.onerror = () => reject(new Error('Payment gateway could not be loaded. Please disable ad blockers and try again.'))
+    document.body.appendChild(script)
+  })
+
+  return razorpayScriptPromise
+}
+
 export default function CheckoutPage() {
   const { cart, clearCart } = useContext(ShopContext)
   const { token, user } = useContext(AuthContext)
@@ -58,7 +84,7 @@ export default function CheckoutPage() {
       !current.pincode
 
     if (isEmpty && def) setAddress(def)
-  }, [user])
+  }, [user, address])
 
   const itemsPayload = useMemo(
     () => cart.map(i => ({ product: i.productId, qty: i.qty })),
@@ -106,10 +132,7 @@ export default function CheckoutPage() {
       const pay = await createRazorpayOrder(order._id, token)
       const { keyId, razorpayOrder } = pay.data
 
-      // Check if Razorpay script is loaded
-      if (!globalThis.Razorpay) {
-        throw new Error('Payment gateway could not be loaded. Please disable ad blockers and try again.')
-      }
+      await loadRazorpayScript()
 
       const options = {
         key: keyId,

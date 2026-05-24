@@ -2,13 +2,21 @@ import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import './Footer.css'
 
+function getClockMinute() {
+  return new Date().toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export default function Footer() {
-  const [time, setTime] = useState(new Date().toLocaleTimeString('en-US', { hour12: false }))
+  const [time, setTime] = useState(getClockMinute)
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTime(new Date().toLocaleTimeString('en-US', { hour12: false }))
-    }, 1000)
+      setTime(getClockMinute())
+    }, 60_000)
     return () => clearInterval(timer)
   }, [])
 
