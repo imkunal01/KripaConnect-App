@@ -1,5 +1,7 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { FaHeart, FaHeartBroken, FaSpinner, FaShoppingCart } from 'react-icons/fa'
+import { FiHeart } from 'react-icons/fi'
 import ShopContext from '../context/ShopContext.jsx'
 import AuthContext from '../context/AuthContext.jsx'
 import { listFavorites } from '../services/favorites'
@@ -70,91 +72,101 @@ export default function Favorites() {
     <div className="favorites-page">
       <Navbar />
       <div className="favorites-container">
-        <div className="favorites-header">
-          <h1 className="favorites-title">My Favorites</h1>
-          <p className="favorites-subtitle">Your saved products for later purchase</p>
-        </div>
-
         {loading ? (
           <div className="favorites-loading">
-            <div className="favorites-loading-icon">⏳</div>
-            <p style={{ color: '#6b7280' }}>Loading favorites...</p>
+            <FaSpinner className="favorites-loading-icon" />
+            <p>Loading your saved items...</p>
           </div>
         ) : visibleItems.length === 0 ? (
           <div className="favorites-empty-state">
-            <div className="favorites-empty-icon">❤️</div>
-            <h2 className="favorites-empty-title">No favorites yet</h2>
+            <FiHeart className="favorites-empty-icon" />
+            <h2 className="favorites-empty-title">You haven't saved any items yet</h2>
             <p className="favorites-empty-text">
-              Start adding products to your favorites to see them here
+              Keep track of your favorite products by clicking the heart icon. Start browsing to find something you'll love!
             </p>
-            <Link to="/products" className="hero-cta-primary">
-              Browse Products
+            <Link to="/products" className="favorites-empty-btn">
+              Explore Products
             </Link>
           </div>
         ) : (
           <div className="favorites-grid">
             {visibleItems.map(p => (
               <div key={p._id} className="favorite-card">
-                <Link to={`/product/${p._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                  <div className="favorite-image">
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleFavorite(p._id);
+                  }} 
+                  className="favorite-remove-icon-btn"
+                  title="Remove from favorites"
+                >
+                  <FaHeartBroken />
+                </button>
+                <Link to={`/product/${p._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <div className="favorite-image-wrapper">
                     {p.images?.[0]?.url ? (
-                      <img src={p.images[0].url} alt={p.name} />
+                      <img src={p.images[0].url} alt={p.name} className="favorite-image" />
                     ) : (
-                      <span style={{ fontSize: '3rem', opacity: 0.3 }}>📦</span>
+                      <div className="favorite-image-placeholder">📦</div>
                     )}
                   </div>
-                  <div className="favorite-name">{p.name}</div>
+                  <div className="favorite-content">
+                    <h3 className="favorite-name">{p.name}</h3>
 
-                  {(() => {
-                    const minBulkQty = p?.min_bulk_qty > 0 ? p.min_bulk_qty : 1
-                    const bulkUnitPrice = p?.price_bulk || p?.retailer_price || p?.price
-                    const hasBulkPricing = !!p?.price_bulk && minBulkQty > 1
+                    <div className="favorite-pricing">
+                      {(() => {
+                        const minBulkQty = p?.min_bulk_qty > 0 ? p.min_bulk_qty : 1
+                        const bulkUnitPrice = p?.price_bulk || p?.retailer_price || p?.price
+                        const hasBulkPricing = !!p?.price_bulk && minBulkQty > 1
 
-                    if (retailerBulk && hasBulkPricing) {
-                      return (
-                        <>
-                          <div className="favorite-price-row">
-                            <span className="favorite-price-strike">₹{p.price?.toLocaleString('en-IN')}</span>
-                            <span className="favorite-price">₹{bulkUnitPrice?.toLocaleString('en-IN')}</span>
-                          </div>
-                          <div className="favorite-bulk-hint">Min bulk qty: {minBulkQty}</div>
-                        </>
-                      )
-                    }
+                        if (retailerBulk && hasBulkPricing) {
+                          return (
+                            <>
+                              <div className="favorite-price-row">
+                                <span className="favorite-price">₹{bulkUnitPrice?.toLocaleString('en-IN')}</span>
+                                <span className="favorite-price-strike">₹{p.price?.toLocaleString('en-IN')}</span>
+                              </div>
+                              <div className="favorite-bulk-hint">Min bulk qty: {minBulkQty}</div>
+                            </>
+                          )
+                        }
 
-                    return (
-                      <>
-                        <div className="favorite-price">₹{p.price?.toLocaleString('en-IN')}</div>
-                        {isRetailer && hasBulkPricing && (
-                          <div className="favorite-bulk-hint">
-                            Bulk pricing available in Retailer Mode (min {minBulkQty})
-                          </div>
-                        )}
-                      </>
-                    )
-                  })()}
+                        return (
+                          <>
+                            <div className="favorite-price">₹{p.price?.toLocaleString('en-IN')}</div>
+                            {isRetailer && hasBulkPricing && (
+                              <div className="favorite-bulk-hint">
+                                Bulk pricing available in Retailer Mode (min {minBulkQty})
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
+                    </div>
+
+                    <div className="favorite-actions">
+                      {(() => {
+                        const minBulkQty = p?.min_bulk_qty > 0 ? p.min_bulk_qty : 1
+                        const hasBulkPricing = !!p?.price_bulk && minBulkQty > 1
+                        const canQuickAdd = !retailerBulk || !hasBulkPricing
+
+                        return (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              addToCart(p, 1);
+                            }}
+                            className="favorite-add-cart-btn"
+                            disabled={!canQuickAdd}
+                            title={!canQuickAdd ? `Minimum ${minBulkQty} units required in Retailer Mode` : undefined}
+                          >
+                            <FaShoppingCart /> {!canQuickAdd ? `Min Qty: ${minBulkQty}` : 'Move to Cart'}
+                          </button>
+                        )
+                      })()}
+                    </div>
+                  </div>
                 </Link>
-                <div className="favorite-actions">
-                  {(() => {
-                    const minBulkQty = p?.min_bulk_qty > 0 ? p.min_bulk_qty : 1
-                    const hasBulkPricing = !!p?.price_bulk && minBulkQty > 1
-                    const canQuickAdd = !retailerBulk || !hasBulkPricing
-
-                    return (
-                      <button
-                        onClick={() => addToCart(p, 1)}
-                        className="favorite-add-cart-btn"
-                        disabled={!canQuickAdd}
-                        title={!canQuickAdd ? `Minimum ${minBulkQty} units required in Retailer Mode` : undefined}
-                      >
-                        {!canQuickAdd ? `Min ${minBulkQty}` : 'Add to Cart'}
-                      </button>
-                    )
-                  })()}
-                  <button onClick={() => toggleFavorite(p._id)} className="favorite-remove-btn">
-                    Remove
-                  </button>
-                </div>
               </div>
             ))}
           </div>
