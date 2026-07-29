@@ -1,6 +1,6 @@
 # KripaConnect — Comprehensive Platform Documentation
 
-> **Version:** 1.0 | **Last Updated:** February 2026 | **Status:** Production-ready
+> **Version:** 1.1 | **Last Updated:** July 2026 | **Status:** Production-ready
 
 ---
 
@@ -36,13 +36,23 @@
 16. [Deployment Guide](#16-deployment-guide)
 17. [Scripts & Utilities](#17-scripts--utilities)
 18. [Project Status & Roadmap](#18-project-status--roadmap)
-
+19. [RAG Recommendation Microservice](#19-rag-recommendation-microservice)
+   - 19.1 [Overview & Purpose](#191-overview--purpose)
+   - 19.2 [Repository Structure](#192-repository-structure)
+   - 19.3 [Technology Stack](#193-technology-stack)
+   - 19.4 [RAG Pipeline Architecture](#194-rag-pipeline-architecture)
+   - 19.5 [API Reference](#195-api-reference)
+   - 19.6 [Service Modules](#196-service-modules)
+   - 19.7 [Pinecone Vector Store](#197-pinecone-vector-store)
+   - 19.8 [LLM Generation (Gemini)](#198-llm-generation-gemini)
+   - 19.9 [Admin Indexing Endpoints](#199-admin-indexing-endpoints)
+   - 19.10 [Environment Configuration](#1910-environment-configuration)
+   - 19.11 [Local Development Setup](#1911-local-development-setup)
+   - 19.12 [Deployment](#1912-deployment)
+   - 19.13 [Implementation Roadmap & Status](#1913-implementation-roadmap--status)
 ---
-
 ## 1. Project Overview
-
 **KripaConnect** is a full-stack, production-grade e-commerce platform designed to serve multiple user personas: regular customers, B2B retailers, and administrators. The platform is delivered as a web application (accessible from any browser), a Progressive Web App (installable on mobile home screens), and a native Android app via Trusted Web Activity (TWA).
-
 ### What the platform does
 
 - Allows customers to browse a product catalog, add items to a cart, and complete purchases using Cash on Delivery or online payment (Razorpay).
@@ -79,16 +89,22 @@
 │          BACKEND  (Node.js + Express 5 on Render)            │
 │  JWT Auth │ Rate Limiter │ Helmet │ Sanitization │ CORS      │
 │  Controllers → Services → Models (Mongoose)                  │
-└──────┬───────────────┬──────────────┬────────────────────────┘
-       │               │              │
-       ▼               ▼              ▼
-┌───────────┐  ┌───────────────┐  ┌──────────────────────────┐
-│  MongoDB  │  │  Cloudinary   │  │   Third-party Services   │
-│  (Atlas)  │  │  (Images)     │  │  Razorpay │ SendGrid     │
-└───────────┘  └───────────────┘  └──────────────────────────┘
+└──────┬───────────────┬──────────────┬───────────┬────────────┘
+       │               │              │           │
+       ▼               ▼              ▼           ▼
+┌───────────┐  ┌───────────────┐  ┌──────────────────┐  ┌─────────────────────────────────────────┐
+│  MongoDB  │  │  Cloudinary   │  │  Third-party Svcs │  │  RAG Microservice  (FastAPI + Python)   │
+│  (Atlas)  │  │  (Images)     │  │  Razorpay│SendGrid│  │  Query Parser → Embeddings → Pinecone   │
+└───────────┘  └───────────────┘  └──────────────────┘  │  → Hybrid Ranker → Gemini LLM Answer   │
+                                                         └──────────────────┬──────────────────────┘
+                                                                            │
+                                                               ┌────────────┴────────────┐
+                                                               │     Pinecone            │
+                                                               │  (Vector Database)      │
+                                                               └─────────────────────────┘
 ```
 
-The entire system follows a **monorepo** layout with `backend/` and `frontend/` as independent sub-projects sharing nothing at the code level—only communicating over HTTP.
+The entire system follows a **monorepo** layout with `backend/`, `frontend/`, and `RAG_kc/` as independent sub-projects—communicating only over HTTP. The RAG microservice is a separate Python/FastAPI service that the frontend (or backend) can call for AI-powered product recommendations.
 
 ---
 
@@ -191,15 +207,48 @@ SKE/                                  ← Monorepo root
 │       └── assets/                   ← Images, fonts, icons
 │
 └── twa-kripa-connect/                ← Native Android TWA app
-    ├── twa-manifest.json             ← TWA configuration
-    ├── assetlinks.json               ← Digital Asset Links for app verification
-    ├── build.gradle / settings.gradle
-    ├── app/
-    │   ├── build.gradle
-    │   └── src/                      ← Android Java source
-    ├── BUILD_DOCUMENTATION.md        ← Full build guide
-    ├── INSTALLATION_GUIDE.md         ← End-user APK install guide
-    └── UPLOAD_INSTRUCTIONS.md        ← assetlinks.json deployment guide
+│   ├── twa-manifest.json             ← TWA configuration
+│   ├── assetlinks.json               ← Digital Asset Links for app verification
+│   ├── build.gradle / settings.gradle
+│   ├── app/
+│   │   ├── build.gradle
+│   │   └── src/                      ← Android Java source
+│   ├── BUILD_DOCUMENTATION.md        ← Full build guide
+│   ├── INSTALLATION_GUIDE.md         ← End-user APK install guide
+│   └── UPLOAD_INSTRUCTIONS.md        ← assetlinks.json deployment guide
+│
+└── RAG_kc/                           ← RAG Recommendation Microservice (Python/FastAPI)
+    ├── .env                          ← Environment variables (not committed)
+    ├── requirements.txt              ← Python dependencies
+    ├── IMPLEMENTATION_ROADMAP.md     ← Pinecone integration phases & production checklist
+    ├── README.md                     ← Quickstart guide
+    └── app/
+        ├── main.py                   ← FastAPI app factory, middleware, health checks
+        ├── __init__.py
+        ├── api/                      ← HTTP route handlers
+        │   ├── routes.py             ← Central router aggregator
+        │   ├── products.py           ← /api/products CRUD endpoints
+        │   ├── recommendations.py    ← /api/recommend NL query endpoint
+        │   └── admin.py              ← /api/admin/* Pinecone indexing endpoints
+        ├── core/
+        │   └── config.py             ← PineconeSettings + admin key validation
+        ├── models/
+        │   └── schema.py             ← Pydantic request/response schemas
+        ├── rag/                      ← RAG pipeline internals
+        │   ├── embeddings.py         ← EmbeddingService (sentence-transformers + fallback)
+        │   ├── pinecone_store.py     ← PineconeProductStore (upsert/query/delete)
+        │   ├── vector_store.py       ← In-memory FAISS-backed store (dev/fallback)
+        │   ├── product_vector_contract.py ← Canonical embedding text & metadata builder
+        │   ├── query_parser.py       ← Regex/keyword NL → structured filter parser
+        │   └── generator.py          ← Gemini LLM answer generation
+        ├── services/                 ← Business logic
+        │   ├── product_service.py    ← Fetch/filter products from Node.js backend
+        │   ├── recommendation_service.py ← End-to-end hybrid ranking pipeline
+        │   └── indexing_service.py   ← Pinecone sync job (full & incremental)
+        ├── data/
+        │   └── index_sync_status.json ← Persisted last-sync state
+        └── utils/
+            └── helpers.py            ← Text chunking & truncation utilities
 ```
 
 ---
@@ -254,6 +303,21 @@ SKE/                                  ← Monorepo root
 | Gradle | Android Gradle Plugin |
 | Min SDK | Android 5.0 (API 21) |
 | Target | Android 14+ |
+
+### RAG Microservice
+
+| Category | Technology | Version / Notes |
+|----------|-----------|-----------------|
+| Runtime | Python | ≥ 3.10 |
+| Framework | FastAPI | 0.111.x |
+| ASGI Server | Uvicorn | 0.29.x (with standard extras) |
+| Data Validation | Pydantic | ≥ 2.7.1 |
+| Embeddings | sentence-transformers | 3.0.x (`all-MiniLM-L6-v2`, 384-dim) |
+| In-memory ANN | FAISS (faiss-cpu) | 1.8.x (dev/fallback) |
+| Vector Database | Pinecone | ≥ 7.0, < 8.0 (serverless) |
+| LLM Provider | Google Gemini | REST API (`gemini-flash-latest`) |
+| Config | python-dotenv | 1.0.x |
+| Product Source | KripaConnect Node.js API | HTTP via `PRODUCTS_API_URL` |
 
 ---
 
@@ -1040,6 +1104,23 @@ All user-uploaded images (product photos and profile pictures) are stored in **C
 | `VITE_API_BASE_URL` | **Required** | Backend base URL |
 | `VITE_GOOGLE_CLIENT_ID` | **Required** | Google OAuth client ID for `GoogleOAuthProvider` |
 
+### RAG Microservice (`RAG_kc/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GEMINI_API_KEY` | **Required** | Google Gemini API key for LLM answer generation |
+| `GEMINI_MODEL` | Optional | Gemini model name (default: `gemini-flash-latest`) |
+| `PRODUCTS_API_URL` | **Required** | Full URL to the Node.js products endpoint (e.g. `http://localhost:5000/api/products`) |
+| `PRODUCTS_API_TIMEOUT_SECONDS` | Optional | HTTP timeout for product fetches (default: `2.0`) |
+| `PRODUCTS_SYNC_INTERVAL_SECONDS` | Optional | Background sync interval in seconds (default: `30`) |
+| `PINECONE_API_KEY` | **Required** | Pinecone serverless API key |
+| `PINECONE_INDEX_NAME` | **Required** | Name of the Pinecone index to use |
+| `PINECONE_NAMESPACE` | **Required** | Pinecone namespace for product vectors |
+| `PINECONE_CLOUD` | **Required** | Pinecone cloud provider (e.g. `aws`) |
+| `PINECONE_REGION` | **Required** | Pinecone region (e.g. `us-east-1`) |
+| `PINECONE_TOP_K_DEFAULT` | **Required** | Default number of vector results to retrieve (integer > 0) |
+| `ADMIN_API_KEY` | **Required** | Secret key required in `X-Admin-Api-Key` header for `/api/admin/*` endpoints |
+
 ---
 
 ## 15. Local Development Setup
@@ -1048,10 +1129,13 @@ All user-uploaded images (product photos and profile pictures) are stored in **C
 
 - Node.js ≥ 18.x
 - npm ≥ 9.x
+- Python ≥ 3.10.x
 - MongoDB Atlas account (or local MongoDB ≥ 6.x)
 - Cloudinary account
 - SendGrid account (with verified sender)
 - Razorpay test account (for payment testing)
+- Pinecone account (for RAG vector store)
+- Google Gemini API key (for RAG LLM generation)
 - (Optional) Redis instance
 
 ### 1. Clone the repository
@@ -1098,7 +1182,31 @@ npm run dev
 # App available at http://localhost:5173
 ```
 
-### 4. Verify Services
+### 4. Set up the RAG Microservice
+
+```bash
+cd ../RAG_kc
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Create `RAG_kc/.env` and fill in all required variables (see section 14 — RAG Microservice env vars).
+
+```bash
+uvicorn app.main:app --reload
+# RAG API available at http://localhost:8000
+# Interactive docs: http://localhost:8000/docs
+```
+
+> **Important:** The Node.js backend (`localhost:5000`) must be running first — the RAG service fetches the product catalogue from it via `PRODUCTS_API_URL`.
+
+### 5. Verify Services
 
 ```bash
 # Test Razorpay credentials
@@ -1106,6 +1214,13 @@ cd backend && npm run test:razorpay
 
 # Test SendGrid email
 cd backend && npm run test:email
+
+# Test RAG API health
+curl http://localhost:8000/health
+# → { "status": "healthy", "version": "0.1.0", "service": "RAG Recommendation API" }
+
+# Test RAG dependency health (Pinecone)
+curl http://localhost:8000/health/deps
 ```
 
 ---
@@ -1142,6 +1257,10 @@ cd backend && npm run test:email
    ./gradlew assembleRelease
    ```
 4. Distribute `app/build/outputs/apk/release/app-release.apk` directly or via Play Store.
+
+### RAG Microservice
+
+> The RAG service runs independently and has no Render/Vercel profile yet — see [Section 19.12](#1912-deployment).
 
 ---
 
@@ -1215,6 +1334,14 @@ cd backend && npm run test:email
 | Capacitor mobile support | ✅ Complete |
 | SendGrid email notifications | ✅ Complete |
 | Security hardening (Helmet, rate limiting) | ✅ Complete |
+| RAG Microservice — FastAPI server & product endpoints | ✅ Complete |
+| RAG Microservice — NL query parser (category + price) | ✅ Complete |
+| RAG Microservice — Sentence-transformer embeddings | ✅ Complete |
+| RAG Microservice — Hybrid ranking (semantic + lexical + intent + rating) | ✅ Complete |
+| RAG Microservice — Gemini LLM answer generation + guardrails | ✅ Complete |
+| RAG Microservice — Pinecone vector store integration | ✅ Complete |
+| RAG Microservice — Admin reindex / incremental sync endpoints | ✅ Complete |
+| RAG Microservice — Dependency health check (`/health/deps`) | ✅ Complete |
 
 ### Planned Enhancements 🚧
 
@@ -1283,4 +1410,393 @@ All API errors follow a consistent shape:
 
 ---
 
-*This documentation covers the KripaConnect platform as of February 2026. For the latest changes, refer to the git commit history.*
+## 19. RAG Recommendation Microservice
+
+### 19.1 Overview & Purpose
+
+The **RAG (Retrieval-Augmented Generation) Recommendation Microservice** (`RAG_kc/`) is an independent Python/FastAPI service that adds AI-powered, natural-language product recommendation capabilities to KripaConnect.
+
+Instead of a keyword search box, users can query in plain English (e.g. *"best headphones under ₹3000 for gaming"*) and receive:
+- A **ranked list** of semantically relevant products.
+- A **natural-language explanation** generated by Google Gemini.
+- **Explainability data** — why each product was recommended.
+- **Parsed filter details** — what category/price constraints the system inferred.
+
+The service is fully decoupled from the Node.js backend. It consumes the existing `/api/products` endpoint from the KripaConnect backend as its product data source.
+
+---
+
+### 19.2 Repository Structure
+
+```
+RAG_kc/
+├── .env                              ← Environment variables (never commit)
+├── requirements.txt                  ← Python dependencies
+├── IMPLEMENTATION_ROADMAP.md         ← Pinecone integration phases & production checklist
+├── README.md                         ← Quickstart guide
+└── app/
+    ├── main.py                       ← FastAPI app factory, middleware, CORS, health checks
+    ├── api/
+    │   ├── routes.py                 ← Aggregates all sub-routers under /api prefix
+    │   ├── products.py               ← /api/products endpoints (list, get, create)
+    │   ├── recommendations.py        ← /api/recommend endpoint (main RAG query)
+    │   └── admin.py                  ← /api/admin/* Pinecone indexing management
+    ├── core/
+    │   └── config.py                 ← PineconeSettings dataclass + admin key helper
+    ├── models/
+    │   └── schema.py                 ← Pydantic schemas for all request/response bodies
+    ├── rag/
+    │   ├── embeddings.py             ← EmbeddingService (sentence-transformers + hash fallback)
+    │   ├── pinecone_store.py         ← PineconeProductStore (upsert / query / delete / health)
+    │   ├── vector_store.py           ← In-memory FAISS store (used during hybrid re-rank)
+    │   ├── product_vector_contract.py ← Canonical embedding text & Pinecone metadata builder
+    │   ├── query_parser.py           ← Regex/keyword NL → structured filter extraction
+    │   └── generator.py             ← Gemini REST call + fallback deterministic answer
+    ├── services/
+    │   ├── product_service.py        ← HTTP client for KripaConnect product API
+    │   ├── recommendation_service.py ← Orchestrates full hybrid retrieval pipeline
+    │   └── indexing_service.py       ← Pinecone sync job (full reindex & incremental)
+    ├── data/
+    │   └── index_sync_status.json    ← Persisted last-sync state (auto-generated)
+    └── utils/
+        └── helpers.py               ← Text chunking & truncation utilities
+```
+
+---
+
+### 19.3 Technology Stack
+
+| Component | Technology | Notes |
+|-----------|-----------|-------|
+| Web framework | FastAPI 0.111 | Async, OpenAPI docs at `/docs` |
+| ASGI server | Uvicorn 0.29 | Production: `uvicorn app.main:app` |
+| Data validation | Pydantic ≥ 2.7 | Request and response schemas |
+| Embeddings | `sentence-transformers` 3.0 | Model: `all-MiniLM-L6-v2` (384-dim) |
+| Vector database | Pinecone ≥ 7.0 | Serverless index, cosine similarity |
+| In-memory ANN | FAISS (faiss-cpu) | Used for per-request hybrid re-rank |
+| LLM | Google Gemini (`gemini-flash-latest`) | Grounded generation via REST API |
+| Product data | KripaConnect Node.js API | Fetched via `PRODUCTS_API_URL` |
+| Config | python-dotenv | `.env` file loading |
+
+---
+
+### 19.4 RAG Pipeline Architecture
+
+The full pipeline for a single `POST /api/recommend` request:
+
+```
+User query (natural language)
+        │
+        ▼
+ 1. QUERY PARSER (query_parser.py)
+    • Regex extracts price constraints (under ₹3000, above ₹1000)
+    • Keyword aliases map to canonical categories ("phone" → "Electronics")
+    • Returns ParsedQuery { category, min_price, max_price }
+        │
+        ▼
+ 2. STRUCTURED FILTER (product_service.py)
+    • Calls Node.js backend: GET /api/products?category=...&min_price=...&max_price=...
+    • Returns the filtered candidate pool
+        │
+        ▼
+ 3. EMBEDDING (embeddings.py)
+    • EmbeddingService wraps sentence-transformers all-MiniLM-L6-v2
+    • Encodes each candidate product: name + category + description + tags
+    • Encodes the user query
+    • Falls back to a deterministic hash-based BOW embedding when
+      sentence-transformers is unavailable (CI / lightweight environments)
+        │
+        ▼
+ 4. VECTOR RETRIEVAL (pinecone_store.py / vector_store.py)
+    • Production path: query Pinecone top-k with optional metadata filter
+    • Dev/fallback path: build in-memory FAISS index over filtered candidates
+    • Returns ranked hits with cosine similarity scores
+        │
+        ▼
+ 5. HYBRID RERANKER (recommendation_service.py)
+    • Weighted fusion of 4 signals:
+      ┌─────────────────────────────────┬────────┐
+      │ Signal                          │ Weight │
+      ├─────────────────────────────────┼────────┤
+      │ Semantic score (Pinecone/FAISS) │  0.60  │
+      │ Lexical overlap (query ∩ text)  │  0.20  │
+      │ Intent match (topic clusters)   │  0.15  │
+      │ Rating prior (0–5 → 0–1)        │  0.05  │
+      └─────────────────────────────────┴────────┘
+    • Tie-breaking: higher rating, then lower price
+        │
+        ▼
+ 6. LLM GENERATION (generator.py)
+    • Top 3 products are formatted into a JSON-lines context block
+    • Gemini generateContent REST API is called with a grounded prompt
+    • Guardrails: "Use ONLY retrieved products. Do not invent specs."
+    • If Gemini is unavailable or times out → deterministic fallback answer
+        │
+        ▼
+ 7. RESPONSE ASSEMBLY
+    • Returns RecommendResponse with:
+      - query, parsed_filters
+      - answer (LLM text or fallback)
+      - top_products (top 3), why_recommended, comparison
+      - products (full ranked list)
+      - total, count
+```
+
+---
+
+### 19.5 API Reference
+
+Base URL: `http://localhost:8000` (dev)
+
+#### Health Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Liveness probe: `{ "status": "ok", "message": "API running" }` |
+| GET | `/health` | Service health: version + service name |
+| GET | `/health/deps` | Dependency health including Pinecone connectivity status |
+| GET | `/api/ping` | Router sanity check: `{ "ping": "pong" }` |
+
+---
+
+#### Products — `/api/products`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/products` | None | List products with optional filters (category, tag, min_price, max_price) and pagination (skip, limit) |
+| GET | `/api/products/{product_id}` | None | Fetch a single product by ID |
+| POST | `/api/products` | None | Add a product to the catalogue (auto-generates ID if omitted) |
+
+**Query parameters for `GET /api/products`:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `category` | string | Filter by category name (case-insensitive) |
+| `tag` | string | Filter by tag (case-insensitive) |
+| `min_price` | float | Minimum price inclusive |
+| `max_price` | float | Maximum price inclusive |
+| `skip` | int | Offset for pagination (default: 0) |
+| `limit` | int | Page size (default: 100, max: 500) |
+
+---
+
+#### Recommendations — `/api/recommend`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/recommend` | None | Submit a natural-language query and receive ranked product recommendations |
+
+**Request body (`RecommendRequest`):**
+
+```json
+{
+  "query": "best noise-cancelling headphones under ₹5000",
+  "limit": 10
+}
+```
+
+**Response body (`RecommendResponse`):**
+
+```json
+{
+  "query": "best noise-cancelling headphones under ₹5000",
+  "parsed_filters": { "category": "Electronics", "min_price": null, "max_price": 5000.0 },
+  "answer": "The Sony WH-1000XM4 is the best match because...",
+  "total": 12,
+  "count": 10,
+  "top_products": [ ...top 3 ProductOut objects... ],
+  "why_recommended": [
+    "Sony WH-1000XM4: rating 4.8/5; price 4499.00; matches: headphones, noise"
+  ],
+  "comparison": [
+    "Sony WH-1000XM4 | price 4499.00 | rating 4.8/5 | stock 20 | tags noise-cancelling, sony, wireless"
+  ],
+  "products": [ ...full ranked list of ProductOut objects... ]
+}
+```
+
+---
+
+#### Admin — `/api/admin` (requires `X-Admin-Api-Key` header)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/admin/reindex` | Wipe the Pinecone namespace and rebuild all vectors from scratch |
+| POST | `/api/admin/sync` | Incremental sync — upsert new/changed products, delete removed products |
+| GET | `/api/admin/index-status` | Return the last persisted sync status (timestamp, counts, errors) |
+
+**Index status response example:**
+
+```json
+{
+  "last_sync_at": "2026-07-15T06:00:00+00:00",
+  "mode": "incremental",
+  "total_synced_count": 42,
+  "failed_ids": [],
+  "current_version": "20260715060000",
+  "sync_duration_seconds": 3.14,
+  "last_error": null,
+  "synced_product_ids": ["P001", "P002", ...]
+}
+```
+
+---
+
+### 19.6 Service Modules
+
+| Module | File | Responsibility |
+|--------|------|---------------|
+| Product Service | `services/product_service.py` | HTTP client to KripaConnect backend; filters, paginates, caches product list; raises `ProductSourceUnavailableError` when backend is down |
+| Recommendation Service | `services/recommendation_service.py` | Orchestrates query parsing → filtering → embedding → hybrid ranking → LLM generation; assembles final `RecommendResponse` dict |
+| Indexing Service | `services/indexing_service.py` | Pulls all products, generates embeddings, upserts to Pinecone; supports `full` (clear + rebuild) and `incremental` (upsert new, delete removed) modes; persists sync state to `data/index_sync_status.json` |
+
+---
+
+### 19.7 Pinecone Vector Store
+
+The `PineconeProductStore` class (`rag/pinecone_store.py`) is the single boundary around all Pinecone SDK operations:
+
+| Method | Description |
+|--------|-------------|
+| `init()` | Connect to Pinecone, auto-create serverless index if missing, validate embedding dimension matches index dimension |
+| `upsert(vectors)` | Batch-upsert `{id, values, metadata}` dicts to the configured namespace |
+| `query(vector, top_k, metadata_filter)` | Run a cosine-similarity ANN query with optional server-side metadata pre-filter (category, price) |
+| `delete_by_product_id(product_id)` | Delete a vector by product ID using Pinecone metadata filter delete |
+| `update_by_product_id(product_id, vector, metadata)` | Re-embed and upsert a single product (used in incremental sync) |
+| `clear_namespace()` | Delete all vectors in the namespace (used before full reindex) |
+| `health_check()` | Return Pinecone connectivity and vector count details |
+
+**Index configuration:**
+
+| Parameter | Value |
+|-----------|-------|
+| Metric | Cosine similarity |
+| Dimension | 384 (all-MiniLM-L6-v2) |
+| Cloud | Configured via `PINECONE_CLOUD` env var |
+| Region | Configured via `PINECONE_REGION` env var |
+
+**Metadata stored per vector:**
+
+Each product vector in Pinecone carries metadata that enables server-side pre-filtering:
+
+```json
+{
+  "product_id": "P001",
+  "name": "Sony WH-1000XM4",
+  "category": "Electronics",
+  "price": 4499.0,
+  "rating": 4.8,
+  "stock": 20,
+  "tags": ["noise-cancelling", "sony", "wireless"],
+  "index_version": "20260715060000",
+  "indexed_at": "2026-07-15T06:00:00+00:00"
+}
+```
+
+---
+
+### 19.8 LLM Generation (Gemini)
+
+The `generator.py` module calls the **Google Gemini REST API** (`generateContent`) directly (no SDK dependency) to produce a grounded recommendation answer.
+
+**Prompt design:**
+- **System instruction:** "Use ONLY the provided product context. Do not invent specs or products. If context is insufficient, say so clearly."
+- **User prompt** includes the original query and a JSON-lines block of the top 3 retrieved products (id, name, category, price, rating, stock, truncated description, tags).
+- Gemini is instructed to: pick the best product (3–5 sentences), mention up to 2 alternatives with trade-offs, stay under 140 words.
+- **Temperature:** 0.2 (low creativity, high factuality).
+- **Max output tokens:** 220.
+
+**Fallback behavior:**
+- If `GEMINI_API_KEY` is not set, Gemini is unreachable, or the request times out (20 s), a deterministic fallback answer is returned instead (no error raised to the client).
+
+---
+
+### 19.9 Admin Indexing Endpoints
+
+The admin endpoints at `/api/admin/*` are protected by a static API key (`ADMIN_API_KEY` env var) passed in the `X-Admin-Api-Key` HTTP header.
+
+**Full Reindex (`POST /api/admin/reindex`):**
+1. Clears all existing vectors in the Pinecone namespace.
+2. Fetches the full product catalogue from the Node.js backend.
+3. Generates embeddings for all products.
+4. Upserts all vectors to Pinecone.
+5. Persists sync status to `data/index_sync_status.json`.
+
+**Incremental Sync (`POST /api/admin/sync`):**
+1. Fetches current products from the Node.js backend.
+2. Generates embeddings and upserts all current products (Pinecone upsert is idempotent).
+3. Computes the diff against the previously synced product IDs.
+4. Deletes vectors for any products that no longer exist.
+5. Persists updated sync status.
+
+---
+
+### 19.10 Environment Configuration
+
+See [Section 14 — RAG Microservice env vars](#14-environment-configuration) for the full variable reference.
+
+---
+
+### 19.11 Local Development Setup
+
+See [Section 15.4 — Set up the RAG Microservice](#4-set-up-the-rag-microservice) for the step-by-step guide.
+
+**Interactive API docs** (Swagger UI): `http://localhost:8000/docs`  
+**ReDoc docs**: `http://localhost:8000/redoc`
+
+---
+
+### 19.12 Deployment
+
+The RAG microservice can be deployed on any Python-capable host (Render, Railway, Fly.io, EC2).
+
+**Recommended production command:**
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+```
+
+**Environment variables** must be set on the host (same as `RAG_kc/.env` — do **not** commit the `.env` file).
+
+**Key deployment notes:**
+- `PRODUCTS_API_URL` must point to the live KripaConnect backend URL (e.g. `https://kripaconnect-app.onrender.com/api/products`).
+- Pinecone index is created automatically on first startup if it does not exist.
+- After first deploy, trigger a full reindex: `POST /api/admin/reindex` with the `X-Admin-Api-Key` header.
+- CORS is currently open (`allow_origins=["*"]`); tighten this to the specific frontend origin before production.
+
+---
+
+### 19.13 Implementation Roadmap & Status
+
+Detailed phase tracking is maintained in `RAG_kc/IMPLEMENTATION_ROADMAP.md`.
+
+**Current implementation status:**
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 0 | FastAPI server, health endpoints, basic routing | ✅ Complete |
+| Phase 1 | Product CRUD endpoints + Pydantic schemas | ✅ Complete |
+| Phase 2 | NL query parser (category + price extraction) | ✅ Complete |
+| Phase 3 | Sentence-transformer embeddings + in-memory FAISS ranking | ✅ Complete |
+| Phase 4 | Hybrid reranker (semantic + lexical + intent + rating) | ✅ Complete |
+| Phase A | Pinecone client integration + index auto-creation | ✅ Complete |
+| Phase B | Indexing pipeline (full reindex + incremental sync + admin endpoints) | ✅ Complete |
+| Phase C | Gemini LLM answer generation + guardrails + fallback | ✅ Complete |
+| Phase D | Production hardening (retries, caching, rate limiting, auth) | 🚧 Planned |
+
+**Planned enhancements:**
+
+| Enhancement | Priority |
+|-------------|----------|
+| API auth + rate limiting on recommendation endpoint | High |
+| Retry/circuit-breaker for Gemini and Pinecone calls | High |
+| Short-TTL response cache for repeated queries | Medium |
+| Structured logging with request IDs and per-stage timings | Medium |
+| Integration test suite (mocked Pinecone + product API) | Medium |
+| Docker image + CI/CD pipeline | Medium |
+| Expose RAG endpoint from the KripaConnect frontend | Low |
+| Multi-language query support | Low |
+
+---
+
+*This documentation covers the KripaConnect platform as of July 2026. For the latest changes, refer to the git commit history.*
