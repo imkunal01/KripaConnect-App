@@ -1,6 +1,6 @@
 # KripaConnect — Full Stack E-Commerce Platform
 
-A complete e-commerce solution with web and mobile support, featuring a modern React frontend, robust Node.js backend, and native Android app via Trusted Web Activity (TWA).
+A complete e-commerce solution with web and mobile support, featuring a modern React frontend, a robust Node.js backend, and a native Android app via Trusted Web Activity (TWA).
 
 **Monorepo containing:**
 
@@ -8,17 +8,27 @@ A complete e-commerce solution with web and mobile support, featuring a modern R
 - **Frontend**: React + Vite (PWA-ready)
 - **Mobile App**: Capacitor (iOS/Android) + TWA Android build
 
-This comprehensive platform includes customer shopping, B2B retailer portal, and full-featured admin dashboard with analytics.
+This comprehensive platform includes customer shopping, a B2B retailer portal, and a full-featured admin dashboard with analytics.
 
 ---
-Enter into Virtual Envirements - (Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned) ; (& c:\Users\Kunal\Desktop\Projects\SKE\RAG_kc\.venv\Scripts\Activate.ps1)
+
 ## Table of Contents
 
+- [System Overview](#system-overview)
 - [Project Structure](#project-structure)
 - [Key Features](#key-features)
   - [Backend Features](#backend-features)
   - [Frontend Features](#frontend-features)
 - [Tech Stack](#tech-stack)
+- [Core Workflows](#core-workflows)
+  - [Authentication Flow](#1-authentication-flow-jwt--refresh--otp--google)
+  - [Product Browsing & Cart Flow](#2-product-browsing--cart-flow)
+  - [Checkout & Payment Flow (Razorpay)](#3-checkout--payment-flow-razorpay)
+  - [Order Lifecycle](#4-order-lifecycle)
+  - [Admin Product & Image Upload Flow](#5-admin-product--image-upload-flow)
+  - [Admin Analytics Flow](#6-admin-analytics-flow)
+  - [RAG Search & Recommendation Flow](#7-rag-search--recommendation-flow)
+  - [Mobile App (TWA) Build & Distribution Flow](#8-mobile-app-twa-build--distribution-flow)
 - [Run Locally](#run-locally)
   - [Backend Setup](#backend-setup)
   - [Frontend Setup](#frontend-setup)
@@ -32,6 +42,70 @@ Enter into Virtual Envirements - (Set-ExecutionPolicy -Scope Process -ExecutionP
 - [Deployment](#deployment)
 - [Project Status & Roadmap](#project-status--roadmap)
 - [License](#license)
+
+---
+
+## System Overview
+
+KripaConnect is a full-stack e-commerce platform for B2C customers and B2B retailers. It's built with a React PWA/TWA frontend and a Node.js/Express backend (MongoDB, optional Redis), implementing role-based JWT auth (access + httpOnly refresh), Google + email-OTP login, secure input sanitization and rate limiting, Razorpay payments with webhook verification, PDF invoicing, a Cloudinary image pipeline, and transaction audit trails. It also includes a RAG-based search and smart recommendation pipeline using hybrid vector + text search with contextual re-ranking. It's deployed on Vercel (frontend) and Render (backend), with an architecture that's container/AWS-ready and maps easily to Next.js/Nest.js, MySQL, and AWS workflows.
+
+**Technical highlights:**
+
+- **Modern JS stack**: React (lazy-loading, PWA/TWA) + Node/Express APIs.
+- **Auth & security**: Dual JWT flow, Google OAuth, email OTP, Helmet, mongo-sanitize, per-route rate limits.
+- **Payments & integrations**: Razorpay order + signature verification, webhooks, Brevo emails, Cloudinary.
+- **Search & recommendations**: RAG retrieval with embeddings + hybrid vector/text search and contextual re-ranking for personalized suggestions.
+- **Data & caching**: Mongoose models (users/products/orders/reviews), optional Redis caching; idempotent webhook handling and audit logs.
+- **Ops-ready**: Vercel/Render deployment, Docker/container friendly, ready for AWS/ECS/EKS and MySQL/Nest.js migrations.
+- **Collaboration**: tests/seed scripts, documentation, and API-first design for team development.
+
+### High-Level Architecture
+
+```mermaid
+flowchart LR
+    subgraph Clients
+        Web[React PWA - Vite]
+        Android[Android TWA App]
+        Mobile[Capacitor iOS/Android]
+    end
+
+    subgraph Frontend["Frontend (Vercel)"]
+        FE[React App]
+    end
+
+    subgraph Backend["Backend (Render) - Node/Express"]
+        API[REST API]
+        MW[Auth / Security Middleware]
+        Ctrl[Controllers]
+        Svc[Services]
+    end
+
+    subgraph Data["Data Layer"]
+        Mongo[(MongoDB Atlas)]
+        Redis[(Redis Cache - optional)]
+    end
+
+    subgraph External["External Services"]
+        Razorpay[Razorpay]
+        Cloudinary[Cloudinary]
+        SendGrid[SendGrid / Brevo]
+        Google[Google OAuth]
+        RAGStore[(Vector Store - Embeddings)]
+    end
+
+    Web --> FE
+    Android --> FE
+    Mobile --> FE
+    FE --> API
+    API --> MW --> Ctrl --> Svc
+    Svc --> Mongo
+    Svc --> Redis
+    Svc --> Razorpay
+    Svc --> Cloudinary
+    Svc --> SendGrid
+    Svc --> Google
+    Svc --> RAGStore
+```
 
 ---
 
@@ -217,7 +291,7 @@ The backend is a REST API built with Express and MongoDB.
 - Reviews endpoints under `/api/reviews`.
 
 **Orders**
-- Create order, list “my orders”, and order detail.
+- Create order, list "my orders", and order detail.
 - Cancel order (user) and update delivery status (admin).
 - Admin delete order.
 
@@ -307,7 +381,7 @@ The frontend is a modern React + Vite application with comprehensive routing, au
 - Spending insights
 
 **Admin Panel (`/admin`)**
-- **Dashboard**: 
+- **Dashboard**:
   - Real-time statistics (revenue, orders, users, low stock)
   - Interactive charts (revenue trends, order distribution)
   - Low stock product alerts
@@ -362,8 +436,6 @@ The frontend is a modern React + Vite application with comprehensive routing, au
 - Native-like performance and appearance
 - Full mobile API access (camera, location, etc.)
 
-
-
 ---
 
 ## Tech Stack
@@ -377,7 +449,7 @@ The frontend is a modern React + Vite application with comprehensive routing, au
 - **File Storage**: Cloudinary (multi-image upload with `streamifier`)
 - **File Upload**: Multer (multipart form-data handling)
 - **PDF Generation**: PDFKit (invoice generation)
-- **Security**: 
+- **Security**:
   - Helmet.js (security headers)
   - Express Rate Limit (DDoS protection)
   - Mongo-sanitize (NoSQL injection prevention)
@@ -394,7 +466,7 @@ The frontend is a modern React + Vite application with comprehensive routing, au
 - **Framework**: React 19.x
 - **Build Tool**: Vite 7.x
 - **Routing**: React Router DOM 7.x
-- **Authentication**: 
+- **Authentication**:
   - Google OAuth (`@react-oauth/google`)
   - Custom JWT implementation
 - **UI/UX**:
@@ -417,6 +489,189 @@ The frontend is a modern React + Vite application with comprehensive routing, au
 
 ---
 
+## Core Workflows
+
+### 1. Authentication Flow (JWT + Refresh + OTP + Google)
+
+```mermaid
+sequenceDiagram
+    participant U as User (Browser/App)
+    participant FE as Frontend (React)
+    participant API as Backend API
+    participant DB as MongoDB
+    participant Mail as SendGrid
+    participant Google as Google OAuth
+
+    alt Email/Password
+        U->>FE: Enter email + password
+        FE->>API: POST /api/auth/login
+        API->>DB: Verify credentials (bcrypt)
+        DB-->>API: User record
+        API-->>FE: Access token (JWT) + httpOnly refreshToken cookie
+    else Email OTP
+        U->>FE: Enter email
+        FE->>API: POST /api/auth/login-otp/request
+        API->>Mail: Send OTP email
+        Mail-->>U: OTP code
+        U->>FE: Enter OTP
+        FE->>API: POST /api/auth/login-otp/verify
+        API->>DB: Validate OTP
+        API-->>FE: Access token + refreshToken cookie
+    else Google Sign-In
+        U->>FE: Click "Sign in with Google"
+        FE->>Google: Get credential/accessToken
+        Google-->>FE: ID token
+        FE->>API: POST /api/auth/google
+        API->>Google: Validate token (GOOGLE_CLIENT_ID)
+        API->>DB: Find/create user
+        API-->>FE: Access token + refreshToken cookie
+    end
+
+    Note over FE,API: On access-token expiry
+    FE->>API: POST /api/auth/refresh (cookie sent automatically)
+    API->>API: Verify refreshToken, rotate token
+    API-->>FE: New access token
+```
+
+### 2. Product Browsing & Cart Flow
+
+```mermaid
+flowchart TD
+    A[User opens Products page] --> B[GET /api/products - filters/sort/search]
+    B --> C[Product grid rendered]
+    C --> D{User action}
+    D -->|View details| E[GET /api/products/:id]
+    D -->|Add to favorites| F[POST /api/favorites]
+    D -->|Add to cart| G[POST /api/cart/add]
+    G --> H[ShopContext updates cart state]
+    H --> I[Cart badge + CartPage reflect changes]
+    E --> J[Reviews + ratings loaded]
+    J --> D
+```
+
+### 3. Checkout & Payment Flow (Razorpay)
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant FE as Frontend
+    participant API as Backend API
+    participant RZP as Razorpay
+    participant DB as MongoDB
+
+    U->>FE: Proceed to checkout
+    FE->>API: POST /api/orders (create app order)
+    API->>DB: Save order (status: pending)
+    API-->>FE: orderId
+
+    alt Cash on Delivery
+        FE->>API: Confirm COD order
+        API->>DB: Update order status
+    else Razorpay Online Payment
+        FE->>API: POST /api/payments/create-order
+        API->>RZP: Create Razorpay order
+        RZP-->>API: razorpayOrderId
+        API->>DB: Save Transaction (pending)
+        API-->>FE: razorpayOrderId + key
+        FE->>RZP: Open checkout modal
+        U->>RZP: Complete payment
+        RZP-->>FE: payment_id, order_id, signature
+        FE->>API: POST /api/payments/verify
+        API->>API: Verify signature (HMAC)
+        API->>DB: Mark order paid + Transaction captured
+        RZP-->>API: (async) POST /api/payments/webhook
+        API->>API: Verify webhook signature
+        API->>DB: Idempotent status update
+    end
+
+    API-->>FE: Order confirmed
+    FE->>U: SuccessScreen shown
+```
+
+### 4. Order Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: Order created
+    Pending --> Paid: Payment verified (Razorpay) / COD confirmed
+    Pending --> Cancelled: User cancels
+    Paid --> Processing: Admin updates status
+    Processing --> Shipped: Admin updates status
+    Shipped --> Delivered: Admin updates status
+    Paid --> Cancelled: Admin/user cancels
+    Delivered --> [*]
+    Cancelled --> [*]
+
+    note right of Paid
+      Invoice can be generated
+      (Admin-only, PDFKit)
+    end note
+```
+
+### 5. Admin Product & Image Upload Flow
+
+```mermaid
+flowchart TD
+    A[Admin submits product form] --> B[Multer parses multipart data - up to 6 images]
+    B --> C[uploadMiddleware validates files]
+    C --> D[cloudinaryService streams images via streamifier]
+    D --> E[Cloudinary returns URLs + public_ids]
+    E --> F[productController saves Product doc in MongoDB]
+    F --> G[Category assignment + stock/pricing saved]
+    G --> H[Product visible in catalog]
+
+    I[Admin removes one image] --> J[DELETE /api/products/:productId/image/:publicId]
+    J --> K[Cloudinary deletes asset by public_id]
+    K --> L[Product doc image array updated]
+```
+
+### 6. Admin Analytics Flow
+
+```mermaid
+flowchart LR
+    A[Admin opens Dashboard] --> B[GET /api/analytics/overview]
+    A --> C[GET /api/analytics/revenue]
+    A --> D[GET /api/analytics/orders]
+    A --> E[GET /api/analytics/top-products]
+    A --> F[GET /api/analytics/user-growth]
+    A --> G[GET /api/analytics/low-stock]
+
+    B & C & D & E & F & G --> H[MongoDB aggregation pipelines]
+    H --> I[Aggregated stats returned]
+    I --> J[Recharts renders revenue trends,\norder distribution, low-stock alerts]
+```
+
+### 7. RAG Search & Recommendation Flow
+
+```mermaid
+flowchart TD
+    A[User query / browsing context] --> B[Query embedding generated]
+    B --> C[Hybrid retrieval]
+    C --> D[Vector similarity search - embeddings store]
+    C --> E[Text/keyword search - MongoDB]
+    D --> F[Candidate results merged]
+    E --> F
+    F --> G[Contextual re-ranking\n- user history, category affinity]
+    G --> H[Personalized product recommendations / search results]
+    H --> I[Rendered on Products / Dashboard pages]
+```
+
+### 8. Mobile App (TWA) Build & Distribution Flow
+
+```mermaid
+flowchart LR
+    A[Deployed frontend - production URL] --> B[assetlinks.json generated]
+    B --> C[Upload to /.well-known/assetlinks.json on domain]
+    C --> D[Bubblewrap CLI configures twa-manifest.json]
+    D --> E[./gradlew assembleRelease]
+    E --> F[Signed release APK]
+    F --> G{Distribution}
+    G -->|Direct install| H[adb install app-release.apk]
+    G -->|Play Store| I[Upload to Play Console]
+```
+
+---
+
 ## Run Locally
 
 ### Backend Setup
@@ -435,6 +690,11 @@ npm start
 ```
 
 Backend default: `http://localhost:5000`
+
+> **Windows PowerShell — activate virtual environment (RAG search component):**
+> ```powershell
+> (Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned) ; (& c:\Users\Kunal\Desktop\Projects\SKE\RAG_kc\.venv\Scripts\Activate.ps1)
+> ```
 
 ### Frontend Setup
 
@@ -462,7 +722,7 @@ Required (core):
 Required (email / OTP / password reset):
 - `SENDGRID_API_KEY` — SendGrid API key.
 - `EMAIL_FROM_EMAIL` — verified SendGrid sender email.
-- `EMAIL_FROM_NAME` — optional sender name (defaults to “Smart E-Commerce”).
+- `EMAIL_FROM_NAME` — optional sender name (defaults to "Smart E-Commerce").
 - `FRONTEND_URL` — used to generate password reset links.
 
 Required (payments):
@@ -516,7 +776,7 @@ GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
 
 Create `frontend/.env`:
 
-- `VITE_API_BASE_URL` — backend base URL (default fallback is `http://localhost:5000`, which breaks in production if you don’t set it).
+- `VITE_API_BASE_URL` — backend base URL (default fallback is `http://localhost:5000`, which breaks in production if you don't set it).
 - `VITE_GOOGLE_CLIENT_ID` — Google client id used by `GoogleOAuthProvider`.
 
 Example:
@@ -740,6 +1000,7 @@ For detailed instructions, see [twa-kripa-connect/BUILD_DOCUMENTATION.md](twa-kr
 - Invoice generation
 - Review system
 - Email notifications
+- RAG-based search + smart recommendation pipeline (hybrid vector + text search, contextual re-ranking)
 
 ### 🚧 Potential Enhancements
 - WhatsApp order notifications
@@ -758,29 +1019,3 @@ For detailed instructions, see [twa-kripa-connect/BUILD_DOCUMENTATION.md](twa-kr
 ## License
 
 This project is proprietary. All rights reserved.
-
-
-
-
-
-
-
-
-KripaConnect Full-stack e-commerce platform for B2C customers, B2B retailers. 
-
-Built with a React PWA/TWA frontend and Node.js/Express backend (MongoDB, optional Redis), it implements role-based JWT auth (access + httpOnly refresh), Google + email-OTP login, secure input sanitization and rate limiting, Razorpay payments with webhook verification, PDF invoicing, Cloudinary image pipeline, and transaction audit trails. I recently added a RAG-based search + smart recommendation pipeline using hybrid vector + text search with contextual re-ranking. Deployed on Vercel (frontend) and Render (backend), the architecture is container/AWS-ready and maps easily to Next.js/Nest.js, MySQL, and AWS workflows.
-
-
-Technical highlights: 
-
-Modern JS stack: React (lazy-loading, PWA/TWA) + Node/Express APIs. Auth & security: Dual JWT flow, Google OAuth, email OTP, Helmet, mongo-sanitize, per-route rate limits. 
-
-Payments & integrations: Razorpay order + signature verification, webhooks, brevo emails, Cloudinary. 
-
-Search & recommendations: RAG retrieval with embeddings + hybrid vector/text search and contextual re-ranking for personalized suggestions.
-
-Data & caching: Mongoose models (users/products/orders/reviews), optional Redis caching; idempotent webhook handling and audit logs.
-
-Ops-ready: Vercel/Render deployment, Docker/container friendly, ready for AWS/ECS/EKS and MySQL/Nest.js migrations. 
-
-Collaboration: tests/seed scripts, documentation, and API-first design for team development.
