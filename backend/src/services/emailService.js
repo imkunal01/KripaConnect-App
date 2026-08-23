@@ -7,10 +7,39 @@ function readEnvTrimmed(key) {
   return trimmed.length ? trimmed : undefined
 }
 
-function getFrontendUrl() {
-  if (process.env.FRONTEND_URL) {
-    return process.env.FRONTEND_URL.trim().replace(/\/$/, "");
+function getFrontendUrl(preferredOrigin) {
+  // If caller provided request origin (e.g. from Vercel or custom domain), use it if allowed
+  if (preferredOrigin) {
+    try {
+      const parsed = new URL(preferredOrigin);
+      const origin = `${parsed.protocol}//${parsed.host}`;
+      const hostname = parsed.hostname.toLowerCase();
+      if (
+        hostname === "kripaconnect.in" ||
+        hostname.endsWith(".kripaconnect.in") ||
+        hostname.endsWith(".vercel.app") ||
+        hostname === "localhost" ||
+        hostname === "127.0.0.1"
+      ) {
+        return origin;
+      }
+    } catch {
+      // ignore parsing failure
+    }
   }
+
+  // If FRONTEND_URL has multiple comma-separated URLs, take the first one
+  if (process.env.FRONTEND_URL) {
+    const urls = process.env.FRONTEND_URL.split(',').map(s => s.trim().replace(/\/$/, "")).filter(Boolean);
+    if (urls.length > 0) return urls[0];
+  }
+
+  if (process.env.VERCEL_URL) {
+    let vUrl = process.env.VERCEL_URL.trim().replace(/\/$/, "");
+    if (!vUrl.startsWith('http')) vUrl = `https://${vUrl}`;
+    return vUrl;
+  }
+
   return process.env.NODE_ENV === "production"
     ? "https://kripaconnect.in"
     : "http://localhost:5173";
@@ -91,8 +120,8 @@ async function sendMail({ to, subject, html, text, cc, bcc, replyTo }) {
 /**
  * Send password reset email with reset link
  */
-async function sendPasswordResetEmail(email, resetToken, userName = 'User') {
-  const resetUrl = `${getFrontendUrl()}/reset-password?token=${encodeURIComponent(resetToken)}`;
+async function sendPasswordResetEmail(email, resetToken, userName = 'User', originUrl = null) {
+  const resetUrl = `${getFrontendUrl(originUrl)}/reset-password?token=${encodeURIComponent(resetToken)}`;
   
   const html = `
     <!DOCTYPE html>

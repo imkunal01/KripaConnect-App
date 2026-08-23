@@ -60,9 +60,18 @@ function getAllowedOrigins() {
     .map(s => s.trim())
     .filter(Boolean);
 
-  const frontendUrl = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
+  const frontendUrls = (process.env.FRONTEND_URL || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
 
-  return [...base, ...fromEnv, ...frontendUrl].map(normalizeOrigin);
+  const vercelUrls = (process.env.VERCEL_URL || "")
+    .split(",")
+    .map(s => s.trim())
+    .map(s => s.startsWith("http") ? s : `https://${s}`)
+    .filter(Boolean);
+
+  return [...base, ...fromEnv, ...frontendUrls, ...vercelUrls].map(normalizeOrigin);
 }
 
 const corsOptions = {
