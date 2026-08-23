@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.jsx'
+import SEO from '../components/SEO.jsx'
 import './FormStyles.css'
 
 export default function Signup() {
@@ -56,6 +57,12 @@ export default function Signup() {
 
   return (
     <div className="auth-wrapper">
+      <SEO
+        title="Create an Account | Sign Up | KripaConnect"
+        description="Join KripaConnect to discover top electronics, track shipments, and unlock wholesale B2B pricing."
+        canonical="/signup"
+        robots="noindex, follow"
+      />
       {/* LEFT: Form Section */}
       <div className="auth-left">
         <button type="button" className="auth-back-btn" onClick={goBack}>

@@ -8,12 +8,17 @@ function readEnvTrimmed(key) {
 }
 
 function getFrontendUrl() {
-  return (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
+  if (process.env.FRONTEND_URL) {
+    return process.env.FRONTEND_URL.trim().replace(/\/$/, "");
+  }
+  return process.env.NODE_ENV === "production"
+    ? "https://kripaconnect.in"
+    : "http://localhost:5173";
 }
 
 function getFromAddress() {
   const fromEmail = readEnvTrimmed('EMAIL_FROM_EMAIL')
-  const fromName = readEnvTrimmed('EMAIL_FROM_NAME') || 'Smart E-Commerce'
+  const fromName = readEnvTrimmed('EMAIL_FROM_NAME') || 'KripaConnect'
   if (!fromEmail) {
     throw new Error('Missing EMAIL_FROM_EMAIL env var (SendGrid requires a verified sender).')
   }
@@ -119,7 +124,7 @@ async function sendPasswordResetEmail(email, resetToken, userName = 'User') {
           <p>If you didn't request a password reset, please ignore this email.</p>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Smart E-Commerce. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} KripaConnect. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -168,7 +173,7 @@ async function sendOtpEmail(email, otp, userName = 'User') {
           <p>If you didn't request this OTP, please ignore this email and secure your account.</p>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Smart E-Commerce. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} KripaConnect. All rights reserved.</p>
         </div>
       </div>
     </body>

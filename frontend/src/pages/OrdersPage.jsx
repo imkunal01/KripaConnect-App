@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth"
 import { getMyOrders, cancelOrder } from "../services/orders"
 import Navbar from "../components/Navbar"
 import Footer from "../components/Footer"
+import SEO from "../components/SEO"
 import "./OrdersPage.css"
 
 function formatDate(dateString) {
@@ -72,6 +73,12 @@ export default function OrdersPage() {
 
   return (
     <div className="orders-page">
+      <SEO
+        title="My Orders | Order History & Tracking | KripaConnect"
+        description="Track your active shipments and view complete order history on KripaConnect."
+        canonical="/orders"
+        robots="noindex, nofollow"
+      />
       <Navbar />
 
       <main className="orders-main">

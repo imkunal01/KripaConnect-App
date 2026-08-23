@@ -12,6 +12,7 @@ import ProductGrid from '../components/ProductGrid.jsx'
 import ProductHeroCarousel from '../components/ProductHeroCarousel.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
+import SEO from '../components/SEO.jsx'
 import './Products.css'
 
 export default function Products() {
@@ -105,50 +106,92 @@ export default function Products() {
       } finally {
         setSuggestLoading(false)
       }
-    }, 250)
+    }, 300)
     return () => clearTimeout(t)
   }, [searchDraft])
 
   /* ===============================
-     Helper: Update URL Params
+     Callbacks
      =============================== */
-  const updateParams = useCallback((next) => {
-    const merged = new URLSearchParams(params)
-    let changed = false
-
-    Object.entries(next).forEach(([k, v]) => {
-      const nextValue = v === undefined || v === null ? '' : String(v)
-      const currentValue = merged.get(k) || ''
-
-      if (nextValue === '') {
-        if (merged.has(k)) {
-          merged.delete(k)
-          changed = true
-        }
-      } else if (currentValue !== nextValue) {
-        merged.set(k, nextValue)
-        changed = true
+  const updateParams = useCallback((newParams) => {
+    const next = new URLSearchParams(params)
+    Object.entries(newParams).forEach(([k, v]) => {
+      if (v === '' || v === undefined || v === null) {
+        next.delete(k)
+      } else {
+        next.set(k, String(v))
       }
     })
-
-    if (!changed) return
-    setParams(merged)
+    setParams(next)
   }, [params, setParams])
 
-  const handleSearchChange = useCallback((val) => updateParams({ search: val }), [updateParams])
+  const handleSearchChange = useCallback((val) => updateParams({ search: val || '' }), [updateParams])
   const handleSearchInputChange = useCallback((val) => setSearchDraft(val), [])
   const handleSuggestionSelect = useCallback((item) => navigate(`/product/${item._id}`), [navigate])
   const handleSortChange = useCallback((val) => updateParams({ sort: val }), [updateParams])
   const handleFiltersOpen = useCallback(() => setFiltersOpen(true), [])
   const handleFiltersClose = useCallback(() => setFiltersOpen(false), [])
 
+  const selectedCategoryObj = categories.find((c) => c._id === category)
+  const pageTitle = selectedCategoryObj
+    ? `${selectedCategoryObj.name} | Buy Online | KripaConnect`
+    : search
+    ? `"${search}" - Electronics Search Results | KripaConnect`
+    : 'Electronics & Appliances Catalog | KripaConnect'
+
+  const pageDescription = selectedCategoryObj
+    ? `Browse ${selectedCategoryObj.name} at KripaConnect. Great prices, verified quality, and fast shipping across India.`
+    : 'Explore our wide collection of consumer electronics, home and kitchen appliances. Filter by category, price, and brand with instant delivery.'
+
+  const catalogSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: selectedCategoryObj ? selectedCategoryObj.name : 'Products Catalog',
+    description: pageDescription,
+    url: `https://kripaconnect.in/products${category ? `?category=${category}` : ''}`,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: 'https://kripaconnect.in/',
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Products',
+          item: 'https://kripaconnect.in/products',
+        },
+        ...(selectedCategoryObj
+          ? [
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: selectedCategoryObj.name,
+                item: `https://kripaconnect.in/products?category=${selectedCategoryObj._id}`,
+              },
+            ]
+          : []),
+      ],
+    },
+  }
+
   return (
     <div className="page-wrapper">
+      <SEO
+        title={pageTitle}
+        description={pageDescription}
+        canonical={`/products${category ? `?category=${category}` : ''}`}
+        keywords="electronics catalog, appliances store, KripaConnect products, TV, refrigerator, mixer grinder, air conditioner"
+        schema={catalogSchema}
+      />
       <Navbar />
 
       <div className="container main-layout">
         {/* Sidebar (Desktop) */}
-        <aside className="sidebar-desktop">
+        <aside className="sidebar-desktop" aria-label="Product filters">
           <div className="sticky-wrapper">
             <FiltersSidebar
               key={`desktop-${category}-${subcategory}-${minPrice}-${maxPrice}-${availability}`}
@@ -162,6 +205,10 @@ export default function Products() {
 
         {/* Product Feed */}
         <main className="product-feed">
+          <h1 className="sr-only">
+            {selectedCategoryObj ? `${selectedCategoryObj.name} Products` : 'Electronics & Home Appliances Catalog'}
+          </h1>
+
           <ProductHeroCarousel banners={banners} fallbackProducts={dealProducts} />
 
           {categories.length > 0 && (
@@ -173,14 +220,14 @@ export default function Products() {
               >
                 All
               </button>
-              {categories.map(cat => (
+              {categories.map((cat) => (
                 <button
                   key={cat._id}
                   type="button"
                   className={`category-strip__item ${category === cat._id ? 'is-active' : ''}`}
                   onClick={() => updateParams({ category: cat._id, subcategory: '' })}
                 >
-                  {cat.logo && <img src={cat.logo} alt="" />}
+                  {cat.logo && <img src={cat.logo} alt={`${cat.name} icon`} loading="lazy" decoding="async" />}
                   <span>{cat.name}</span>
                 </button>
               ))}
@@ -227,7 +274,7 @@ export default function Products() {
           ) : items.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">🔍</div>
-              <h3>No matches found</h3>
+              <h2>No matches found</h2>
               <p>Try adjusting your search or filters.</p>
               <button className="btn-reset" onClick={() => setParams({})}>
                 Clear All Filters
@@ -246,8 +293,8 @@ export default function Products() {
       >
         <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
           <div className="drawer-header">
-            <h3>Filters</h3>
-            <button className="btn-close" onClick={handleFiltersClose}>
+            <h2>Filters</h2>
+            <button className="btn-close" onClick={handleFiltersClose} aria-label="Close filters">
               ✕
             </button>
           </div>

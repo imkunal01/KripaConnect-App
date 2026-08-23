@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import './Dashboard.css'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
+import SEO from '../components/SEO.jsx'
 import { listCategories } from '../services/categories'
 import { listProducts } from '../services/products'
 import ShopContext from '../context/ShopContext.jsx'
@@ -79,6 +80,11 @@ export default function Dashboard() {
 
   return (
     <div className="dash-page">
+      <SEO
+        title="KripaConnect® | Buy Electronics, Home Appliances & B2B Wholesale"
+        description="Shop top-brand consumer electronics, home appliances, and kitchen essentials at KripaConnect. Fast delivery, 100% original products & B2B bulk pricing."
+        canonical="/"
+      />
       <Navbar />
 
       <main className="dash-container">

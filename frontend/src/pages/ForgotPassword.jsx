@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { forgotPassword } from '../services/auth'
+import SEO from '../components/SEO'
 import './FormStyles.css'
 
 export default function ForgotPassword() {
@@ -38,6 +39,11 @@ export default function ForgotPassword() {
   if (success) {
     return (
       <div className="auth-wrapper">
+        <SEO
+          title="Password Reset Email Sent | KripaConnect"
+          description="Check your email for instructions to reset your KripaConnect password."
+          robots="noindex, nofollow"
+        />
         <div className="auth-left">
           <button type="button" className="auth-back-btn" onClick={() => navigate('/login')}>
             ← Back to Login
@@ -84,6 +90,12 @@ export default function ForgotPassword() {
 
   return (
     <div className="auth-wrapper">
+      <SEO
+        title="Forgot Password | KripaConnect"
+        description="Reset your KripaConnect account password securely."
+        canonical="/forgot-password"
+        robots="noindex, nofollow"
+      />
       <div className="auth-left">
         <button type="button" className="auth-back-btn" onClick={goBack}>
           ← Back

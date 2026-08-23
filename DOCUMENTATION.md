@@ -65,7 +65,7 @@
 ### Live Deployment
 | Layer | URL |
 |-------|-----|
-| Frontend (Vercel) | `https://kripa-connect-app.vercel.app` |
+| Frontend (Production) | `https://kripaconnect.in` (`https://kripa-connect-app.vercel.app`) |
 | Backend API (Render) | `https://kripaconnect-app.onrender.com` |
 
 ---

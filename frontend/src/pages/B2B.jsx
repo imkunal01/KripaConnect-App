@@ -8,6 +8,7 @@ import { getMyOrders } from '../services/orders.js'
 import { apiFetch } from '../services/api.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
+import SEO from '../components/SEO.jsx'
 import './B2B.css'
 
 function formatCurrency(value) {
@@ -637,6 +638,11 @@ export default function B2B() {
 
   return (
     <div className="b2b-page">
+      <SEO
+        title="Retailer Dashboard | B2B Portal | KripaConnect"
+        description="Exclusive B2B retailer dashboard for wholesale electronics ordering, order history, and bulk tier savings."
+        robots="noindex, nofollow"
+      />
       <Navbar />
       
       <main className="b2b-main">

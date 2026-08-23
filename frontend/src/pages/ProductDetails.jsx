@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getProduct, listProducts } from '../services/products'
 import { listProductReviews, createProductReview } from '../services/reviews'
@@ -11,6 +11,7 @@ import ReviewForm from '../components/ReviewForm.jsx'
 import ProductGrid from '../components/ProductGrid.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
+import SEO from '../components/SEO.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import './ProductDetails.css'
@@ -107,33 +108,146 @@ export default function ProductDetails() {
     navigate('/checkout')
   }
 
+  const productSchema = useMemo(() => {
+    if (!product) return null
+    const images = Array.isArray(product.images) && product.images.length > 0
+      ? product.images.map((img) => img.url).filter(Boolean)
+      : ['https://kripaconnect.in/icon-512.png']
+
+    const catName = product.Category?.name || (typeof product.category_id === 'object' ? product.category_id?.name : '')
+
+    const schemaObj = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Product',
+          '@id': `https://kripaconnect.in/product/${product._id}#product`,
+          name: product.name,
+          image: images,
+          description: product.description || `Buy genuine ${product.name} with warranty and fast shipping on KripaConnect.`,
+          sku: product._id,
+          brand: {
+            '@type': 'Brand',
+            name: product.brand || 'KripaConnect',
+          },
+          ...(catName ? { category: catName } : {}),
+          offers: {
+            '@type': 'Offer',
+            url: `https://kripaconnect.in/product/${product._id}`,
+            priceCurrency: 'INR',
+            price: Number(product.price || 0),
+            itemCondition: 'https://schema.org/NewCondition',
+            availability: (product.stock || 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            seller: {
+              '@type': 'Organization',
+              name: 'KripaConnect',
+            },
+          },
+          ...(reviews.length > 0
+            ? {
+                aggregateRating: {
+                  '@type': 'AggregateRating',
+                  ratingValue: (
+                    reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) / reviews.length
+                  ).toFixed(1),
+                  reviewCount: reviews.length,
+                },
+              }
+            : {}),
+        },
+        {
+          '@type': 'BreadcrumbList',
+          '@id': `https://kripaconnect.in/product/${product._id}#breadcrumb`,
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Home',
+              item: 'https://kripaconnect.in/',
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Products',
+              item: 'https://kripaconnect.in/products',
+            },
+            ...(catName
+              ? [
+                  {
+                    '@type': 'ListItem',
+                    position: 3,
+                    name: catName,
+                    item: `https://kripaconnect.in/products?category=${product.Category?._id || product.category_id}`,
+                  },
+                  {
+                    '@type': 'ListItem',
+                    position: 4,
+                    name: product.name,
+                    item: `https://kripaconnect.in/product/${product._id}`,
+                  },
+                ]
+              : [
+                  {
+                    '@type': 'ListItem',
+                    position: 3,
+                    name: product.name,
+                    item: `https://kripaconnect.in/product/${product._id}`,
+                  },
+                ]),
+          ],
+        },
+      ],
+    }
+
+    return schemaObj
+  }, [product, reviews])
+
   if (loading) return <div className="loader-screen"><div className="spinner"></div></div>
-  if (!product) return <div className="error-screen">Product not found. <Link to="/">Go Home</Link></div>
+  if (!product) {
+    return (
+      <div className="error-screen">
+        <SEO title="Product Not Found" robots="noindex, nofollow" />
+        Product not found. <Link to="/">Go Home</Link>
+      </div>
+    )
+  }
 
   const inStock = (product.stock || 0) > 0
   const bulkUnitPrice = product?.price_bulk || product?.retailer_price || product?.price
   const displayUnitPrice = retailerBulk ? bulkUnitPrice : product.price
+  const pageTitle = `${product.name} | Buy Online | KripaConnect`
+  const pageDescription = product.description
+    ? product.description.slice(0, 155)
+    : `Buy ${product.name} online at ₹${product.price?.toLocaleString('en-IN')}. 100% original with warranty and fast delivery across India.`
 
   return (
     <div className="pdp-page">
+      <SEO
+        title={pageTitle}
+        description={pageDescription}
+        canonical={`/product/${product._id}`}
+        image={selectedImage || product.images?.[0]?.url}
+        type="product"
+        schema={productSchema}
+      />
       <Navbar />
 
       <main className="pdp-layout">
         <div className="pdp-shell">
-          <nav className="pdp-breadcrumbs">
+          <nav className="pdp-breadcrumbs" aria-label="Breadcrumb">
             <Link to="/">Home</Link>
-            <span> / </span>
+            <span aria-hidden="true"> / </span>
             <Link to="/products">Products</Link>
-            <span> / </span>
+            <span aria-hidden="true"> / </span>
             <span>{product.name}</span>
           </nav>
 
           <div className="pdp-hero">
             {/* Media */}
-            <section className="pdp-media">
+            <section className="pdp-media" aria-label="Product images">
               <div className="pdp-media-main">
                 {selectedImage ? (
-                  <img src={selectedImage} alt={product.name} />
+                  <img src={selectedImage} alt={product.name} loading="eager" decoding="async" />
                 ) : (
                   <div className="pdp-media-placeholder">No Image</div>
                 )}
@@ -142,15 +256,16 @@ export default function ProductDetails() {
               </div>
 
               {product.images?.length > 1 && (
-                <div className="pdp-media-thumbs">
+                <div className="pdp-media-thumbs" role="group" aria-label="Product thumbnails">
                   {product.images.map((img, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setSelectedImage(img.url)}
                       className={`pdp-thumb ${selectedImage === img.url ? 'isActive' : ''}`}
+                      aria-label={`View image ${i + 1}`}
                     >
-                      <img src={img.url} alt={`thumbnail ${i + 1}`} />
+                      <img src={img.url} alt={`${product.name} view ${i + 1}`} loading="lazy" decoding="async" />
                     </button>
                   ))}
                 </div>
@@ -158,7 +273,7 @@ export default function ProductDetails() {
             </section>
 
             {/* Info */}
-            <section className="pdp-info">
+            <section className="pdp-info" aria-label="Product purchasing details">
               <div className="pdp-info-card">
                 <div className="pdp-title-row">
                   <h1 className="pdp-title">{product.name}</h1>

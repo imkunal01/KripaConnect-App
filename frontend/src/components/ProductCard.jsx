@@ -39,7 +39,7 @@ export default function ProductCard({ product, favorite }) {
       <Link to={`/product/${product._id}`} className="product-card-link">
         <div className="product-card-image">
           {product.images?.[0]?.url ? (
-            <img src={product.images[0].url} alt={product.name} />
+            <img src={product.images[0].url} alt={product.name} loading="lazy" decoding="async" />
           ) : (
             <span style={{ fontSize: '3rem', opacity: 0.3 }}>📦</span>
           )}

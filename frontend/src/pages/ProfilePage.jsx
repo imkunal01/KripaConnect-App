@@ -5,6 +5,7 @@ import { profile, updateProfile, uploadProfilePhoto, requestRetailerRole } from 
 import AddressForm from '../components/AddressForm.jsx'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import SEO from '../components/SEO'
 import './ProfilePage.css'
 
 /* eslint-disable react/prop-types */
@@ -320,6 +321,12 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page-modern">
+      <SEO
+        title="Account Profile & Settings | KripaConnect"
+        description="Manage your account profile, delivery addresses, and retailer role requests on KripaConnect."
+        canonical="/profile"
+        robots="noindex, nofollow"
+      />
       <Navbar />
       
       <main className="profile-layout">

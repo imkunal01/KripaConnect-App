@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+Allow: /products
+Allow: /product/
+Allow: /categories
+Allow: /about
+Allow: /contact
+Allow: /faq
+Allow: /services
+Allow: /terms
+Allow: /privacy
+Allow: /returns
+
+Disallow: /admin
+Disallow: /checkout
+Disallow: /orders
+Disallow: /profile
+Disallow: /onboarding
+Disallow: /address-setup
+Disallow: /api/
+Disallow: /success/
+Disallow: /reset-password
+Disallow: /forgot-password
+
+Sitemap: https://kripaconnect.in/sitemap.xml

@@ -3,7 +3,7 @@
   "appName": "KripaConnect",
   "webDir": "dist",
   "server": {
-    "url": "https://kripa-connect-app.vercel.app",
+    "url": "https://kripaconnect.in",
     "cleartext": false
   }
 }
