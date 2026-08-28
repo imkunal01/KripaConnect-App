@@ -9,6 +9,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
+import SEO from '../components/SEO.jsx'
 import './Favorites.css'
 
 export default function Favorites() {
@@ -70,6 +71,12 @@ export default function Favorites() {
 
   return (
     <div className="favorites-page">
+      <SEO
+        title="Your Wishlist & Saved Products | KripaConnect"
+        description="View and manage your favorite electronics and appliances on KripaConnect."
+        canonical="/favorites"
+        robots="noindex, follow"
+      />
       <Navbar />
       <div className="favorites-container">
         {loading ? (

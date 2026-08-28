@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { resetPassword } from '../services/auth'
+import SEO from '../components/SEO'
 import './FormStyles.css'
 
 export default function ResetPassword() {
@@ -55,6 +56,10 @@ export default function ResetPassword() {
   if (success) {
     return (
       <div className="auth-wrapper">
+        <SEO
+          title="Password Reset Successful | KripaConnect"
+          robots="noindex, nofollow"
+        />
         <div className="auth-left">
           <header className="auth-header">
             <div className="brand">KripaConnect</div>
@@ -88,6 +93,12 @@ export default function ResetPassword() {
 
   return (
     <div className="auth-wrapper">
+      <SEO
+        title="Reset Your Password | KripaConnect"
+        description="Choose a new secure password for your KripaConnect account."
+        canonical="/reset-password"
+        robots="noindex, nofollow"
+      />
       <div className="auth-left">
         <header className="auth-header">
           <div className="brand">KripaConnect</div>

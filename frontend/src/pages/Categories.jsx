@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { listCategories } from '../services/categories'
 import { listSubcategories } from '../services/subcategories'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
+import SEO from '../components/SEO.jsx'
 import './Categories.css'
 
 export default function Categories() {
@@ -35,39 +36,72 @@ export default function Categories() {
     return acc
   }, {})
 
+  const categoriesSchema = useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Product Categories',
+    description: 'Browse all electronics, appliances, and home device categories at KripaConnect.',
+    url: 'https://kripaconnect.in/categories',
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: 'https://kripaconnect.in/',
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Categories',
+          item: 'https://kripaconnect.in/categories',
+        },
+      ],
+    },
+  }), [])
+
   return (
     <div className="categories-page">
+      <SEO
+        title="Shop by Category | Consumer Electronics & Appliances | KripaConnect"
+        description="Browse all product categories including Kitchen Appliances, Entertainment, Cooling, and Home Electronics. Find deals and explore subcategories."
+        canonical="/categories"
+        keywords="product categories, electronics categories, home appliances, kitchen appliances, KripaConnect catalog"
+        schema={categoriesSchema}
+      />
       <Navbar />
-      <div className="categories-container">
-        <div className="categories-header">
-          <h1 className="categories-title">Categories</h1>
-          <p className="categories-subtitle">Browse products by category</p>
-        </div>
+
+      <main className="categories-container">
+        <header className="categories-header">
+          <h1 className="categories-title">Product Categories</h1>
+          <p className="categories-subtitle">Browse products and subcategories</p>
+        </header>
 
         {loading ? (
-          <div className="categories-loading">
+          <div className="categories-loading" aria-busy="true" aria-live="polite">
             <div className="categories-loading-icon">⏳</div>
             <p style={{ color: '#6b7280' }}>Loading categories...</p>
           </div>
         ) : items.length === 0 ? (
           <div className="categories-empty-state">
             <div className="categories-empty-icon">📂</div>
-            <h2 className="categories-empty-title">No categories found</h2>
+            <h2>No categories found</h2>
             <p className="categories-empty-text">Categories will appear here when available</p>
           </div>
         ) : (
-          <div className="categories-grid">
+          <section className="categories-grid" aria-label="Categories list">
             {items.map(c => (
               <div key={c._id} className="category-card">
                 <Link to={`/products?category=${c._id}`} className="category-link">
                   {c.logo ? (
-                    <img className="category-logo" src={c.logo} alt={c.name} />
+                    <img className="category-logo" src={c.logo} alt={`${c.name} category`} loading="lazy" decoding="async" />
                   ) : (
                     <div className="category-icon">📦</div>
                   )}
-                  <div className="category-name">{c.name}</div>
+                  <h2 className="category-name">{c.name}</h2>
                 </Link>
-                <div className="subcategory-list">
+                <div className="subcategory-list" aria-label={`${c.name} subcategories`}>
                   {(subByCategory[c._id] || []).map(sub => (
                     <Link
                       key={sub._id}
@@ -75,7 +109,7 @@ export default function Categories() {
                       className="subcategory-chip"
                     >
                       {sub.logo ? (
-                        <img className="subcategory-logo" src={sub.logo} alt={sub.name} />
+                        <img className="subcategory-logo" src={sub.logo} alt={`${sub.name} subcategory`} loading="lazy" decoding="async" />
                       ) : (
                         <span className="subcategory-dot" aria-hidden="true">•</span>
                       )}
@@ -85,9 +119,9 @@ export default function Categories() {
                 </div>
               </div>
             ))}
-          </div>
+          </section>
         )}
-      </div>
+      </main>
       <Footer />
     </div>
   )

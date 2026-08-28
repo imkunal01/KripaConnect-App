@@ -25,11 +25,32 @@ function normalizeOrigin(o) {
   return String(o || "").trim().replace(/\/$/, "");
 }
 
+function isAllowedDomain(originUrl) {
+  try {
+    const parsed = new URL(originUrl);
+    const hostname = parsed.hostname.toLowerCase();
+    return (
+      hostname === "kripaconnect.in" ||
+      hostname.endsWith(".kripaconnect.in") ||
+      hostname.endsWith(".vercel.app") ||
+      hostname === "kripaconnect-app.onrender.com" ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function getAllowedOrigins() {
   const base = [
     "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:5174",
+    "https://kripaconnect.in",
+    "https://www.kripaconnect.in",
+    "http://kripaconnect.in",
+    "http://www.kripaconnect.in",
     "https://kripa-connect-app.vercel.app",
     "https://kripaconnect-app.onrender.com",
   ];
@@ -39,9 +60,18 @@ function getAllowedOrigins() {
     .map(s => s.trim())
     .filter(Boolean);
 
-  const frontendUrl = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
+  const frontendUrls = (process.env.FRONTEND_URL || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
 
-  return [...base, ...fromEnv, ...frontendUrl].map(normalizeOrigin);
+  const vercelUrls = (process.env.VERCEL_URL || "")
+    .split(",")
+    .map(s => s.trim())
+    .map(s => s.startsWith("http") ? s : `https://${s}`)
+    .filter(Boolean);
+
+  return [...base, ...fromEnv, ...frontendUrls, ...vercelUrls].map(normalizeOrigin);
 }
 
 const corsOptions = {
@@ -52,8 +82,15 @@ const corsOptions = {
     const normalized = normalizeOrigin(origin);
     const allowedOrigins = getAllowedOrigins();
 
-    // Allow Vercel preview deployments by default
-    if (allowedOrigins.includes(normalized) || normalized.endsWith(".vercel.app")) {
+    // Allow configured origins, Vercel deployments, and kripaconnect.in domains
+    if (
+      allowedOrigins.includes(normalized) ||
+      isAllowedDomain(normalized) ||
+      normalized.endsWith(".vercel.app") ||
+      normalized.endsWith(".kripaconnect.in") ||
+      normalized === "https://kripaconnect.in" ||
+      normalized === "https://www.kripaconnect.in"
+    ) {
       return callback(null, true);
     }
 
@@ -156,6 +193,66 @@ app.use("/api/retailer", require("./routes/retailerRoutes"));
 app.use("/api/favorites", require("./routes/favoriteRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
+
+/* =========================
+   DYNAMIC SITEMAP (SEO)
+========================= */
+app.get("/api/sitemap.xml", async (req, res) => {
+  try {
+    const Product = require("./models/Product");
+    const Category = require("./models/Category");
+
+    const [products, categories] = await Promise.all([
+      Product.find({ active: { $ne: false } }).select("_id updatedAt").lean(),
+      Category.find().select("_id updatedAt").lean(),
+    ]);
+
+    const baseUrl = "https://kripaconnect.in";
+    const now = new Date().toISOString().split("T")[0];
+
+    const staticRoutes = [
+      { path: "", changefreq: "daily", priority: "1.0" },
+      { path: "products", changefreq: "daily", priority: "0.9" },
+      { path: "categories", changefreq: "weekly", priority: "0.8" },
+      { path: "about", changefreq: "monthly", priority: "0.5" },
+      { path: "contact", changefreq: "monthly", priority: "0.5" },
+      { path: "faq", changefreq: "monthly", priority: "0.5" },
+      { path: "services", changefreq: "monthly", priority: "0.5" },
+      { path: "terms", changefreq: "monthly", priority: "0.3" },
+      { path: "privacy", changefreq: "monthly", priority: "0.3" },
+      { path: "returns", changefreq: "monthly", priority: "0.3" },
+    ];
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+    // Static pages
+    for (const r of staticRoutes) {
+      xml += `  <url>\n    <loc>${baseUrl}/${r.path}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${r.changefreq}</changefreq>\n    <priority>${r.priority}</priority>\n  </url>\n`;
+    }
+
+    // Category pages
+    for (const c of categories) {
+      const lastmod = c.updatedAt ? new Date(c.updatedAt).toISOString().split("T")[0] : now;
+      xml += `  <url>\n    <loc>${baseUrl}/products?category=${c._id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+    }
+
+    // Product pages
+    for (const p of products) {
+      const lastmod = p.updatedAt ? new Date(p.updatedAt).toISOString().split("T")[0] : now;
+      xml += `  <url>\n    <loc>${baseUrl}/product/${p._id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+    }
+
+    xml += `</urlset>`;
+
+    res.header("Content-Type", "application/xml");
+    res.header("Cache-Control", "public, max-age=3600");
+    return res.send(xml);
+  } catch (err) {
+    console.error("Sitemap generation error:", err);
+    return res.status(500).send("Error generating sitemap");
+  }
+});
 
 /* =========================
    HEALTH CHECK

@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
+import SEO from '../components/SEO.jsx'
 import './CartPage.css'
 
 function formatPrice(value) {
@@ -49,6 +50,12 @@ export default function CartPage() {
 
   return (
     <div className="cart-page-x">
+      <SEO
+        title="Your Shopping Cart | KripaConnect"
+        description="Review your selected items, modify quantities, and proceed to secure checkout on KripaConnect."
+        canonical="/cart"
+        robots="noindex, nofollow"
+      />
       <Navbar />
 
       <main className="cart-wrapper">

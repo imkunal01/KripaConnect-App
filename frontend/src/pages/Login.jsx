@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import { useGoogleLogin } from '@react-oauth/google'
 import OtpLogin from '../components/OtpLogin.jsx'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.jsx'
+import SEO from '../components/SEO.jsx'
 import './FormStyles.css'
 
 export default function Login() {
@@ -64,6 +65,12 @@ export default function Login() {
 
   return (
     <div className="auth-wrapper">
+      <SEO
+        title="Log In to Your Account | KripaConnect"
+        description="Log in to your KripaConnect account to manage your orders, wishlist, and bulk purchases."
+        canonical="/login"
+        robots="noindex, follow"
+      />
       {/* LEFT: Form Section */}
       <div className="auth-left">
         <button type="button" className="auth-back-btn" onClick={goBack}>

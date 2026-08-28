@@ -58,7 +58,8 @@ const requestPasswordReset = async (req, res) => {
     await user.save()
 
     // Send email with plaintext token (only user has access to this)
-    await sendPasswordResetEmail(email, resetToken, user.name)
+    const reqOrigin = req.headers.origin || req.headers.referer || null
+    await sendPasswordResetEmail(email, resetToken, user.name, reqOrigin)
 
     res.json({ message: 'If that email exists, a password reset link has been sent.' })
   } catch (error) {
