@@ -16,18 +16,17 @@ Redis has been integrated as a caching layer to improve performance and support 
 
 ### Prerequisites
 
-Redis server must be running and accessible via `REDIS_URL` environment variable.
+Upstash Redis credentials configured in `.env`:
 
 ```bash
-# Add to your .env file
-REDIS_URL=redis://localhost:6379
-# Or for cloud Redis (e.g., Redis Cloud, Upstash)
-REDIS_URL=redis://username:password@host:port
+# Add to your backend/.env file
+UPSTASH_REDIS_REST_URL=https://your-db-name.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-upstash-rest-token
 ```
 
 ### Installation
 
-The `ioredis` package is already added to `package.json`. Run:
+The `@upstash/redis` package is used for connectionless HTTP/REST Redis operations:
 
 ```bash
 cd backend

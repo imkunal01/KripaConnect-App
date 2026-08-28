@@ -125,6 +125,50 @@ const getStats = async (req, res) => {
   }
 };
 
+// Bulk import products via CSV
+const importProductsCsv = async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ success: false, message: "Please upload a valid CSV file" });
+    }
+
+    const { updateExisting } = req.body;
+    const isUpdate = updateExisting === 'true' || updateExisting === true;
+
+    const { parseCsvBuffer, processProductImport } = require("../services/csvImportService");
+    const rows = await parseCsvBuffer(req.file.buffer);
+
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({ success: false, message: "The uploaded CSV file contains no data rows" });
+    }
+
+    const result = await processProductImport(rows, { updateExisting: isUpdate });
+
+    res.json({
+      success: true,
+      message: `Processed ${result.totalRows} rows: ${result.createdCount} created, ${result.updatedCount} updated, ${result.failedCount} failed`,
+      data: result
+    });
+  } catch (error) {
+    console.error("CSV Import Error:", error);
+    res.status(500).json({ success: false, message: error.message || "Failed to import products from CSV" });
+  }
+};
+
+// Download CSV template
+const downloadCsvTemplate = (req, res) => {
+  try {
+    const { generateCsvTemplate } = require("../services/csvImportService");
+    const csvContent = generateCsvTemplate();
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", 'attachment; filename="kripaconnect_products_template.csv"');
+    res.status(200).send(csvContent);
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to generate CSV template" });
+  }
+};
+
 module.exports = {
   getAllUsers,
   toggleBlockUser,
@@ -132,4 +176,7 @@ module.exports = {
   clearRetailerCooldown,
   deleteUser,
   getStats,
+  importProductsCsv,
+  downloadCsvTemplate,
 };
+

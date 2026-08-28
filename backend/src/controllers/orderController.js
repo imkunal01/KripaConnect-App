@@ -3,6 +3,7 @@ const Product = require("../models/Product");
 const User = require("../models/User");
 const { sendMail } = require("../services/emailService");
 const { invalidateMultipleKeys, invalidateCache } = require('../utils/cacheUtils');
+const { emitOrderUpdate } = require("../config/socket");
 
 function normalizePurchaseMode(value, isRetailer) {
   if (!isRetailer) return "customer";
@@ -30,28 +31,49 @@ const createOrder = async (req, res) => {
     const products = await Product.find({ _id: { $in: productIds } });
     const productMap = new Map(products.map(p => [p._id.toString(), p]));
 
-    for (let item of items) {
-      const product = productMap.get(item.product);
-      
-      if (!product) return res.status(404).json({ message: `Product ${item.product} not found` });
-      if (product.stock < item.qty) return res.status(400).json({ message: `${product.name} is out of stock` });
+    const successfulDecrements = [];
 
-      // Pricing logic: customer mode uses standard pricing; retailer mode enforces bulk rules
-      let unitPrice = product.price;
-      if (isRetailer && effectivePurchaseMode === "retailer") {
-        const minBulkQty = product.min_bulk_qty > 0 ? product.min_bulk_qty : 1;
-        if (minBulkQty > 1 && item.qty < minBulkQty) {
-          return res.status(400).json({
-            message: `${product.name} requires minimum quantity of ${minBulkQty} for bulk purchase`,
-          });
+    try {
+      for (let item of items) {
+        const product = productMap.get(String(item.product));
+        
+        if (!product) throw new Error(`Product not found`);
+
+        // Pricing logic: customer mode uses standard pricing; retailer mode enforces bulk rules
+        let unitPrice = product.price;
+        if (isRetailer && effectivePurchaseMode === "retailer") {
+          const minBulkQty = product.min_bulk_qty > 0 ? product.min_bulk_qty : 1;
+          if (minBulkQty > 1 && item.qty < minBulkQty) {
+            throw new Error(`${product.name} requires minimum quantity of ${minBulkQty} for bulk purchase`);
+          }
+          unitPrice = product.price_bulk || product.retailer_price || product.price;
         }
-        unitPrice = product.price_bulk || product.retailer_price || product.price;
-      }
 
-      total += item.qty * unitPrice;
-      orderItems.push({ product: product._id, name: product.name, qty: item.qty, price: unitPrice });
-      product.stock -= item.qty;
-      await product.save(); // Still saving individually to handle concurrency versions, but that's acceptable for now.
+        // Concurrency-safe atomic decrement
+        const updatedProduct = await Product.findOneAndUpdate(
+          { _id: item.product, stock: { $gte: item.qty } },
+          { $inc: { stock: -item.qty } },
+          { new: true }
+        );
+
+        if (!updatedProduct) {
+          throw new Error(`${product.name} is out of stock or insufficient quantity available`);
+        }
+
+        successfulDecrements.push({ productId: item.product, qty: item.qty });
+        total += item.qty * unitPrice;
+        orderItems.push({ product: product._id, name: product.name, qty: item.qty, price: unitPrice });
+      }
+    } catch (concurrencyErr) {
+      // Compensation rollback: restore all stocks decremented so far in this checkout
+      for (let dec of successfulDecrements) {
+        try {
+          await Product.findByIdAndUpdate(dec.productId, { $inc: { stock: dec.qty } });
+        } catch (rbErr) {
+          console.error("Stock rollback error for item:", dec.productId, rbErr);
+        }
+      }
+      return res.status(400).json({ message: concurrencyErr.message });
     }
 
     const order = await Order.create({
@@ -73,6 +95,9 @@ const createOrder = async (req, res) => {
         console.warn("Failed to clear cart after COD order:", e.message);
       }
     }
+
+    // Broadcast real-time order creation event
+    emitOrderUpdate(order);
 
     // send email confirmation (simple)
     try {
@@ -170,8 +195,25 @@ const updateOrderStatus = async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
+    const previousStatus = order.deliveryStatus;
     order.deliveryStatus = status;
     await order.save();
+
+    // If order was transitioned to cancelled from an active state, restock items
+    if (status === "cancelled" && previousStatus !== "cancelled") {
+      for (const item of order.items || []) {
+        if (item.product && item.qty > 0) {
+          try {
+            await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.qty } });
+          } catch (restockErr) {
+            console.error("Restock error on order status update:", restockErr);
+          }
+        }
+      }
+    }
+
+    // Broadcast real-time order update via Socket.io
+    emitOrderUpdate(order);
 
     // Invalidate analytics caches (status change affects stats)
     await invalidateMultipleKeys([
@@ -226,6 +268,20 @@ const cancelOrder = async (req, res) => {
     order.deliveryStatus = "cancelled";
     await order.save();
     
+    // Restock items upon user cancellation
+    for (const item of order.items || []) {
+      if (item.product && item.qty > 0) {
+        try {
+          await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.qty } });
+        } catch (restockErr) {
+          console.error("Restock error on user cancellation:", restockErr);
+        }
+      }
+    }
+
+    // Broadcast real-time order update via Socket.io
+    emitOrderUpdate(order);
+
     // Invalidate analytics caches (cancellation affects order stats)
     await invalidateMultipleKeys([
       'analytics:overview',

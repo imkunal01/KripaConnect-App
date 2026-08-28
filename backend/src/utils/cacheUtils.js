@@ -2,6 +2,21 @@ const crypto = require('crypto');
 const { getRedisClient, isRedisAvailable } = require('../config/redis');
 
 /**
+ * Helper to safely parse cached data
+ */
+function parseCachedValue(val) {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'string') {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return val;
+    }
+  }
+  return val;
+}
+
+/**
  * Get cached data or fetch and cache it
  * @param {string} key - Cache key
  * @param {number} ttl - Time to live in seconds
@@ -11,7 +26,7 @@ const { getRedisClient, isRedisAvailable } = require('../config/redis');
  */
 async function getOrSetCache(key, ttl, fetchFn, logHitMiss = false) {
   const redis = getRedisClient();
-  
+
   // Fallback to direct fetch if Redis unavailable
   if (!redis || !isRedisAvailable()) {
     if (logHitMiss && process.env.NODE_ENV !== 'production') {
@@ -23,26 +38,30 @@ async function getOrSetCache(key, ttl, fetchFn, logHitMiss = false) {
   try {
     // Try to get cached data
     const cached = await redis.get(key);
-    
-    if (cached) {
+
+    if (cached !== null && cached !== undefined) {
       if (logHitMiss && process.env.NODE_ENV !== 'production') {
         console.log(`✅ CACHE HIT - Key: ${key}`);
       }
-      return JSON.parse(cached);
+      return parseCachedValue(cached);
     }
 
     // Cache miss - fetch fresh data
     if (logHitMiss && process.env.NODE_ENV !== 'production') {
       console.log(`❌ CACHE MISS - Key: ${key}`);
     }
-    
+
     const freshData = await fetchFn();
-    
+
     // Store in cache with TTL
     if (freshData !== null && freshData !== undefined) {
-      await redis.setex(key, ttl, JSON.stringify(freshData));
+      if (ttl) {
+        await redis.set(key, freshData, { ex: ttl });
+      } else {
+        await redis.set(key, freshData);
+      }
     }
-    
+
     return freshData;
   } catch (error) {
     console.error(`Redis cache error for key ${key}:`, error.message);
@@ -58,7 +77,7 @@ async function getOrSetCache(key, ttl, fetchFn, logHitMiss = false) {
 async function invalidateCache(key) {
   const redis = getRedisClient();
   if (!redis || !isRedisAvailable()) return;
-  
+
   try {
     await redis.del(key);
     if (process.env.NODE_ENV !== 'production') {
@@ -76,9 +95,13 @@ async function invalidateCache(key) {
 async function invalidateMultipleKeys(keys) {
   const redis = getRedisClient();
   if (!redis || !isRedisAvailable() || !keys.length) return;
-  
+
   try {
-    await redis.del(...keys);
+    if (keys.length === 1) {
+      await redis.del(keys[0]);
+    } else {
+      await redis.del(...keys);
+    }
     if (process.env.NODE_ENV !== 'production') {
       console.log(`🗑️  CACHE INVALIDATED - Keys: ${keys.join(', ')}`);
     }
@@ -94,11 +117,15 @@ async function invalidateMultipleKeys(keys) {
 async function invalidatePattern(pattern) {
   const redis = getRedisClient();
   if (!redis || !isRedisAvailable()) return;
-  
+
   try {
     const keys = await redis.keys(pattern);
-    if (keys.length > 0) {
-      await redis.del(...keys);
+    if (keys && keys.length > 0) {
+      if (keys.length === 1) {
+        await redis.del(keys[0]);
+      } else {
+        await redis.del(...keys);
+      }
       if (process.env.NODE_ENV !== 'production') {
         console.log(`🗑️  CACHE PATTERN INVALIDATED - Pattern: ${pattern} (${keys.length} keys)`);
       }
@@ -120,7 +147,7 @@ function hashQueryParams(params) {
       acc[key] = params[key];
       return acc;
     }, {});
-  
+
   const str = JSON.stringify(sorted);
   return crypto.createHash('md5').update(str).digest('hex');
 }
@@ -134,9 +161,13 @@ function hashQueryParams(params) {
 async function setCache(key, data, ttl) {
   const redis = getRedisClient();
   if (!redis || !isRedisAvailable()) return;
-  
+
   try {
-    await redis.setex(key, ttl, JSON.stringify(data));
+    if (ttl) {
+      await redis.set(key, data, { ex: ttl });
+    } else {
+      await redis.set(key, data);
+    }
   } catch (error) {
     console.error(`Failed to set cache for key ${key}:`, error.message);
   }
@@ -150,10 +181,10 @@ async function setCache(key, data, ttl) {
 async function getCache(key) {
   const redis = getRedisClient();
   if (!redis || !isRedisAvailable()) return null;
-  
+
   try {
     const cached = await redis.get(key);
-    return cached ? JSON.parse(cached) : null;
+    return parseCachedValue(cached);
   } catch (error) {
     console.error(`Failed to get cache for key ${key}:`, error.message);
     return null;

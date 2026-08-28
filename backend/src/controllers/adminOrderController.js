@@ -1,4 +1,6 @@
 const Order = require("../models/Order");
+const Product = require("../models/Product");
+const { emitOrderUpdate } = require("../config/socket");
 
 // Get all orders (Admin)
 const getAllOrdersAdmin = async (req, res) => {
@@ -21,8 +23,25 @@ const updateOrderStatusAdmin = async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
+    const previousStatus = order.deliveryStatus;
     order.deliveryStatus = status;
     await order.save();
+
+    // Restock if status changed to cancelled from active
+    if (status === "cancelled" && previousStatus !== "cancelled") {
+      for (const item of order.items || []) {
+        if (item.product && item.qty > 0) {
+          try {
+            await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.qty } });
+          } catch (restockErr) {
+            console.error("Restock error on admin order cancellation:", restockErr);
+          }
+        }
+      }
+    }
+
+    // Broadcast real-time order update
+    emitOrderUpdate(order);
 
     res.json({ success: true, message: "Order status updated", data: order });
   } catch (err) {

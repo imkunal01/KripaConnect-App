@@ -36,7 +36,7 @@ export default function OtpLogin({ onSuccess }) {
       setTimeLeft(300) // 5 minutes
       setCanResend(false)
     } catch (err) {
-      setError(err.message || 'Failed to send OTP')
+      setError(err.message || 'Failed to send OTP code. Please check your email and try again.')
     } finally {
       setLoading(false)
     }
@@ -54,7 +54,7 @@ export default function OtpLogin({ onSuccess }) {
       const payload = await signInWithOtp({ email, otp })
       onSuccess?.(payload)
     } catch (err) {
-      setError(err.message || 'Invalid OTP')
+      setError(err.message || 'Invalid or expired code. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -84,87 +84,113 @@ export default function OtpLogin({ onSuccess }) {
 
   if (step === 'email') {
     return (
-      <form onSubmit={handleRequestOtp} className="form-stack">
+      <form onSubmit={handleRequestOtp} className="cyber-otp-container">
         {error && (
-          <div style={{ 
-            padding: '12px', 
-            background: '#fee2e2', 
-            border: '1px solid #dc2626', 
-            borderRadius: '6px', 
-            color: '#dc2626',
-            fontSize: '14px',
-            marginBottom: '1rem'
-          }}>
-            {error}
+          <div className="cyber-alert-box" role="alert">
+            <svg className="cyber-alert-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <span>{error}</span>
           </div>
         )}
 
-        <input 
-          className="input-field" 
-          type="email" 
-          placeholder="Email Address" 
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <div className="cyber-input-group">
+          <label className="cyber-input-label" htmlFor="otp-email-input">
+            Email for Passwordless Code
+          </label>
+          <div className="cyber-input-wrapper">
+            <svg className="cyber-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+            <input 
+              id="otp-email-input"
+              className="cyber-input" 
+              type="email" 
+              placeholder="name@example.com" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              autoFocus
+            />
+          </div>
+        </div>
         
-        <button className="btn-primary" type="submit" disabled={loading}>
-          {loading ? 'Sending OTP...' : 'Send OTP'}
+        <button className="cyber-submit-btn" type="submit" disabled={loading}>
+          {loading ? (
+            <span>Sending Security Code...</span>
+          ) : (
+            <>
+              <span>Send 6-Digit Code</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </>
+          )}
         </button>
       </form>
     )
   }
 
   return (
-    <form onSubmit={handleVerifyOtp} className="form-stack">
+    <form onSubmit={handleVerifyOtp} className="cyber-otp-container">
       {error && (
-        <div style={{ 
-          padding: '12px', 
-          background: '#fee2e2', 
-          border: '1px solid #dc2626', 
-          borderRadius: '6px', 
-          color: '#dc2626',
-          fontSize: '14px',
-          marginBottom: '1rem'
-        }}>
-          {error}
+        <div className="cyber-alert-box" role="alert">
+          <svg className="cyber-alert-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <span>{error}</span>
         </div>
       )}
 
-      <div style={{ marginBottom: '1rem', textAlign: 'center', color: '#6b7280' }}>
-        OTP sent to <strong>{email}</strong>
+      <div className="otp-instruction-card">
+        <h3>Check Your Inbox</h3>
+        <p>
+          We dispatched a 6-digit access code to <strong>{email}</strong>
+        </p>
       </div>
 
-      <input 
-        className="input-field" 
-        type="text" 
-        placeholder="Enter 6-digit OTP" 
-        value={otp}
-        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-        required
-        maxLength={6}
-        style={{ 
-          fontSize: '24px', 
-          textAlign: 'center', 
-          letterSpacing: '8px',
-          fontFamily: 'monospace'
-        }}
-      />
+      <div className="cyber-input-group">
+        <input 
+          id="cyber-otp-pin"
+          className="otp-pin-input" 
+          type="text" 
+          inputMode="numeric"
+          pattern="[0-9]*"
+          placeholder="••••••" 
+          value={otp}
+          onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          required
+          maxLength={6}
+          autoComplete="one-time-code"
+          autoFocus
+        />
+      </div>
 
-      {timeLeft > 0 && (
-        <div style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px', marginTop: '0.5rem' }}>
-          Code expires in <strong style={{ color: '#dc2626' }}>{formatTime(timeLeft)}</strong>
+      {timeLeft > 0 ? (
+        <div className="otp-timer-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>Code valid for {formatTime(timeLeft)}</span>
+        </div>
+      ) : (
+        <div className="otp-timer-chip expired">
+          <span>Code expired. Request a new code below.</span>
         </div>
       )}
       
-      <button className="btn-primary" type="submit" disabled={loading || otp.length !== 6}>
-        {loading ? 'Verifying...' : 'Verify & Login'}
+      <button className="cyber-submit-btn" type="submit" disabled={loading || otp.length !== 6}>
+        {loading ? 'Authenticating...' : 'Verify Code & Sign In'}
       </button>
 
-      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+      <div style={{ display: 'flex', gap: '10px' }}>
         <button
           type="button"
-          className="btn-google"
+          className="cyber-secondary-btn"
           onClick={() => {
             setStep('email')
             setOtp('')
@@ -179,12 +205,12 @@ export default function OtpLogin({ onSuccess }) {
 
         <button
           type="button"
-          className="btn-google"
+          className="cyber-secondary-btn"
           onClick={handleResend}
           disabled={loading || !canResend}
           style={{ flex: 1 }}
         >
-          {canResend ? 'Resend OTP' : 'Resend'}
+          {canResend ? 'Resend Code' : 'Resend'}
         </button>
       </div>
     </form>

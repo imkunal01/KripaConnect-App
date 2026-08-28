@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
 import { getOrderById } from '../services/orders'
+import { subscribeToOrder } from '../services/socket'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import OrderTimeline from '../components/OrderTimeline'
+import { OrderDetailsSkeleton } from '../components/SkeletonLoader'
 
 function formatDate(dateString) {
   if (!dateString) return 'N/A'
@@ -33,6 +36,22 @@ export default function OrderDetailsPage() {
     }
     if (id) {
       loadOrder()
+
+      // Real-time live status update listener
+      const unsubscribe = subscribeToOrder(id, (updatedOrder) => {
+        setOrder(prev => ({
+          ...prev,
+          ...updatedOrder,
+          // Preserve populated product references if socket update was partial
+          items: updatedOrder.items || prev?.items || []
+        }))
+        toast.success(`Order status updated: ${String(updatedOrder.deliveryStatus || '').toUpperCase()} 🚚`, {
+          id: `order-update-${id}`,
+          duration: 4000
+        })
+      })
+
+      return () => unsubscribe()
     }
   }, [id, token, navigate])
 
@@ -54,7 +73,9 @@ export default function OrderDetailsPage() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Navbar />
-        <div style={{ flex: 1, padding: '40px', textAlign: 'center' }}>Loading order details...</div>
+        <main style={{ flex: 1, padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+          <OrderDetailsSkeleton />
+        </main>
         <Footer />
       </div>
     )

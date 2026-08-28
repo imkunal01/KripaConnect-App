@@ -9,6 +9,7 @@ import FavoritesButton from '../components/FavoritesButton.jsx'
 import ReviewList from '../components/ReviewList.jsx'
 import ReviewForm from '../components/ReviewForm.jsx'
 import ProductGrid from '../components/ProductGrid.jsx'
+import { ProductDetailsSkeleton } from '../components/SkeletonLoader.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import SEO from '../components/SEO.jsx'
@@ -20,8 +21,7 @@ export default function ProductDetails() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addToCart, favorites } = useContext(ShopContext)
-  const { token } = useContext(AuthContext)
-  const { role } = useAuth()
+  const { token, role, openAuthModal } = useAuth()
   const { mode } = usePurchaseMode()
   
   const [product, setProduct] = useState(null)
@@ -202,7 +202,15 @@ export default function ProductDetails() {
     return schemaObj
   }, [product, reviews])
 
-  if (loading) return <div className="loader-screen"><div className="spinner"></div></div>
+  if (loading) {
+    return (
+      <div className="product-details-page">
+        <Navbar />
+        <ProductDetailsSkeleton />
+        <Footer />
+      </div>
+    )
+  }
   if (!product) {
     return (
       <div className="error-screen">
@@ -374,7 +382,14 @@ export default function ProductDetails() {
                   <ReviewForm onSubmit={handleReviewSubmit} />
                 </>
               ) : (
-                <Link to="/login" className="login-link">Log in to review</Link>
+                <button
+                  type="button"
+                  onClick={() => openAuthModal({ mode: 'login', title: 'Sign in to review', description: 'Log in to your account to share your feedback.' })}
+                  className="login-link"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
+                >
+                  Log in to review
+                </button>
               )}
             </div>
           </div>

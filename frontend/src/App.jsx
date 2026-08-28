@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import AuthModal from './components/AuthModal.jsx'
 
 const Login = lazy(() => import('./pages/Login.jsx'))
 const Signup = lazy(() => import('./pages/Signup.jsx'))
@@ -67,8 +68,6 @@ function App() {
           <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailsPage /></ProtectedRoute>} />
           <Route path="/b2b" element={<ProtectedRoute allow={['retailer']}><B2B /></ProtectedRoute>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
           <Route path="/admin" element={<ProtectedRoute allow={['admin']}><Admin /></ProtectedRoute>} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/about" element={<About />} />
@@ -80,6 +79,8 @@ function App() {
           <Route path="/returns" element={<Refund />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        {/* Global Auth Popup Modal (accessible anywhere via openAuthModal) */}
+        <AuthModal />
       </div>
     </Suspense>
   )

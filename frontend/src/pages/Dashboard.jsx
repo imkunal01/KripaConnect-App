@@ -8,6 +8,7 @@ import SEO from '../components/SEO.jsx'
 import { listCategories } from '../services/categories'
 import { listProducts } from '../services/products'
 import ShopContext from '../context/ShopContext.jsx'
+import { ProductGridSkeleton, CategoryGridSkeleton } from '../components/SkeletonLoader.jsx'
 import heroimg from '../assets/auntyvibing.png'
 import heroimg2 from '../assets/heroimg.png'
 
@@ -165,7 +166,7 @@ export default function Dashboard() {
 
           <div className="dash-products-grid" aria-busy={loading ? 'true' : 'false'}>
             {loading ? (
-              <div className="dash-loading">Loading products…</div>
+              <ProductGridSkeleton count={6} />
             ) : (
               products.map((p) => {
                 const inStock = (p.stock || 0) > 0

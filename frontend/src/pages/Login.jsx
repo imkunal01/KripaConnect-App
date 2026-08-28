@@ -1,58 +1,10 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth.js'
-import { useGoogleLogin } from '@react-oauth/google'
-import OtpLogin from '../components/OtpLogin.jsx'
-import PasswordStrengthMeter from '../components/PasswordStrengthMeter.jsx'
+import { useNavigate, Link } from 'react-router-dom'
 import SEO from '../components/SEO.jsx'
-import './FormStyles.css'
+import AuthCard from '../components/AuthCard.jsx'
+import '../components/AuthModal.css'
 
 export default function Login() {
-  const { signIn, googleSignIn } = useAuth()
   const navigate = useNavigate()
-  
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [useOtp, setUseOtp] = useState(false)
-
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const payload = await googleSignIn(null, tokenResponse.access_token);
-        const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
-        const needsOnboarding = !!payload?.isNewUser || !hasAddress
-        navigate(needsOnboarding ? '/onboarding' : '/');
-      } catch (e) {
-        console.error(e);
-        alert("Google Login Failed");
-      }
-    },
-    onError: () => {
-      console.log('Login Failed');
-      alert("Google Login Failed");
-    }
-  });
-
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      const payload = await signIn({ email, password })
-      const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
-      navigate(hasAddress ? '/' : '/onboarding')
-    } catch (e) {
-      console.error(e)
-      alert("Login failed")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleOtpSuccess = (payload) => {
-    const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
-    navigate(hasAddress ? '/' : '/onboarding')
-  }
 
   const goBack = () => {
     try {
@@ -64,100 +16,143 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-wrapper">
+    <div className="auth-page-container">
       <SEO
-        title="Log In to Your Account | KripaConnect"
-        description="Log in to your KripaConnect account to manage your orders, wishlist, and bulk purchases."
+        title="Sign In | KripaConnect Electronics & Wholesale"
+        description="Sign in to your KripaConnect account to manage electronics orders, wishlist items, and B2B wholesale pricing."
         canonical="/login"
         robots="noindex, follow"
       />
-      {/* LEFT: Form Section */}
-      <div className="auth-left">
-        <button type="button" className="auth-back-btn" onClick={goBack}>
-          ← Back
-        </button>
 
-        <header className="auth-header">
-          <div className="brand">KripaConnect</div>
-          <div className="auth-toggle">
-            <Link to="/login" className="toggle-btn active">Log In</Link>
-            <Link to="/signup" className="toggle-btn">Sign Up</Link>
-          </div>
-        </header>
-
-        {!useOtp ? (
-          <form onSubmit={handleLogin} className="form-stack">
-            <input 
-              className="input-field" 
-              type="email" 
-              placeholder="Email Address" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input 
-              className="input-field" 
-              type="password" 
-              placeholder="Password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            <PasswordStrengthMeter
-              password={password}
-              visible={password.length > 0}
-              title="Password tips"
-            />
-            
-            <div className="form-extras">
-              <label style={{display:'flex', gap:'8px', alignItems:'center', color:'#71717a', cursor:'pointer'}}>
-                <input type="checkbox" style={{width:'16px', height:'16px'}} /> Remember me
-              </label>
-              <Link to="/forgot-password" className="link-reset">Forgot Password?</Link>
-            </div>
-
-            <button className="btn-primary" type="submit" disabled={loading}>
-              {loading ? 'Signing In...' : 'Log In'}
-            </button>
-
-            <button
-              type="button"
-              className="btn-google"
-              onClick={() => setUseOtp(true)}
-              style={{ marginTop: '10px' }}
-            >
-              Login with Email OTP instead
-            </button>
-          </form>
-        ) : (
-          <>
-            <OtpLogin onSuccess={handleOtpSuccess} />
-            <button
-              type="button"
-              className="btn-google"
-              onClick={() => setUseOtp(false)}
-              style={{ marginTop: '10px' }}
-            >
-              ← Back to Password Login
-            </button>
-          </>
-        )}
-
-        <div className="divider">or continue with</div>
-
-        <button className="btn-google" onClick={() => loginWithGoogle()}>
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="Google" />
-          Google
-        </button>
+      {/* Cyber Aurora Floating Background */}
+      <div className="auth-aurora-bg" aria-hidden="true">
+        <div className="aurora-blob aurora-blob--1" />
+        <div className="aurora-blob aurora-blob--2" />
+        <div className="aurora-blob aurora-blob--3" />
       </div>
+      <div className="auth-grid-overlay" aria-hidden="true" />
 
-      {/* RIGHT: Visual Section */}
-      <div className="auth-right">
-        <div className="visual-content">
-          <h2>Discover hidden gems.</h2>
-          <p>Join a community of explorers and creators sharing unique perspectives from around the globe.</p>
+      {/* Dual Cyber Studio Layout */}
+      <div className="auth-studio-wrapper">
+        {/* Left Side: Auth Card Form */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button
+              type="button"
+              className="cyber-secondary-btn"
+              style={{ width: 'auto', padding: '6px 14px', height: '36px', borderRadius: '999px', fontSize: '0.82rem' }}
+              onClick={goBack}
+              aria-label="Back to store"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              <span>Back to store</span>
+            </button>
+
+            <Link
+              to="/"
+              style={{ color: '#94A3B8', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none' }}
+            >
+              Browse Catalog →
+            </Link>
+          </div>
+
+          <AuthCard
+            initialMode="login"
+            isModal={false}
+            title="Welcome Back"
+            description="Sign in to access your electronics dashboard, live tracking & wholesale rates."
+          />
         </div>
+
+        {/* Right Side: Interactive Showcase Studio */}
+        <aside className="auth-studio-showcase" aria-label="KripaConnect platform highlights">
+          {/* Header Pill */}
+          <div className="showcase-header-pill">
+            <span className="pulse-dot" aria-hidden="true" />
+            <span>Direct OEM Electronics • B2B Certified</span>
+          </div>
+
+          {/* Main Headline */}
+          <div className="showcase-main-content">
+            <h1 className="showcase-headline">
+              Smarter electronics sourcing, <span className="neon-highlight">Reimagined</span>.
+            </h1>
+
+            <p className="showcase-description">
+              Access thousands of certified electronics with real-time supply chain tracking, instant volume discounts, and seamless GST invoicing.
+            </p>
+
+            {/* Interactive Live Cards Deck */}
+            <div className="showcase-cards-deck">
+              <div className="showcase-card-item">
+                <div className="showcase-card-left">
+                  <div className="showcase-card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                  </div>
+                  <div className="showcase-card-text">
+                    <h4>Direct Brand Pricing</h4>
+                    <p>Verified OEM direct rates without distributor markups</p>
+                  </div>
+                </div>
+                <span className="showcase-card-chip highlight">Best Price</span>
+              </div>
+
+              <div className="showcase-card-item">
+                <div className="showcase-card-left">
+                  <div className="showcase-card-icon blue-theme">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                      <line x1="12" y1="22.08" x2="12" y2="12" />
+                    </svg>
+                  </div>
+                  <div className="showcase-card-text">
+                    <h4>Express Dispatch Radar</h4>
+                    <p>Live package tracking from hub straight to doorstep</p>
+                  </div>
+                </div>
+                <span className="showcase-card-chip highlight-b2b">Same-Day</span>
+              </div>
+
+              <div className="showcase-card-item">
+                <div className="showcase-card-left">
+                  <div className="showcase-card-icon green-theme">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
+                  <div className="showcase-card-text">
+                    <h4>100% Genuine Warranty</h4>
+                    <p>Full manufacturer warranty coverage on all products</p>
+                  </div>
+                </div>
+                <span className="showcase-card-chip">Guaranteed</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Trust Metrics */}
+          <div className="showcase-trust-bar">
+            <div className="trust-stat">
+              <span className="trust-number">50K+</span>
+              <span className="trust-caption">Active Buyers</span>
+            </div>
+            <div className="trust-stat">
+              <span className="trust-number">99.8%</span>
+              <span className="trust-caption">On-Time Delivery</span>
+            </div>
+            <div className="trust-stat">
+              <span className="trust-number">₹10Cr+</span>
+              <span className="trust-caption">Wholesale Volume</span>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   )

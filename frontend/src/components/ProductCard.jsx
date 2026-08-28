@@ -1,5 +1,7 @@
 import { useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { FaHeart, FaShoppingCart } from 'react-icons/fa'
+import { FiHeart } from 'react-icons/fi'
 import ShopContext from '../context/ShopContext.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
@@ -20,6 +22,7 @@ export default function ProductCard({ product, favorite }) {
   const minBulkQty = product?.min_bulk_qty > 0 ? product.min_bulk_qty : 1
   const bulkUnitPrice = product?.price_bulk || product?.retailer_price || product?.price
   const canQuickAdd = !retailerBulk || minBulkQty <= 1
+  const tag = product.tags && product.tags.length > 0 ? product.tags[0] : null
   
   return (
     <div
@@ -27,63 +30,93 @@ export default function ProductCard({ product, favorite }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Wishlist Icon - Top Right */}
+      {/* Wishlist Button */}
       <button
         onClick={withPreventFav(async () => toggleFavorite(product._id))}
         className={`product-card-wishlist ${favorite ? 'active' : ''}`}
         disabled={isTogglingFav}
+        aria-label={favorite ? 'Remove from wishlist' : 'Add to wishlist'}
+        type="button"
       >
-        {favorite ? '❤️' : '🤍'}
+        {favorite ? (
+          <FaHeart className="wishlist-icon filled" aria-hidden="true" />
+        ) : (
+          <FiHeart className="wishlist-icon" aria-hidden="true" />
+        )}
       </button>
 
-      <Link to={`/product/${product._id}`} className="product-card-link">
+      {/* Image Container */}
+      <Link to={`/product/${product._id}`} className="product-card-image-link" tabIndex="-1">
         <div className="product-card-image">
+          {tag && <span className="product-card-badge">{tag}</span>}
           {product.images?.[0]?.url ? (
-            <img src={product.images[0].url} alt={product.name} loading="lazy" decoding="async" />
+            <img
+              src={product.images[0].url}
+              alt={product.name}
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
-            <span style={{ fontSize: '3rem', opacity: 0.3 }}>📦</span>
+            <div className="product-card-img-placeholder" aria-hidden="true">📦</div>
           )}
         </div>
       </Link>
 
+      {/* Content */}
       <div className="product-card-body">
-        <Link to={`/product/${product._id}`} className="product-card-link">
-          <div className="product-card-name">{product.name}</div>
+        <Link to={`/product/${product._id}`} className="product-card-title-link">
+          <h3 className="product-card-name" title={product.name}>
+            {product.name}
+          </h3>
         </Link>
-        
-        {product.tags && product.tags.length > 0 && (
-          <div className="product-card-tag">{product.tags[0]}</div>
-        )}
 
+        {/* Price & Stock Row */}
         <div className="product-card-price-row">
-          {retailerBulk ? (
-            <div className="product-card-price">
-              <span style={{ textDecoration: 'line-through', opacity: 0.6, marginRight: 8 }}>
-                ₹{product.price?.toLocaleString('en-IN')}
+          <div className="product-card-pricing">
+            {retailerBulk ? (
+              <div className="product-card-price-group">
+                <span className="product-card-price-strike">
+                  ₹{Number(product.price || 0).toLocaleString('en-IN')}
+                </span>
+                <span className="product-card-price">
+                  ₹{Number(bulkUnitPrice || 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+            ) : (
+              <span className="product-card-price">
+                ₹{Number(product.price || 0).toLocaleString('en-IN')}
               </span>
-              <span>
-                ₹{bulkUnitPrice?.toLocaleString('en-IN')}
-              </span>
-            </div>
-          ) : (
-            <div className="product-card-price">₹{product.price?.toLocaleString('en-IN')}</div>
-          )}
-          <div className={`product-card-stock ${inStock ? '' : 'out-of-stock'}`}>
-            {inStock ? 'In Stock' : 'Out of Stock'}
+            )}
+          </div>
+          
+          <div className={`product-card-stock ${inStock ? 'in-stock' : 'out-of-stock'}`}>
+            <span className="stock-dot" aria-hidden="true" />
+            <span>{inStock ? 'In Stock' : 'Out of Stock'}</span>
           </div>
         </div>
 
         {retailerBulk && minBulkQty > 1 && (
-          <div className="product-card-tag">Min bulk qty: {minBulkQty}</div>
+          <div className="product-card-bulk-hint">Min qty: {minBulkQty} units</div>
         )}
       </div>
 
+      {/* Action Button */}
       <button
         onClick={withPreventAdd(async () => addToCart(product, 1))}
         disabled={!inStock || !canQuickAdd || isAdding}
-        className="product-card-button"
+        className={`product-card-button ${!inStock ? 'btn-out-of-stock' : ''} ${isAdding ? 'btn-adding' : ''}`}
+        type="button"
       >
-        {!inStock ? 'Out of Stock' : !canQuickAdd ? `Min ${minBulkQty} units` : isAdding ? 'Adding...' : 'Add to Cart'}
+        <FaShoppingCart className="btn-cart-icon" aria-hidden="true" />
+        <span>
+          {!inStock
+            ? 'Out of Stock'
+            : !canQuickAdd
+            ? `Min ${minBulkQty} units`
+            : isAdding
+            ? 'Adding...'
+            : 'Add to Cart'}
+        </span>
       </button>
     </div>
   )

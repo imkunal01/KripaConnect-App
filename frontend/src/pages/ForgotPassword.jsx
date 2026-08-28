@@ -1,31 +1,10 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { forgotPassword } from '../services/auth'
-import SEO from '../components/SEO'
-import './FormStyles.css'
+import { useNavigate, Link } from 'react-router-dom'
+import SEO from '../components/SEO.jsx'
+import AuthCard from '../components/AuthCard.jsx'
+import '../components/AuthModal.css'
 
 export default function ForgotPassword() {
   const navigate = useNavigate()
-  
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState('')
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    
-    try {
-      await forgotPassword(email)
-      setSuccess(true)
-    } catch (err) {
-      setError(err.message || 'Failed to send reset email')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const goBack = () => {
     try {
@@ -36,120 +15,122 @@ export default function ForgotPassword() {
     }
   }
 
-  if (success) {
-    return (
-      <div className="auth-wrapper">
-        <SEO
-          title="Password Reset Email Sent | KripaConnect"
-          description="Check your email for instructions to reset your KripaConnect password."
-          robots="noindex, nofollow"
-        />
-        <div className="auth-left">
-          <button type="button" className="auth-back-btn" onClick={() => navigate('/login')}>
-            ← Back to Login
-          </button>
-
-          <header className="auth-header">
-            <div className="brand">KripaConnect</div>
-          </header>
-
-          <div className="welcome-text">
-            <h1>Check Your Email</h1>
-            <p style={{ marginTop: '20px', color: '#059669' }}>
-              ✓ If an account exists with <strong>{email}</strong>, you'll receive a password reset link shortly.
-            </p>
-            <p style={{ marginTop: '15px', color: '#6b7280' }}>
-              The link will expire in 15 minutes for security reasons.
-            </p>
-            <p style={{ marginTop: '15px', color: '#6b7280' }}>
-              Didn't receive it? Check your spam folder or <button 
-                onClick={() => setSuccess(false)} 
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  color: '#2563eb', 
-                  textDecoration: 'underline', 
-                  cursor: 'pointer' 
-                }}
-              >
-                try again
-              </button>.
-            </p>
-          </div>
-        </div>
-
-        <div className="auth-right">
-          <div className="visual-content">
-            <h2>Secure password reset.</h2>
-            <p>We've sent you a secure link to reset your password. Click the link in your email to continue.</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="auth-wrapper">
+    <div className="auth-page-container">
       <SEO
-        title="Forgot Password | KripaConnect"
+        title="Account Recovery | KripaConnect"
         description="Reset your KripaConnect account password securely."
         canonical="/forgot-password"
         robots="noindex, nofollow"
       />
-      <div className="auth-left">
-        <button type="button" className="auth-back-btn" onClick={goBack}>
-          ← Back
-        </button>
 
-        <header className="auth-header">
-          <div className="brand">KripaConnect</div>
-        </header>
+      {/* Cyber Aurora Floating Background */}
+      <div className="auth-aurora-bg" aria-hidden="true">
+        <div className="aurora-blob aurora-blob--1" />
+        <div className="aurora-blob aurora-blob--2" />
+        <div className="aurora-blob aurora-blob--3" />
+      </div>
+      <div className="auth-grid-overlay" aria-hidden="true" />
 
-        <div className="welcome-text">
-          <h1>Forgot Password?</h1>
-          <p>No worries! Enter your email and we'll send you a reset link.</p>
-        </div>
+      {/* Dual Cyber Studio Layout */}
+      <div className="auth-studio-wrapper">
+        {/* Left Side: Auth Card Form */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button
+              type="button"
+              className="cyber-secondary-btn"
+              style={{ width: 'auto', padding: '6px 14px', height: '36px', borderRadius: '999px', fontSize: '0.82rem' }}
+              onClick={goBack}
+              aria-label="Back to login"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              <span>Back to login</span>
+            </button>
 
-        <form onSubmit={handleSubmit} className="form-stack">
-          {error && (
-            <div style={{ 
-              padding: '12px', 
-              background: '#fee2e2', 
-              border: '1px solid #dc2626', 
-              borderRadius: '6px', 
-              color: '#dc2626',
-              fontSize: '14px'
-            }}>
-              {error}
-            </div>
-          )}
-
-          <input 
-            className="input-field" 
-            type="email" 
-            placeholder="Email Address" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          
-          <button className="btn-primary" type="submit" disabled={loading}>
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </button>
-
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <Link to="/login" style={{ color: '#2563eb', textDecoration: 'none' }}>
-              ← Back to Login
+            <Link
+              to="/login"
+              style={{ color: '#94A3B8', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none' }}
+            >
+              Sign In Instead →
             </Link>
           </div>
-        </form>
-      </div>
 
-      <div className="auth-right">
-        <div className="visual-content">
-          <h2>Reset your password.</h2>
-          <p>Enter your email address and we'll send you a secure link to reset your password.</p>
+          <AuthCard
+            initialMode="forgot"
+            isModal={false}
+            title="Recover Access"
+            description="Enter your registered email address to receive an encrypted reset token."
+          />
         </div>
+
+        {/* Right Side: Interactive Showcase Studio */}
+        <aside className="auth-studio-showcase" aria-label="KripaConnect account security">
+          <div className="showcase-header-pill">
+            <span className="pulse-dot" aria-hidden="true" />
+            <span>256-Bit SSL Encrypted Recovery</span>
+          </div>
+
+          <div className="showcase-main-content">
+            <h1 className="showcase-headline">
+              Bank-grade security for your <span className="neon-highlight">Account & Orders</span>.
+            </h1>
+
+            <p className="showcase-description">
+              We protect your saved corporate GST profiles, delivery locations, and order history with automated cryptographic verification tokens.
+            </p>
+
+            <div className="showcase-cards-deck">
+              <div className="showcase-card-item">
+                <div className="showcase-card-left">
+                  <div className="showcase-card-icon green-theme">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
+                  <div className="showcase-card-text">
+                    <h4>Single-Use Security Token</h4>
+                    <p>Cryptographically signed links that expire in 15 minutes</p>
+                  </div>
+                </div>
+                <span className="showcase-card-chip">Protected</span>
+              </div>
+
+              <div className="showcase-card-item">
+                <div className="showcase-card-left">
+                  <div className="showcase-card-icon blue-theme">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                  </div>
+                  <div className="showcase-card-text">
+                    <h4>Instant SMTP Dispatch</h4>
+                    <p>Immediate delivery to your registered primary inbox</p>
+                  </div>
+                </div>
+                <span className="showcase-card-chip highlight-b2b">Instant</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="showcase-trust-bar">
+            <div className="trust-stat">
+              <span className="trust-number">256-Bit</span>
+              <span className="trust-caption">Encryption</span>
+            </div>
+            <div className="trust-stat">
+              <span className="trust-number">0</span>
+              <span className="trust-caption">Data Leakage</span>
+            </div>
+            <div className="trust-stat">
+              <span className="trust-number">100%</span>
+              <span className="trust-caption">Privacy Guaranteed</span>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   )

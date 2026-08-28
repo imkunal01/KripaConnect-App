@@ -3,11 +3,13 @@ const router = express.Router();
 
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
+const uploadCsv = require("../middleware/uploadCsvMiddleware");
 
 const adminController = require("../controllers/adminController");
 const adminOrderController = require("../controllers/adminOrderController");
 const adminCategoryController = require("../controllers/adminCategoryController");
 const adminSubcategoryController = require("../controllers/adminSubcategoryController");
+const adminProductBulkController = require("../controllers/adminProductBulkController");
 const bannerController = require("../controllers/bannerController");
 
 // USER MANAGEMENT
@@ -17,6 +19,12 @@ router.put("/users/role/:id", protect, adminOnly, adminController.updateUserRole
 router.put("/users/role/:id/clear-cooldown", protect, adminOnly, adminController.clearRetailerCooldown);
 router.delete("/users/:id", protect, adminOnly, adminController.deleteUser);
 router.get("/stats", protect, adminOnly, adminController.getStats);
+
+// PRODUCT BULK ACTIONS & CSV IMPORT
+router.post("/products/bulk-action", protect, adminOnly, adminProductBulkController.bulkProductAction);
+router.post("/products/bulk-export", protect, adminOnly, adminProductBulkController.bulkExportProducts);
+router.post("/products/import-csv", protect, adminOnly, uploadCsv.single("file"), adminController.importProductsCsv);
+router.get("/products/csv-template", protect, adminOnly, adminController.downloadCsvTemplate);
 
 // ORDER MANAGEMENT
 router.get("/orders", protect, adminOnly, adminOrderController.getAllOrdersAdmin);
