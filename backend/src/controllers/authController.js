@@ -143,25 +143,32 @@ function applySavedAddressToUser(user, savedAddress) {
 
     user.savedAddresses = Array.isArray(user.savedAddresses) ? user.savedAddresses : [];
 
-    // Find current default BEFORE clearing flags
-    const existingDefaultIdx = user.savedAddresses.findIndex(addr => addr.default === true);
+    const isExplicitDefault = savedAddress.default === true;
+    const shouldBeDefault = isExplicitDefault || user.savedAddresses.length === 0;
 
-    // Ensure only one default
-    user.savedAddresses.forEach(addr => { addr.default = false; });
-
-    if (existingDefaultIdx >= 0) {
-        const existing = user.savedAddresses[existingDefaultIdx];
-        // Mongoose subdoc: assign fields directly
-        existing.name = normalized.name;
-        existing.phone = normalized.phone;
-        existing.addressLine = normalized.addressLine;
-        existing.city = normalized.city;
-        existing.state = normalized.state;
-        existing.pincode = normalized.pincode;
-        existing.default = true;
-    } else {
-        user.savedAddresses.push(normalized);
+    if (shouldBeDefault) {
+        user.savedAddresses.forEach(addr => { addr.default = false; });
     }
+
+    // If an existing address ID is provided, update that address
+    if (savedAddress._id) {
+        const existingIdx = user.savedAddresses.findIndex(addr => addr._id && addr._id.toString() === savedAddress._id.toString());
+        if (existingIdx >= 0) {
+            const existing = user.savedAddresses[existingIdx];
+            existing.name = normalized.name;
+            existing.phone = normalized.phone;
+            existing.addressLine = normalized.addressLine;
+            existing.city = normalized.city;
+            existing.state = normalized.state;
+            existing.pincode = normalized.pincode;
+            if (shouldBeDefault) existing.default = true;
+            return;
+        }
+    }
+
+    // Otherwise, push as a new address
+    normalized.default = shouldBeDefault;
+    user.savedAddresses.push(normalized);
 }
 
 function validateSavedAddressFields(savedAddress, user) {
@@ -170,8 +177,8 @@ function validateSavedAddressFields(savedAddress, user) {
         name: (a.name || user.name || '').toString().trim(),
         phone: (a.phone || user.phone || '').toString().trim(),
         addressLine: (a.addressLine || '').toString().trim(),
-        city: (a.city || '').toString().trim(),
-        state: (a.state || '').toString().trim(),
+        city: (a.city || 'Indore').toString().trim(),
+        state: (a.state || 'Madhya Pradesh').toString().trim(),
         pincode: (a.pincode || '').toString().trim(),
     };
     const missing = [];
@@ -186,7 +193,7 @@ function validateSavedAddressFields(savedAddress, user) {
 
 const updateProfile = async (req, res) => {
     try {
-        const { name, phone, role, savedAddress } = req.body;
+        const { name, phone, role, savedAddress, savedAddresses, deleteAddressId, setDefaultAddressId } = req.body;
         const user = await User.findById(req.user._id);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -205,12 +212,39 @@ const updateProfile = async (req, res) => {
             user.role = role;
         }
 
+        user.savedAddresses = Array.isArray(user.savedAddresses) ? user.savedAddresses : [];
+
+        // Delete address if requested
+        if (deleteAddressId) {
+            const wasDefault = user.savedAddresses.some(a => a._id && a._id.toString() === deleteAddressId.toString() && a.default);
+            user.savedAddresses = user.savedAddresses.filter(a => a._id && a._id.toString() !== deleteAddressId.toString());
+            if (wasDefault && user.savedAddresses.length > 0) {
+                user.savedAddresses[0].default = true;
+            }
+        }
+
+        // Set default address if requested
+        if (setDefaultAddressId) {
+            user.savedAddresses.forEach(a => {
+                a.default = a._id && a._id.toString() === setDefaultAddressId.toString();
+            });
+        }
+
+        // Save single address
         if (savedAddress) {
             const missing = validateSavedAddressFields(savedAddress, user);
             if (missing.length) {
                 return res.status(400).json({ message: `Missing address fields: ${missing.join(', ')}` });
             }
             applySavedAddressToUser(user, savedAddress);
+        }
+
+        // Replace entire address list if provided
+        if (Array.isArray(savedAddresses)) {
+            user.savedAddresses = savedAddresses;
+            if (user.savedAddresses.length > 0 && !user.savedAddresses.some(a => a.default)) {
+                user.savedAddresses[0].default = true;
+            }
         }
 
         await user.save();

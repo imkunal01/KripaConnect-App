@@ -1,9 +1,8 @@
-import { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getProduct, listProducts } from '../services/products'
 import { listProductReviews, createProductReview } from '../services/reviews'
 import ShopContext from '../context/ShopContext.jsx'
-import AuthContext from '../context/AuthContext.jsx'
 import QuantitySelector from '../components/QuantitySelector.jsx'
 import FavoritesButton from '../components/FavoritesButton.jsx'
 import ReviewList from '../components/ReviewList.jsx'
@@ -15,6 +14,22 @@ import Footer from '../components/Footer.jsx'
 import SEO from '../components/SEO.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
+import {
+  FiShield,
+  FiTruck,
+  FiRefreshCw,
+  FiStar,
+  FiCheck,
+  FiShoppingCart,
+  FiZap,
+  FiLayers,
+  FiShare2,
+  FiInfo,
+  FiFileText,
+  FiMessageSquare
+} from 'react-icons/fi'
+import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa'
+import toast from 'react-hot-toast'
 import './ProductDetails.css'
 
 export default function ProductDetails() {
@@ -31,6 +46,8 @@ export default function ProductDetails() {
   const [selectedImage, setSelectedImage] = useState(null)
   const [relatedItems, setRelatedItems] = useState([])
   const [relatedLoading, setRelatedLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('description') // 'description' | 'specs' | 'warranty' | 'reviews'
+  const [addingToCart, setAddingToCart] = useState(false)
 
   const isRetailer = role === 'retailer'
   const retailerBulk = isRetailer && mode === 'retailer'
@@ -59,8 +76,8 @@ export default function ProductDetails() {
         ])
         if (active) {
           setProduct(p)
-          setReviews(r)
-          if (p.images?.length) setSelectedImage(p.images[0].url)
+          setReviews(Array.isArray(r) ? r : [])
+          if (p?.images?.length) setSelectedImage(p.images[0].url)
         }
       } catch (e) {
         console.error("Failed to load product", e)
@@ -98,9 +115,26 @@ export default function ProductDetails() {
 
   // Handlers
   const handleReviewSubmit = async (payload) => {
-    await createProductReview(id, payload, token)
-    const r = await listProductReviews(id)
-    setReviews(r)
+    try {
+      await createProductReview(id, payload, token)
+      toast.success('Thank you for your review!')
+      const r = await listProductReviews(id)
+      setReviews(Array.isArray(r) ? r : [])
+    } catch (err) {
+      toast.error(err.message || 'Failed to submit review')
+    }
+  }
+
+  const handleAddToCart = async () => {
+    if (!product) return
+    setAddingToCart(true)
+    try {
+      await addToCart(product, qty)
+    } catch (err) {
+      // error is handled in ShopContext
+    } finally {
+      setAddingToCart(false)
+    }
   }
 
   const handleBuyNow = async () => {
@@ -108,308 +142,461 @@ export default function ProductDetails() {
     navigate('/checkout')
   }
 
-  const productSchema = useMemo(() => {
-    if (!product) return null
-    const images = Array.isArray(product.images) && product.images.length > 0
-      ? product.images.map((img) => img.url).filter(Boolean)
-      : ['https://kripaconnect.in/icon-512.png']
-
-    const catName = product.Category?.name || (typeof product.category_id === 'object' ? product.category_id?.name : '')
-
-    const schemaObj = {
-      '@context': 'https://schema.org',
-      '@graph': [
-        {
-          '@type': 'Product',
-          '@id': `https://kripaconnect.in/product/${product._id}#product`,
-          name: product.name,
-          image: images,
-          description: product.description || `Buy genuine ${product.name} with warranty and fast shipping on KripaConnect.`,
-          sku: product._id,
-          brand: {
-            '@type': 'Brand',
-            name: product.brand || 'KripaConnect',
-          },
-          ...(catName ? { category: catName } : {}),
-          offers: {
-            '@type': 'Offer',
-            url: `https://kripaconnect.in/product/${product._id}`,
-            priceCurrency: 'INR',
-            price: Number(product.price || 0),
-            itemCondition: 'https://schema.org/NewCondition',
-            availability: (product.stock || 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            seller: {
-              '@type': 'Organization',
-              name: 'KripaConnect',
-            },
-          },
-          ...(reviews.length > 0
-            ? {
-                aggregateRating: {
-                  '@type': 'AggregateRating',
-                  ratingValue: (
-                    reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) / reviews.length
-                  ).toFixed(1),
-                  reviewCount: reviews.length,
-                },
-              }
-            : {}),
-        },
-        {
-          '@type': 'BreadcrumbList',
-          '@id': `https://kripaconnect.in/product/${product._id}#breadcrumb`,
-          itemListElement: [
-            {
-              '@type': 'ListItem',
-              position: 1,
-              name: 'Home',
-              item: 'https://kripaconnect.in/',
-            },
-            {
-              '@type': 'ListItem',
-              position: 2,
-              name: 'Products',
-              item: 'https://kripaconnect.in/products',
-            },
-            ...(catName
-              ? [
-                  {
-                    '@type': 'ListItem',
-                    position: 3,
-                    name: catName,
-                    item: `https://kripaconnect.in/products?category=${product.Category?._id || product.category_id}`,
-                  },
-                  {
-                    '@type': 'ListItem',
-                    position: 4,
-                    name: product.name,
-                    item: `https://kripaconnect.in/product/${product._id}`,
-                  },
-                ]
-              : [
-                  {
-                    '@type': 'ListItem',
-                    position: 3,
-                    name: product.name,
-                    item: `https://kripaconnect.in/product/${product._id}`,
-                  },
-                ]),
-          ],
-        },
-      ],
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: product?.name,
+        text: `Check out ${product?.name} on KripaConnect!`,
+        url: window.location.href,
+      }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+      toast.success('Product link copied to clipboard!')
     }
+  }
 
-    return schemaObj
-  }, [product, reviews])
+  // Calculated Ratings
+  const avgRating = useMemo(() => {
+    if (!reviews.length) return 5.0
+    const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0)
+    return (sum / reviews.length).toFixed(1)
+  }, [reviews])
 
   if (loading) {
     return (
-      <div className="product-details-page">
+      <div className="pdp-page">
         <Navbar />
         <ProductDetailsSkeleton />
         <Footer />
       </div>
     )
   }
+
   if (!product) {
     return (
-      <div className="error-screen">
-        <SEO title="Product Not Found" robots="noindex, nofollow" />
-        Product not found. <Link to="/">Go Home</Link>
+      <div className="pdp-page">
+        <Navbar />
+        <div className="pdp-empty-screen">
+          <h2>Product Not Found</h2>
+          <p>The product you are looking for might have been moved or is currently unavailable.</p>
+          <Link to="/products" className="pdp-btn-primary">Browse All Products</Link>
+        </div>
+        <Footer />
       </div>
     )
   }
 
   const inStock = (product.stock || 0) > 0
+  const stockNum = Number(product.stock) || 0
   const bulkUnitPrice = product?.price_bulk || product?.retailer_price || product?.price
-  const displayUnitPrice = retailerBulk ? bulkUnitPrice : product.price
-  const pageTitle = `${product.name} | Buy Online | KripaConnect`
-  const pageDescription = product.description
-    ? product.description.slice(0, 155)
-    : `Buy ${product.name} online at ₹${product.price?.toLocaleString('en-IN')}. 100% original with warranty and fast delivery across India.`
+  const catName = product.Category?.name || (typeof product.category_id === 'object' ? product.category_id?.name : 'Electronics')
+  const subName = product.subcategory_id?.name || (typeof product.subcategory_id === 'object' ? product.subcategory_id?.name : null)
+
+  const numPrice = Number(product.price) || 0
+  const numRetailerPrice = Number(product.retailer_price) || 0
+  const retailerMargin = numPrice > 0 && numRetailerPrice > 0 ? numPrice - numRetailerPrice : 0
+  const retailerMarginPercent = numPrice > 0 ? Math.round((retailerMargin / numPrice) * 100) : 0
 
   return (
     <div className="pdp-page">
       <SEO
-        title={pageTitle}
-        description={pageDescription}
+        title={`${product.name} | Buy Online | KripaConnect`}
+        description={product.description?.slice(0, 160) || `Buy genuine ${product.name} with fast delivery on KripaConnect.`}
         canonical={`/product/${product._id}`}
         image={selectedImage || product.images?.[0]?.url}
         type="product"
-        schema={productSchema}
       />
       <Navbar />
 
-      <main className="pdp-layout">
-        <div className="pdp-shell">
-          <nav className="pdp-breadcrumbs" aria-label="Breadcrumb">
-            <Link to="/">Home</Link>
-            <span aria-hidden="true"> / </span>
-            <Link to="/products">Products</Link>
-            <span aria-hidden="true"> / </span>
-            <span>{product.name}</span>
-          </nav>
+      <main className="pdp-container">
+        {/* Breadcrumb Navigation */}
+        <nav className="pdp-breadcrumbs" aria-label="Breadcrumb">
+          <Link to="/">Home</Link>
+          <span className="pdp-bread-sep">/</span>
+          <Link to="/products">Products</Link>
+          {catName && (
+            <>
+              <span className="pdp-bread-sep">/</span>
+              <Link to={`/products?category=${product.Category?._id || product.category_id}`}>{catName}</Link>
+            </>
+          )}
+          <span className="pdp-bread-sep">/</span>
+          <span className="pdp-bread-current">{product.name}</span>
+        </nav>
 
-          <div className="pdp-hero">
-            {/* Media */}
-            <section className="pdp-media" aria-label="Product images">
-              <div className="pdp-media-main">
-                {selectedImage ? (
-                  <img src={selectedImage} alt={product.name} loading="eager" decoding="async" />
+        {/* Top Hero: Gallery + Purchasing Details */}
+        <div className="pdp-hero-grid">
+          {/* Left Column: Image Gallery */}
+          <section className="pdp-gallery">
+            <div className="pdp-main-image-wrap">
+              {selectedImage ? (
+                <img
+                  src={selectedImage}
+                  alt={product.name}
+                  className="pdp-main-image"
+                  loading="eager"
+                  decoding="async"
+                />
+              ) : (
+                <div className="pdp-media-placeholder">No Image Available</div>
+              )}
+
+              {/* Status Badges */}
+              <div className="pdp-image-badges">
+                {!inStock ? (
+                  <span className="pdp-img-badge pdp-img-badge--danger">Out of Stock</span>
+                ) : stockNum < 10 ? (
+                  <span className="pdp-img-badge pdp-img-badge--warning">Only {stockNum} Left!</span>
                 ) : (
-                  <div className="pdp-media-placeholder">No Image</div>
+                  <span className="pdp-img-badge pdp-img-badge--success">In Stock</span>
                 )}
-                {!inStock && <span className="pdp-badge pdp-badge--danger">Sold Out</span>}
-                {inStock && <span className="pdp-badge">In Stock</span>}
-              </div>
 
-              {product.images?.length > 1 && (
-                <div className="pdp-media-thumbs" role="group" aria-label="Product thumbnails">
-                  {product.images.map((img, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setSelectedImage(img.url)}
-                      className={`pdp-thumb ${selectedImage === img.url ? 'isActive' : ''}`}
-                      aria-label={`View image ${i + 1}`}
-                    >
-                      <img src={img.url} alt={`${product.name} view ${i + 1}`} loading="lazy" decoding="async" />
-                    </button>
-                  ))}
+                {product.tags && product.tags[0] && (
+                  <span className="pdp-img-badge pdp-img-badge--dark">{product.tags[0]}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Thumbnail Row */}
+            {product.images && product.images.length > 1 && (
+              <div className="pdp-thumbnails">
+                {product.images.map((img, idx) => (
+                  <button
+                    key={img.public_id || idx}
+                    type="button"
+                    className={`pdp-thumb-btn ${selectedImage === img.url ? 'is-active' : ''}`}
+                    onClick={() => setSelectedImage(img.url)}
+                    aria-label={`View image ${idx + 1}`}
+                  >
+                    <img src={img.url} alt={`${product.name} thumbnail ${idx + 1}`} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Right Column: Buying Information Card */}
+          <section className="pdp-details-card">
+            {/* Category & Action Bar */}
+            <div className="pdp-cat-row">
+              <span className="pdp-cat-pill">{catName}</span>
+              <div className="pdp-quick-actions">
+                <button
+                  type="button"
+                  className="pdp-share-btn"
+                  onClick={handleShare}
+                  aria-label="Share product"
+                  title="Share product link"
+                >
+                  <FiShare2 />
+                </button>
+                <FavoritesButton productId={product._id} active={favorites.includes(product._id)} />
+              </div>
+            </div>
+
+            {/* Product Title */}
+            <h1 className="pdp-title">{product.name}</h1>
+
+            {/* Ratings Summary */}
+            <div className="pdp-rating-summary">
+              <div className="pdp-stars">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <FaStar key={star} className={star <= Math.round(avgRating) ? 'star-filled' : 'star-empty'} />
+                ))}
+              </div>
+              <span className="pdp-rating-number">{avgRating}</span>
+              <span className="pdp-review-count">
+                ({reviews.length} {reviews.length === 1 ? 'verified review' : 'verified reviews'})
+              </span>
+            </div>
+
+            {/* Pricing Section */}
+            <div className="pdp-price-section">
+              {retailerBulk ? (
+                <div className="pdp-wholesale-price-box">
+                  <div className="pdp-price-label">Wholesale B2B Rate</div>
+                  <div className="pdp-price-flex">
+                    <span className="pdp-price-current">₹{Number(bulkUnitPrice || 0).toLocaleString('en-IN')}</span>
+                    <span className="pdp-price-retail-strike">Retail: ₹{numPrice.toLocaleString('en-IN')}</span>
+                  </div>
+                  {retailerMargin > 0 && (
+                    <div className="pdp-margin-badge">
+                      <span>Retailer Profit Margin: <strong>₹{retailerMargin.toLocaleString('en-IN')}</strong> ({retailerMarginPercent}%)</span>
+                    </div>
+                  )}
+                  {minBulkQty > 1 && (
+                    <div className="pdp-min-bulk-pill">Minimum wholesale quantity: {minBulkQty} units</div>
+                  )}
+                </div>
+              ) : (
+                <div className="pdp-consumer-price-box">
+                  <div className="pdp-price-flex">
+                    <span className="pdp-price-current">₹{numPrice.toLocaleString('en-IN')}</span>
+                    <span className="pdp-tax-inclusive">Inclusive of all taxes</span>
+                  </div>
                 </div>
               )}
-            </section>
+            </div>
 
-            {/* Info */}
-            <section className="pdp-info" aria-label="Product purchasing details">
-              <div className="pdp-info-card">
-                <div className="pdp-title-row">
-                  <h1 className="pdp-title">{product.name}</h1>
-                  <FavoritesButton productId={product._id} active={favorites.includes(product._id)} />
+            {/* Stock Health */}
+            <div className="pdp-stock-health-bar">
+              {inStock ? (
+                <div className="pdp-stock-status is-in">
+                  <span className="pdp-stock-indicator" />
+                  <span>In Stock & Ready to Ship</span>
                 </div>
+              ) : (
+                <div className="pdp-stock-status is-out">
+                  <span className="pdp-stock-indicator" />
+                  <span>Currently Out of Stock</span>
+                </div>
+              )}
+            </div>
 
-                <div className="pdp-price-row">
-                  {retailerBulk ? (
-                    <div className="pdp-price">
-                      <span className="pdp-price-old">₹{product.price?.toLocaleString('en-IN')}</span>
-                      ₹{bulkUnitPrice?.toLocaleString('en-IN')}
-                    </div>
-                  ) : (
-                    <div className="pdp-price">₹{product.price?.toLocaleString('en-IN')}</div>
-                  )}
-                  <div className={`pdp-stock ${inStock ? 'isIn' : 'isOut'}`}>
-                    {inStock ? 'Available' : 'Out of stock'}
+            {/* Quantity Selector & Purchase Buttons */}
+            <div className="pdp-purchase-block">
+              <div className="pdp-qty-row">
+                <label className="pdp-qty-label">Quantity:</label>
+                <QuantitySelector
+                  value={qty}
+                  min={retailerBulk ? minBulkQty : 1}
+                  max={stockNum || 99}
+                  onChange={setQty}
+                />
+              </div>
+
+              <div className="pdp-action-buttons">
+                <button
+                  type="button"
+                  className="pdp-btn-cart"
+                  onClick={handleAddToCart}
+                  disabled={!inStock || addingToCart || (retailerBulk && qty < minBulkQty)}
+                >
+                  <FiShoppingCart />
+                  <span>{addingToCart ? 'Adding...' : 'Add to Cart'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="pdp-btn-buy"
+                  onClick={handleBuyNow}
+                  disabled={!inStock || (retailerBulk && qty < minBulkQty)}
+                >
+                  <FiZap />
+                  <span>Buy Now</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Trust Assurances */}
+            <div className="pdp-trust-grid">
+              <div className="pdp-trust-pill">
+                <FiTruck className="pdp-trust-icon" />
+                <span>Fast Express Shipping</span>
+              </div>
+              <div className="pdp-trust-pill">
+                <FiShield className="pdp-trust-icon" />
+                <span>100% Genuine Warranty</span>
+              </div>
+              <div className="pdp-trust-pill">
+                <FiRefreshCw className="pdp-trust-icon" />
+                <span>7-Day Replacement</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* Tabbed In-Depth Information */}
+        <div className="pdp-tabs-container">
+          <div className="pdp-tab-nav" role="tablist">
+            <button
+              type="button"
+              className={`pdp-tab-btn ${activeTab === 'description' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('description')}
+              role="tab"
+            >
+              <FiInfo /> Description & Overview
+            </button>
+            <button
+              type="button"
+              className={`pdp-tab-btn ${activeTab === 'specs' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('specs')}
+              role="tab"
+            >
+              <FiFileText /> Technical Specs
+            </button>
+            <button
+              type="button"
+              className={`pdp-tab-btn ${activeTab === 'warranty' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('warranty')}
+              role="tab"
+            >
+              <FiShield /> Warranty & Shipping
+            </button>
+            <button
+              type="button"
+              className={`pdp-tab-btn ${activeTab === 'reviews' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('reviews')}
+              role="tab"
+            >
+              <FiMessageSquare /> Customer Reviews ({reviews.length})
+            </button>
+          </div>
+
+          <div className="pdp-tab-content">
+            {activeTab === 'description' && (
+              <div className="pdp-tab-panel">
+                <h3 className="pdp-panel-heading">Product Overview</h3>
+                <p className="pdp-desc-text">
+                  {product.description || "High-performance device engineered for superior reliability, energy efficiency, and modern aesthetic elegance."}
+                </p>
+                {product.tags && product.tags.length > 0 && (
+                  <div className="pdp-tags-row">
+                    <span className="pdp-tag-label">Tags:</span>
+                    {product.tags.map(t => (
+                      <span key={t} className="pdp-tag-pill">{t}</span>
+                    ))}
                   </div>
-                </div>
-
-                {retailerBulk && minBulkQty > 1 && (
-                  <div className="pdp-subtext">Minimum bulk quantity: {minBulkQty}</div>
                 )}
+              </div>
+            )}
 
-                <div className="pdp-actions">
-                  <div className="pdp-qty">
-                    <span className="label-subtle">Quantity</span>
-                    <QuantitySelector value={qty} min={retailerBulk ? minBulkQty : 1} max={product.stock} onChange={setQty} />
+            {activeTab === 'specs' && (
+              <div className="pdp-tab-panel">
+                <h3 className="pdp-panel-heading">Technical Specifications</h3>
+                <table className="pdp-specs-table">
+                  <tbody>
+                    <tr>
+                      <th>Product SKU</th>
+                      <td>{product._id.slice(-8).toUpperCase()}</td>
+                    </tr>
+                    <tr>
+                      <th>Category</th>
+                      <td>{catName}</td>
+                    </tr>
+                    {subName && (
+                      <tr>
+                        <th>Subcategory</th>
+                        <td>{subName}</td>
+                      </tr>
+                    )}
+                    <tr>
+                      <th>Inventory Availability</th>
+                      <td>{inStock ? `${stockNum} units available` : 'Out of stock'}</td>
+                    </tr>
+                    <tr>
+                      <th>Quality Assurance</th>
+                      <td>100% Tested & Verified Manufacturer Quality</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeTab === 'warranty' && (
+              <div className="pdp-tab-panel">
+                <h3 className="pdp-panel-heading">Warranty & Delivery Information</h3>
+                <div className="pdp-delivery-grid">
+                  <div className="pdp-delivery-card">
+                    <FiShield className="pdp-delivery-icon" />
+                    <h4>1-Year Manufacturer Warranty</h4>
+                    <p>Covers technical faults, manufacturing defects, and component replacement.</p>
                   </div>
-
-                  <div className="pdp-actions-row">
-                    <button
-                      className="btn-add-cart"
-                      onClick={() => addToCart(product, qty)}
-                      disabled={!inStock || (retailerBulk && qty < minBulkQty)}
-                    >
-                      Add to Cart
-                    </button>
-                    <button
-                      className="btn-buy-now"
-                      onClick={handleBuyNow}
-                      disabled={!inStock || (retailerBulk && qty < minBulkQty)}
-                    >
-                      Buy Now
-                    </button>
+                  <div className="pdp-delivery-card">
+                    <FiTruck className="pdp-delivery-icon" />
+                    <h4>Insured Express Delivery</h4>
+                    <p>Tracked doorstep shipping with multi-layer tamper-evident packaging.</p>
                   </div>
-
-                  <div className="pdp-trust">
-                    <span>🔒 Secure Payment</span>
-                    <span>⚡ Fast Shipping</span>
-                    <span>✅ Authenticated</span>
+                  <div className="pdp-delivery-card">
+                    <FiRefreshCw className="pdp-delivery-icon" />
+                    <h4>7-Day Easy Return Policy</h4>
+                    <p>Eligible for prompt exchange or refund in case of transit damage or defects.</p>
                   </div>
                 </div>
               </div>
+            )}
 
-            </section>
+            {activeTab === 'reviews' && (
+              <div className="pdp-tab-panel">
+                <div className="pdp-reviews-layout">
+                  <div className="pdp-reviews-list-col">
+                    <h3 className="pdp-panel-heading">Verified Customer Feedback</h3>
+                    {reviews.length === 0 ? (
+                      <div className="pdp-no-reviews">
+                        <FiMessageSquare className="pdp-no-reviews-icon" />
+                        <p>No customer reviews yet. Be the first to share your experience!</p>
+                      </div>
+                    ) : (
+                      <ReviewList items={reviews} />
+                    )}
+                  </div>
+
+                  <div className="pdp-add-review-col">
+                    <div className="pdp-review-form-card">
+                      <h4 className="pdp-review-form-title">Write a Review</h4>
+                      {token ? (
+                        <ReviewForm onSubmit={handleReviewSubmit} />
+                      ) : (
+                        <div className="pdp-review-login-prompt">
+                          <p>Sign in to your KripaConnect account to leave a verified rating and review.</p>
+                          <button
+                            type="button"
+                            className="pdp-btn-secondary"
+                            onClick={() => openAuthModal({ mode: 'login', title: 'Sign in to review' })}
+                          >
+                            Sign In to Review
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        <section className="pdp-section">
-          <div className="pdp-section-header">
-            <h2>Product Details</h2>
-            <span className="pdp-section-sub">Everything you need to know</span>
-          </div>
-
-          <div className="pdp-details-grid">
-            <div className="pdp-card">
-              <h3>Description</h3>
-              <p className="description-text">{product.description || "No specific description available."}</p>
+        {/* Similar Products Recommendation */}
+        {relatedItems.length > 0 && (
+          <section className="pdp-related-section">
+            <div className="pdp-related-header">
+              <h2>You May Also Like</h2>
+              <p>Hand-picked recommendations based on this category</p>
             </div>
-            <div className="pdp-card">
-              <h3>Specifications</h3>
-              <ul className="specs-list">
-                <li><strong>SKU:</strong> {product._id.slice(-6).toUpperCase()}</li>
-                <li><strong>Category:</strong> {product.Category?.name || 'Uncategorized'}</li>
-                <li><strong>Subcategory:</strong> {product.subcategory_id?.name || '—'}</li>
-                <li><strong>Warranty:</strong> 1 Year Manufacturer</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <section className="pdp-section">
-          <div className="pdp-section-header">
-            <h2>Customer Reviews</h2>
-            <span className="pdp-section-sub">Ratings and verified feedback</span>
-          </div>
-
-          <div className="pdp-reviews-grid">
-            <div className="pdp-card">
-              {reviews.length === 0 && <p className="no-reviews">No reviews yet.</p>}
-              <ReviewList items={reviews} />
-            </div>
-            <div className="pdp-card">
-              {token ? (
-                <>
-                  <h3>Add your rating</h3>
-                  <ReviewForm onSubmit={handleReviewSubmit} />
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => openAuthModal({ mode: 'login', title: 'Sign in to review', description: 'Log in to your account to share your feedback.' })}
-                  className="login-link"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                >
-                  Log in to review
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="pdp-section">
-          <div className="pdp-section-header">
-            <h2>Similar Products</h2>
-            <span className="pdp-section-sub">More products you may like</span>
-          </div>
-
-          {relatedLoading ? (
-            <div className="pdp-loading">Loading suggestions…</div>
-          ) : relatedItems.length === 0 ? (
-            <div className="pdp-empty">No similar products found.</div>
-          ) : (
             <ProductGrid items={relatedItems} />
-          )}
-        </section>
+          </section>
+        )}
       </main>
+
+      {/* Sticky Mobile Purchase Dock */}
+      <div className="pdp-mobile-dock">
+        <div className="pdp-mobile-dock-info">
+          <span className="pdp-mobile-dock-price">
+            ₹{(retailerBulk ? bulkUnitPrice : numPrice).toLocaleString('en-IN')}
+          </span>
+          <span className="pdp-mobile-dock-stock">
+            {inStock ? 'In Stock' : 'Out of Stock'}
+          </span>
+        </div>
+        <div className="pdp-mobile-dock-actions">
+          <button
+            type="button"
+            className="pdp-mobile-dock-btn-cart"
+            onClick={handleAddToCart}
+            disabled={!inStock || (retailerBulk && qty < minBulkQty)}
+          >
+            Add to Cart
+          </button>
+          <button
+            type="button"
+            className="pdp-mobile-dock-btn-buy"
+            onClick={handleBuyNow}
+            disabled={!inStock || (retailerBulk && qty < minBulkQty)}
+          >
+            Buy Now
+          </button>
+        </div>
+      </div>
 
       <Footer />
     </div>

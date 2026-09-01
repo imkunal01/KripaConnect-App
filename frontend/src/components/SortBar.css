@@ -1,31 +1,41 @@
 .sort-dd {
   position: relative;
-  display: inline-block;
-  min-width: 210px;
+  display: block;
+  width: 100%;
 }
 
 .sort-dd-btn {
   width: 100%;
-  min-height: 50px;
-  padding: 12px 14px 12px 16px;
-  border-radius: 999px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
   background: #ffffff;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--border-color, #e2e8f0);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  font-size: 0.94rem;
-  font-weight: 800;
-  color: #111827;
+  gap: 8px;
+  color: var(--text-primary, #0f172a);
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: all 0.2s ease;
+}
+
+.sort-active-label {
+  font-size: 0.84rem;
+  font-weight: 750;
+  color: var(--text-primary, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  flex: 1;
 }
 
 .sort-dd-btn:hover,
 .sort-dd-btn:focus-visible {
-  border-color: rgba(var(--kc-primary-rgb), 0.42);
-  box-shadow: 0 0 0 4px rgba(var(--kc-primary-rgb), 0.09);
+  border-color: #cbd5e1;
+  background: var(--gray-50, #f8fafc);
   outline: none;
 }
 
@@ -33,8 +43,9 @@
   display: grid;
   place-items: center;
   color: #64748b;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .chev.up {
@@ -43,70 +54,40 @@
 
 .sort-dd-menu {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 6px);
   left: 0;
   width: 100%;
+  min-width: 180px;
   background: #ffffff;
-  border-radius: 18px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 22px 50px rgba(15, 23, 42, 0.14);
-  z-index: 40;
+  border-radius: 16px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+  z-index: 60;
   overflow: hidden;
   padding: 6px;
 }
 
 .sort-dd-item {
   width: 100%;
-  padding: 11px 12px;
-  background: transparent;
+  padding: 10px 12px;
   border: none;
-  border-radius: 12px;
+  background: transparent;
   text-align: left;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #111827;
+  font-size: 0.84rem;
+  font-weight: 650;
+  color: var(--text-primary, #0f172a);
+  border-radius: 10px;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .sort-dd-item:hover {
-  background: #f8fafc;
+  background: var(--gray-50, #f8fafc);
+  color: var(--primary, #FF3D3D);
 }
 
 .sort-dd-item.active {
-  background: rgba(var(--kc-primary-rgb), 0.1);
-  color: var(--primary);
-}
-
-@media (max-width: 600px) {
-  .sort-dd {
-    width: 42px;
-    min-width: 0;
-  }
-
-  .sort-dd-btn {
-    width: 42px;
-    min-height: 42px;
-    height: 42px;
-    padding: 0;
-    justify-content: center;
-    border-radius: 12px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-  }
-
-  .sort-dd-btn > span:first-child {
-    display: none;
-  }
-
-  .chev {
-    font-size: 0.85rem;
-    color: #334155;
-  }
-
-  .sort-dd-menu {
-    left: auto;
-    right: 0;
-    width: min(220px, calc(100vw - 24px));
-    border-radius: 14px;
-  }
+  background: rgba(var(--kc-primary-rgb, 255, 61, 61), 0.08);
+  color: var(--primary, #FF3D3D);
+  font-weight: 800;
 }

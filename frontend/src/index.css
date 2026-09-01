@@ -1,68 +1,129 @@
-/* Global CSS - Minimal Styles Only */
+/* =========================================================
+   KripaConnect - Ultra-Modern Design System & Tokens
+   ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Core Design Tokens - Red Accent Redesign */
-  /* Mode-aware accent tokens */
+  /* Mode-aware accent tokens (Customer Default) */
   --kc-primary: #FF3D3D;
   --kc-primary-dark: #D32F2F;
   --kc-primary-rgb: 255, 61, 61;
-  --kc-primary-light: #FFEBEE;
+  --kc-primary-light: #FFF1F2;
+  --kc-primary-glow: rgba(255, 61, 61, 0.25);
 
   --primary: var(--kc-primary);
   --primary-dark: var(--kc-primary-dark);
   --secondary: #10b981;
+  --secondary-light: #ecfdf5;
   --danger: #ef4444;
-  
-  /* Essential Colors */
-  --gray-50: #f9fafb;
-  --gray-200: #e5e7eb;
-  --gray-500: #6b7280;
-  --gray-900: #111827;
-  
-  /* Essential Backgrounds */
+  --danger-light: #fef2f2;
+  --warning: #f59e0b;
+  --warning-light: #fffbeb;
+  --info: #3b82f6;
+  --info-light: #eff6ff;
+
+  /* Neutral Spectrum */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+
+  /* Backgrounds */
   --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  
-  /* Essential Text */
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  
-  /* Essential Borders */
-  --border-color: #e5e7eb;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+
+  /* Borders & Dividers */
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-focus: var(--primary);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.09);
+  --shadow-xl: 0 20px 48px rgba(15, 23, 42, 0.12);
+  --shadow-glow: 0 8px 24px var(--kc-primary-glow);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-blur: blur(16px);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.22s var(--ease-spring);
 }
 
 :root[data-purchase-mode='retailer'] {
   --kc-primary: #2563eb;
   --kc-primary-dark: #1d4ed8;
   --kc-primary-rgb: 37, 99, 235;
-  --kc-primary-light: #dbeafe;
+  --kc-primary-light: #eff6ff;
+  --kc-primary-glow: rgba(37, 99, 235, 0.25);
 }
 
 * {
   box-sizing: border-box;
-  /* Remove browser tap highlights & callouts */
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
-  /* Remove 300ms tap delay */
   touch-action: manipulation;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  line-height: 1.5;
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.55;
   color: var(--text-primary);
   background-color: var(--bg-secondary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Disable overscroll bounce for native feel */
   overscroll-behavior: none;
-  /* Prevent text selection on touch */
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  user-select: none;
+}
+
+/* Custom Sleek Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Allow text selection only in inputs and content areas */

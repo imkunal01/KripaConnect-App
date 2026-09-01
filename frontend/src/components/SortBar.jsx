@@ -27,8 +27,9 @@ export default function SortBar({ value, onChange }) {
         type="button"
         className="sort-dd-btn"
         onClick={() => setOpen(o => !o)}
+        aria-label="Sort products by"
       >
-        <span>{active}</span>
+        <span className="sort-active-label">{active}</span>
         <span className={`chev ${open ? 'up' : ''}`}>
           <FaChevronDown aria-hidden="true" />
         </span>

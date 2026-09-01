@@ -22,7 +22,10 @@ export default function ProductCard({ product, favorite }) {
   const minBulkQty = product?.min_bulk_qty > 0 ? product.min_bulk_qty : 1
   const bulkUnitPrice = product?.price_bulk || product?.retailer_price || product?.price
   const canQuickAdd = !retailerBulk || minBulkQty <= 1
-  const tag = product.tags && product.tags.length > 0 ? product.tags[0] : null
+  
+  // Clean tags from any corrupted quotes or brackets
+  const rawTag = product.tags && product.tags.length > 0 ? product.tags[0] : null
+  const tag = rawTag ? String(rawTag).replace(/[\[\]"']/g, '').trim() : null
   
   return (
     <div

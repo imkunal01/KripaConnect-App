@@ -1,154 +1,69 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useRef, useContext } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { usePurchaseMode } from '../hooks/usePurchaseMode'
+import ShopContext from '../context/ShopContext.jsx'
 import { profile, updateProfile, uploadProfilePhoto, requestRetailerRole } from '../services/auth'
 import AddressForm from '../components/AddressForm.jsx'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import SEO from '../components/SEO'
+import {
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiCamera,
+  FiEdit2,
+  FiCheck,
+  FiX,
+  FiShoppingBag,
+  FiShield,
+  FiLogOut,
+  FiBriefcase,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiClock,
+  FiPlus,
+  FiTrash2,
+  FiStar
+} from 'react-icons/fi'
+import toast from 'react-hot-toast'
 import './ProfilePage.css'
 
-/* eslint-disable react/prop-types */
-
-function getDefaultAddress(user) {
-  const list = Array.isArray(user?.savedAddresses) ? user.savedAddresses : []
-  return list.find(a => a?.default) || list[0] || null
-}
-
-function hasAnyAddressField(a) {
-  const v = a || {}
-  return !!(
-    v.name ||
-    v.phone ||
-    v.addressLine ||
-    v.city ||
-    v.state ||
-    v.pincode
-  )
-}
-
-function isAddressComplete(a) {
-  const v = a || {}
-  return !!(v.name && v.phone && v.addressLine && v.city && v.state && v.pincode)
-}
-
-function RetailerRequestPanel({ user, requestingRetailer, onRequestRetailerRole }) {
-  const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({
-    shopName: '', ownerName: '', phone: '', shopAddress: '', businessProof: ''
-  })
-
-  if (user?.role !== 'customer') return null
-
-  const isCooldown = user.retailerRequestCooldown && new Date() < new Date(user.retailerRequestCooldown)
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    onRequestRetailerRole(formData)
-  }
-
-  return (
-    <div style={{ marginBottom: 10, width: '100%' }}>
-      {user.retailerRequestStatus === 'pending' ? (
-        <span className="adminBadge adminBadge--ok">Retailer request pending review</span>
-      ) : isCooldown ? (
-        <span className="adminBadge adminBadge--danger">
-          Request rejected. You can apply again in {Math.round((new Date(user.retailerRequestCooldown) - new Date()) / 60000)} mins
-        </span>
-      ) : !showForm ? (
-        <button className="btn-edit-mode" onClick={() => setShowForm(true)} disabled={requestingRetailer}>
-          Request Retailer Access
-        </button>
-      ) : (
-        <form onSubmit={handleSubmit} className="form-grid" style={{ marginTop: 16 }}>
-          <h4 style={{ gridColumn: '1 / -1', margin: '0 0 10px', color: 'var(--profile-text)' }}>Apply for Retailer Role</h4>
-          <div className="form-group">
-            <label>Shop Name</label>
-            <input className="input-modern" required placeholder="Enter shop name" value={formData.shopName} onChange={e => setFormData({...formData, shopName: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label>Owner Name</label>
-            <input className="input-modern" required placeholder="Enter owner name" value={formData.ownerName} onChange={e => setFormData({...formData, ownerName: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label>Phone Number</label>
-            <input className="input-modern" required placeholder="Enter shop phone" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label>Business Proof (URL/GST)</label>
-            <input className="input-modern" placeholder="Enter business proof" value={formData.businessProof} onChange={e => setFormData({...formData, businessProof: e.target.value})} />
-          </div>
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label>Shop Address</label>
-            <textarea className="input-modern" required rows={3} placeholder="Full shop address" value={formData.shopAddress} onChange={e => setFormData({...formData, shopAddress: e.target.value})} />
-          </div>
-          <div className="edit-actions" style={{ gridColumn: '1 / -1', marginTop: 8 }}>
-            <button type="submit" className="btn-save" disabled={requestingRetailer}>
-              {requestingRetailer ? 'Submitting...' : 'Submit Request'}
-            </button>
-            <button type="button" className="btn-cancel" onClick={() => setShowForm(false)} disabled={requestingRetailer}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-    </div>
-  )
-}
-
-function ProfileQuickActions({ user, navigate, signOut, requestingRetailer, onRequestRetailerRole }) {
-  return (
-    <div className="actions-section">
-      <h3>Quick Actions</h3>
-      <div className="action-cards">
-        <button className="action-card" onClick={() => navigate('/orders')}>
-          <span className="ac-icon">📦</span>
-          <div className="ac-text">
-            <strong>My Orders</strong>
-            <small>Track & Return</small>
-          </div>
-          <span className="ac-arrow">&rarr;</span>
-        </button>
-
-        <RetailerRequestPanel
-          user={user}
-          requestingRetailer={requestingRetailer}
-          onRequestRetailerRole={onRequestRetailerRole}
-        />
-
-        <button className="action-card logout" onClick={() => signOut()}>
-          <span className="ac-icon">🚪</span>
-          <div className="ac-text">
-            <strong>Logout</strong>
-            <small>Sign out of device</small>
-          </div>
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export default function ProfilePage() {
-  const { token, signOut } = useAuth()
+  const { token, signOut, refreshMe } = useAuth()
+  const { mode, setMode, canSwitchMode } = usePurchaseMode()
+  const { wipeCart } = useContext(ShopContext)
   const navigate = useNavigate()
-  
-  // Refs for cleaner DOM manipulation
   const fileInputRef = useRef(null)
+  const [modeSwitchBusy, setModeSwitchBusy] = useState(false)
 
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
-  
-  // Feedback states
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  
-  // Form Data
-  const [formData, setFormData] = useState({ name: '', phone: '' })
-  const [addressData, setAddressData] = useState({})
-  const [photoPreview, setPhotoPreview] = useState(null)
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  
+  // Tabs: 'details' | 'addresses' | 'retailer'
+  const [activeTab, setActiveTab] = useState('details')
+
+  // Form State
+  const [formData, setFormData] = useState({ name: '', phone: '' })
+
+  // Address Modal/Editor State
+  const [addressModalOpen, setAddressModalOpen] = useState(false)
+  const [editingAddress, setEditingAddress] = useState({})
+  const [savingAddress, setSavingAddress] = useState(false)
+
+  // Retailer Application Form
+  const [retailerForm, setRetailerForm] = useState({
+    shopName: '',
+    ownerName: '',
+    phone: '',
+    shopAddress: '',
+    businessProof: ''
+  })
   const [requestingRetailer, setRequestingRetailer] = useState(false)
 
   useEffect(() => {
@@ -166,319 +81,729 @@ export default function ProfilePage() {
       const userData = res.data
       setUser(userData)
       setFormData({ name: userData.name || '', phone: userData.phone || '' })
-      setPhotoPreview(userData.profilePhoto || null)
-
-      const def = getDefaultAddress(userData)
-      setAddressData({
-        name: def?.name || userData.name || '',
-        phone: def?.phone || userData.phone || '',
-        addressLine: def?.addressLine || '',
-        city: def?.city || '',
-        state: def?.state || '',
-        pincode: def?.pincode || '',
-      })
     } catch (err) {
       console.error(err)
-      setError('Failed to load profile')
+      toast.error('Failed to load user profile')
     } finally {
       setLoading(false)
     }
   }
 
-  function handleChange(e) {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-    // Keep address phone in sync with profile phone
-    if (name === 'phone') {
-      setAddressData(prev => ({ ...prev, phone: value }))
-    }
-  }
-
-  function handleAddressChange(next) {
-    setAddressData(next)
-    // Keep profile phone in sync with address phone
-    if (next?.phone !== undefined) {
-      setFormData(prev => ({ ...prev, phone: next.phone }))
-    }
-  }
-
-  // Handle File Selection
-  function handlePhotoSelect(e) {
+  const handlePhotoSelect = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('Image size must be less than 5MB')
+      toast.error('Image size must be less than 5MB')
       return
     }
     if (!file.type.startsWith('image/')) {
-      setError('Please select an image file')
+      toast.error('Please select a valid image file')
       return
     }
 
-    // Preview immediately
-    const reader = new FileReader()
-    reader.onload = (ev) => setPhotoPreview(ev.target.result)
-    reader.readAsDataURL(file)
-
-    // Trigger upload immediately (optional, or wait for save)
-    // Here we stick to your logic: explicit upload action or auto-upload?
-    // Let's keep it simple: Select -> Button appears to confirm upload, or auto upload.
-    // For better UX: We'll set the file to state, but let the user click "Save" to finalize everything,
-    // OR keep the separate upload button if that's the backend requirement.
-    // Based on your previous code, let's auto-upload on selection for a snappy feel? 
-    // Actually, sticking to your previous "Upload" button logic is safer for errors, 
-    // but let's make it smoother:
-    handlePhotoUpload(file) 
-  }
-
-  async function handlePhotoUpload(file) {
     try {
       setUploadingPhoto(true)
-      setError('')
       const res = await uploadProfilePhoto(file, token)
       setUser(res.data)
-      setPhotoPreview(res.data.profilePhoto)
-      setSuccess('Photo updated!')
-      setTimeout(() => setSuccess(''), 3000)
+      toast.success('Profile avatar updated!')
     } catch (err) {
-      setError(err.message || 'Failed to upload photo')
-      // Revert preview if failed
-      setPhotoPreview(user.profilePhoto)
+      toast.error(err.message || 'Failed to upload photo')
     } finally {
       setUploadingPhoto(false)
     }
   }
 
-  async function handleSave() {
+  const handleSaveProfile = async () => {
     try {
-      setSaving(true)
-      setError('')
-
-      const payload = { ...formData }
-      if (hasAnyAddressField(addressData)) {
-        if (!isAddressComplete(addressData)) {
-          throw new Error('Please complete all address fields (name, phone, address, city, state, pincode).')
-        }
-        payload.savedAddress = addressData
-      }
-
-      const res = await updateProfile(payload, token)
-      const updated = res.data
-      setUser(updated)
-      setFormData({ name: updated.name || '', phone: updated.phone || '' })
-      const def = getDefaultAddress(updated)
-      setAddressData({
-        name: def?.name || updated.name || '',
-        phone: def?.phone || updated.phone || '',
-        addressLine: def?.addressLine || '',
-        city: def?.city || '',
-        state: def?.state || '',
-        pincode: def?.pincode || '',
-      })
-      setEditing(false)
-      setSuccess('Profile updated successfully!')
-      setTimeout(() => setSuccess(''), 3000)
+      setSavingProfile(true)
+      const res = await updateProfile(formData, token)
+      setUser(res.data)
+      setEditingProfile(false)
+      await refreshMe?.(token)
+      toast.success('Profile details updated!')
     } catch (err) {
-      setError(err.message || 'Failed to update profile')
+      toast.error(err.message || 'Failed to update profile')
     } finally {
-      setSaving(false)
+      setSavingProfile(false)
     }
   }
 
-  async function handleRequestRetailerRole(payload) {
+  // Address Actions
+  const handleOpenAddAddress = () => {
+    setEditingAddress({
+      name: user?.name || '',
+      phone: user?.phone || '',
+      addressLine: '',
+      city: 'Indore',
+      state: 'Madhya Pradesh',
+      pincode: '452001',
+      default: (user?.savedAddresses?.length || 0) === 0
+    })
+    setAddressModalOpen(true)
+  }
+
+  const handleOpenEditAddress = (addr) => {
+    setEditingAddress({ ...addr })
+    setAddressModalOpen(true)
+  }
+
+  const handleSaveAddressModal = async () => {
+    if (!editingAddress.name?.trim() || !editingAddress.phone?.trim() || !editingAddress.addressLine?.trim()) {
+      toast.error('Please enter name, phone, and street address')
+      return
+    }
+
+    setSavingAddress(true)
+    try {
+      const normalized = {
+        _id: editingAddress._id,
+        name: editingAddress.name.trim(),
+        phone: editingAddress.phone.trim(),
+        addressLine: editingAddress.addressLine.trim(),
+        city: (editingAddress.city || 'Indore').trim(),
+        state: (editingAddress.state || 'Madhya Pradesh').trim(),
+        pincode: (editingAddress.pincode || '452001').trim(),
+        default: !!editingAddress.default
+      }
+
+      const res = await updateProfile({ savedAddress: normalized }, token)
+      setUser(res.data)
+      await refreshMe?.(token)
+      setAddressModalOpen(false)
+      toast.success(editingAddress._id ? 'Address updated!' : 'New address added!')
+    } catch (err) {
+      toast.error(err.message || 'Failed to save address')
+    } finally {
+      setSavingAddress(false)
+    }
+  }
+
+  const handleDeleteAddress = async (addressId) => {
+    if (!window.confirm('Delete this delivery address?')) return
+    try {
+      const res = await updateProfile({ deleteAddressId: addressId }, token)
+      setUser(res.data)
+      await refreshMe?.(token)
+      toast.success('Address deleted')
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete address')
+    }
+  }
+
+  const handleSetDefaultAddress = async (addressId) => {
+    try {
+      const res = await updateProfile({ setDefaultAddressId: addressId }, token)
+      setUser(res.data)
+      await refreshMe?.(token)
+      toast.success('Default delivery address updated!')
+    } catch (err) {
+      toast.error(err.message || 'Failed to set default address')
+    }
+  }
+
+  const handleRetailerSubmit = async (e) => {
+    e.preventDefault()
     try {
       setRequestingRetailer(true)
-      setError('')
-      const res = await requestRetailerRole(payload, token)
+      const res = await requestRetailerRole(retailerForm, token)
       setUser(res.data)
-      setSuccess('Retailer request submitted!')
-      setTimeout(() => setSuccess(''), 3000)
+      toast.success('Retailer application submitted for verification!')
     } catch (err) {
-      setError(err.message || 'Failed to submit retailer request')
+      toast.error(err.message || 'Failed to submit retailer request')
     } finally {
       setRequestingRetailer(false)
     }
   }
 
-  const handleCancel = () => {
-    setEditing(false)
-    setFormData({ name: user.name || '', phone: user.phone || '' })
-    setPhotoPreview(user.profilePhoto || null)
-    const def = getDefaultAddress(user)
-    setAddressData({
-      name: def?.name || user.name || '',
-      phone: def?.phone || user.phone || '',
-      addressLine: def?.addressLine || '',
-      city: def?.city || '',
-      state: def?.state || '',
-      pincode: def?.pincode || '',
-    })
-    setError('')
+  if (loading) {
+    return (
+      <div className="profile-page">
+        <Navbar />
+        <div className="profile-loading-screen">Loading Profile…</div>
+        <Footer />
+      </div>
+    )
   }
 
-  if (loading) return <div className="profile-loading"><div className="spinner"></div></div>
+  const isRetailer = user?.role === 'retailer'
+  const isCooldown = user?.retailerRequestCooldown && new Date() < new Date(user.retailerRequestCooldown)
+  const savedAddresses = Array.isArray(user?.savedAddresses) ? user.savedAddresses : []
 
   return (
-    <div className="profile-page-modern">
+    <div className="profile-page">
       <SEO
-        title="Account Profile & Settings | KripaConnect"
-        description="Manage your account profile, delivery addresses, and retailer role requests on KripaConnect."
+        title="Account Settings & Saved Addresses | KripaConnect"
+        description="Manage your KripaConnect account settings, delivery addresses, security, and wholesale permissions."
         canonical="/profile"
         robots="noindex, nofollow"
       />
       <Navbar />
-      
-      <main className="profile-layout">
-        
-        {/* Banner Section */}
-        <div className="profile-banner">
-          <div className="banner-overlay" />
-        </div>
 
-        <div className="profile-container">
-          
-          {/* Main Card */}
-          <div className="profile-card-modern">
-            
-            {/* Header: Avatar & Main Info */}
-            <div className="profile-header-modern">
-              <div className="avatar-wrapper">
-                <img
-                  src={photoPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=random`}
-                  alt="Profile"
-                  className="avatar-img"
-                />
-                
-                {/* Photo Edit Trigger */}
-                {editing && (
-                  <>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoSelect}
-                      hidden
-                    />
-                    <button 
-                      className="avatar-edit-btn" 
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingPhoto}
-                    >
-                      {uploadingPhoto ? '⏳' : '📷'}
-                    </button>
-                  </>
+      <main className="profile-container">
+        {/* Profile Hero Header Card */}
+        <section className="profile-hero-card">
+          <div className="profile-hero-avatar-wrap">
+            <img
+              src={user?.profilePhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=FF3D3D&color=fff&size=200`}
+              alt={user?.name || 'User Profile'}
+              className="profile-avatar-img"
+            />
+            <button
+              type="button"
+              className="profile-avatar-upload-btn"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              title="Change Profile Photo"
+            >
+              <FiCamera />
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoSelect}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
+          </div>
+
+          <div className="profile-hero-info">
+            <div className="profile-name-row">
+              <h1 className="profile-name">{user?.name || 'Customer'}</h1>
+              {isRetailer ? (
+                <span className="profile-role-badge is-retailer">
+                  <FiBriefcase /> Retailer B2B Partner
+                </span>
+              ) : (
+                <span className="profile-role-badge is-customer">
+                  <FiShield /> Verified Customer
+                </span>
+              )}
+            </div>
+            <div className="profile-email-row">
+              <FiMail /> {user?.email}
+              {user?.phone && <span>• <FiPhone /> {user.phone}</span>}
+            </div>
+          </div>
+
+          <div className="profile-hero-actions">
+            {isRetailer && (
+              <button
+                type="button"
+                className="profile-quick-btn profile-quick-btn--b2b"
+                onClick={() => navigate('/b2b')}
+              >
+                <FiBriefcase /> B2B Wholesale Hub
+              </button>
+            )}
+            <button
+              type="button"
+              className="profile-quick-btn"
+              onClick={() => navigate('/orders')}
+            >
+              <FiShoppingBag /> My Orders
+            </button>
+            <button
+              type="button"
+              className="profile-quick-btn profile-quick-btn--logout"
+              onClick={() => {
+                signOut()
+                toast.success('Signed out successfully')
+              }}
+            >
+              <FiLogOut /> Sign Out
+            </button>
+          </div>
+        </section>
+
+        {/* Prominent Purchase Mode Changer Card */}
+        <section className="profile-mode-spotlight-card">
+          <div className="profile-mode-spotlight-left">
+            <div className="profile-mode-badge-wrap">
+              <span className={`profile-mode-indicator ${mode === 'retailer' ? 'is-bulk' : 'is-cust'}`}>
+                {mode === 'retailer' ? <FiBriefcase /> : <FiShield />}
+                <strong>{mode === 'retailer' ? 'Retailer Bulk Mode Active' : 'Customer Mode Active'}</strong>
+              </span>
+            </div>
+            <h3 className="profile-mode-spotlight-title">Store Pricing & Sourcing Mode</h3>
+            <p className="profile-mode-spotlight-desc">
+              {mode === 'retailer'
+                ? 'Browsing with wholesale master carton pricing, bulk quantity tiers, and GST ITC credit invoices enabled.'
+                : 'Browsing individual consumer products with standard retail pricing and 10-15 minute doorstep delivery.'}
+            </p>
+            {mode === 'retailer' && (
+              <div style={{ marginTop: '10px' }}>
+                <Link to="/b2b" className="profile-mode-open-portal-link">
+                  <FiBriefcase /> Open B2B Wholesale Portal & Invoices →
+                </Link>
+              </div>
+            )}
+          </div>
+
+          <div className="profile-mode-spotlight-right">
+            {canSwitchMode ? (
+              <div className="profile-mode-btn-group">
+                <button
+                  type="button"
+                  className={`profile-mode-choice-btn ${mode === 'customer' ? 'active' : ''}`}
+                  onClick={async () => {
+                    if (mode === 'customer' || modeSwitchBusy) return
+                    if (window.confirm('Switch to Customer Mode? Your cart will be cleared to prevent mixed-tier orders.')) {
+                      setModeSwitchBusy(true)
+                      try {
+                        await wipeCart()
+                        setMode('customer')
+                        toast.success('Switched to Customer Mode')
+                      } finally {
+                        setModeSwitchBusy(false)
+                      }
+                    }
+                  }}
+                  disabled={modeSwitchBusy}
+                >
+                  <FiShield />
+                  <span>Customer (Retail)</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`profile-mode-choice-btn is-retail-btn ${mode === 'retailer' ? 'active' : ''}`}
+                  onClick={async () => {
+                    if (mode === 'retailer' || modeSwitchBusy) return
+                    if (window.confirm('Switch to Retailer B2B Mode? Your cart will be cleared to prevent mixed-tier orders.')) {
+                      setModeSwitchBusy(true)
+                      try {
+                        await wipeCart()
+                        setMode('retailer')
+                        toast.success('Switched to Retailer B2B Wholesale Mode')
+                      } finally {
+                        setModeSwitchBusy(false)
+                      }
+                    }
+                  }}
+                  disabled={modeSwitchBusy}
+                >
+                  <FiBriefcase />
+                  <span>Retailer (Bulk B2B)</span>
+                </button>
+              </div>
+            ) : (
+              <div className="profile-mode-upgrade-box">
+                <button
+                  type="button"
+                  className="profile-mode-apply-btn"
+                  onClick={() => setActiveTab('retailer')}
+                >
+                  <FiBriefcase />
+                  <span>Apply for B2B Retailer Access →</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Tab Navigation */}
+        <nav className="profile-tab-nav" role="tablist">
+          <button
+            type="button"
+            className={`profile-tab-btn ${activeTab === 'details' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('details')}
+            role="tab"
+          >
+            <FiUser /> Personal Details
+          </button>
+          <button
+            type="button"
+            className={`profile-tab-btn ${activeTab === 'addresses' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('addresses')}
+            role="tab"
+          >
+            <FiMapPin /> Saved Addresses ({savedAddresses.length})
+          </button>
+          {!isRetailer && (
+            <button
+              type="button"
+              className={`profile-tab-btn ${activeTab === 'retailer' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('retailer')}
+              role="tab"
+            >
+              <FiBriefcase /> Retailer B2B Access
+            </button>
+          )}
+        </nav>
+
+        {/* TAB 1: Personal Details */}
+        {activeTab === 'details' && (
+          <div className="profile-card fade-in">
+            <div className="profile-card-top">
+              <div>
+                <h2 className="profile-card-title">Personal Profile Information</h2>
+                <p className="profile-card-sub">Update your primary contact details.</p>
+              </div>
+
+              {!editingProfile ? (
+                <button
+                  type="button"
+                  className="profile-btn-edit"
+                  onClick={() => setEditingProfile(true)}
+                >
+                  <FiEdit2 /> Edit Details
+                </button>
+              ) : (
+                <div className="profile-edit-actions">
+                  <button
+                    type="button"
+                    className="profile-btn-cancel"
+                    onClick={() => setEditingProfile(false)}
+                    disabled={savingProfile}
+                  >
+                    <FiX /> Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="profile-btn-save"
+                    onClick={handleSaveProfile}
+                    disabled={savingProfile}
+                  >
+                    <FiCheck /> {savingProfile ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="profile-fields-grid">
+              <div className="profile-field-group">
+                <label>Full Name</label>
+                {editingProfile ? (
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="profile-input"
+                    placeholder="Enter your full name"
+                  />
+                ) : (
+                  <div className="profile-field-static">{user?.name || 'Not provided'}</div>
                 )}
               </div>
 
-              <div className="header-info" aria-label="User Information">
-                <div className="header-top">
-                  <h1 className="user-name">{user.name}</h1>
-                  <span className={`role-badge ${user.role === 'retailer' ? 'badge-gold' : 'badge-blue'}`}>
-                    {user.role === 'retailer' ? 'Retailer' : 'Customer'}
-                  </span>
+              <div className="profile-field-group">
+                <label>Email Address</label>
+                <div className="profile-field-static is-readonly">
+                  {user?.email} <span className="profile-readonly-pill">Fixed ID</span>
                 </div>
-                <p className="user-email">{user.email}</p>
-                <RetailerRequestPanel user={user} requestingRetailer={requestingRetailer} onRequestRetailerRole={handleRequestRetailerRole} />
-                {success && <div className="alert-toast success">✓ {success}</div>}
-                {error && <div className="alert-toast error">⚠ {error}</div>}
               </div>
 
-              <div className="header-actions">
-                {editing ? (
-                  <div className="edit-actions">
-                    <button className="btn-cancel" onClick={handleCancel} disabled={saving}>
-                      Cancel
-                    </button>
-                    <button className="btn-save" onClick={handleSave} disabled={saving}>
-                      {saving ? 'Saving...' : 'Save Changes'}
-                    </button>
-                  </div>
+              <div className="profile-field-group">
+                <label>Contact Phone Number</label>
+                {editingProfile ? (
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="profile-input"
+                    placeholder="Enter 10-digit mobile number"
+                    maxLength={10}
+                  />
                 ) : (
-                  <button className="btn-edit-mode" onClick={() => setEditing(true)}>
-                    Edit Profile
-                  </button>
+                  <div className="profile-field-static">{user?.phone || 'Not provided'}</div>
                 )}
               </div>
             </div>
 
-            <hr className="divider" />
-
-            {/* Content Grid */}
-            <div className="profile-content-grid">
-              
-              {/* Left: Personal Details Form */}
-              <div className="details-section">
-                <h3>Account Details</h3>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label htmlFor="profile-name">Full Name</label>
-                    {editing ? (
-                      <input
-                        id="profile-name"
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        className="input-modern"
-                      />
-                    ) : (
-                      <div className="value-display">{user.name || 'Not set'}</div>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="profile-phone">Phone Number</label>
-                    {editing ? (
-                      <input
-                        id="profile-phone"
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="+91..."
-                        className="input-modern"
-                      />
-                    ) : (
-                      <div className="value-display">{user.phone || 'Not provided'}</div>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <div className="adminLabel">Email Address</div>
-                    <div className="value-display disabled">{user.email}</div>
-                  </div>
+            {/* Shopping & Purchase Mode Setting */}
+            {canSwitchMode && (
+              <div className="profile-purchase-mode-card">
+                <div className="profile-mode-text">
+                  <h3>Purchase & Shopping Mode</h3>
+                  <p>Choose whether to browse store at retail prices or wholesale master carton bulk rates.</p>
                 </div>
 
-                <div style={{ marginTop: '2rem' }}>
-                  <h3>Delivery Address</h3>
+                <div className="profile-mode-selector-row">
+                  <button
+                    type="button"
+                    className={`profile-mode-toggle-btn ${mode === 'customer' ? 'is-active' : ''}`}
+                    onClick={async () => {
+                      if (mode === 'customer' || modeSwitchBusy) return
+                      if (window.confirm('Switch to Customer Mode? Your cart will be cleared to avoid mixed pricing.')) {
+                        setModeSwitchBusy(true)
+                        try {
+                          await wipeCart()
+                          setMode('customer')
+                          toast.success('Switched to Customer Mode')
+                        } finally {
+                          setModeSwitchBusy(false)
+                        }
+                      }
+                    }}
+                    disabled={modeSwitchBusy}
+                  >
+                    <FiShield />
+                    <span>Customer Mode (Individual)</span>
+                  </button>
 
-                  {editing ? (
-                    <AddressForm value={addressData} onChange={handleAddressChange} disabled={saving} />
-                  ) : (
-                    <div className="value-display">
-                      {isAddressComplete(addressData) ? (
-                        <>
-                          {addressData.name}<br />
-                          {addressData.phone}<br />
-                          {addressData.addressLine}<br />
-                          {addressData.city}, {addressData.state} - {addressData.pincode}
-                        </>
-                      ) : (
-                        'Not set'
-                      )}
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    className={`profile-mode-toggle-btn is-retailer-btn ${mode === 'retailer' ? 'is-active' : ''}`}
+                    onClick={async () => {
+                      if (mode === 'retailer' || modeSwitchBusy) return
+                      if (window.confirm('Switch to Retailer B2B Mode? Your cart will be cleared to avoid mixed pricing.')) {
+                        setModeSwitchBusy(true)
+                        try {
+                          await wipeCart()
+                          setMode('retailer')
+                          toast.success('Switched to Retailer B2B Mode')
+                        } finally {
+                          setModeSwitchBusy(false)
+                        }
+                      }
+                    }}
+                    disabled={modeSwitchBusy}
+                  >
+                    <FiBriefcase />
+                    <span>Retailer Mode (Bulk / ITC GST)</span>
+                  </button>
                 </div>
               </div>
+            )}
+          </div>
+        )}
 
-              {/* Right: Quick Actions & Stats */}
-              <ProfileQuickActions user={user} navigate={navigate} signOut={signOut} requestingRetailer={requestingRetailer} onRequestRetailerRole={handleRequestRetailerRole} />
+        {/* TAB 2: Multiple Saved Addresses Manager */}
+        {activeTab === 'addresses' && (
+          <div className="profile-card fade-in">
+            <div className="profile-card-top">
+              <div>
+                <h2 className="profile-card-title">Delivery Addresses</h2>
+                <p className="profile-card-sub">Save multiple home, office, or depot addresses for instant checkout.</p>
+              </div>
 
+              <button
+                type="button"
+                className="profile-btn-add-addr"
+                onClick={handleOpenAddAddress}
+              >
+                <FiPlus /> Add New Address
+              </button>
+            </div>
+
+            {savedAddresses.length === 0 ? (
+              <div className="profile-no-address">
+                <FiMapPin className="profile-no-address-icon" />
+                <p>You have no saved addresses yet.</p>
+                <button
+                  type="button"
+                  className="profile-btn-save"
+                  onClick={handleOpenAddAddress}
+                >
+                  <FiPlus /> Add Your First Delivery Address
+                </button>
+              </div>
+            ) : (
+              <div className="profile-address-cards-grid">
+                {savedAddresses.map((addr, idx) => (
+                  <div key={addr._id || idx} className={`profile-addr-card ${addr.default ? 'is-default' : ''}`}>
+                    <div className="profile-addr-card-top">
+                      <div className="profile-addr-card-name-row">
+                        <strong>{addr.name}</strong>
+                        {addr.default && (
+                          <span className="profile-addr-default-badge">
+                            <FiStar /> Default Address
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="profile-addr-card-actions">
+                        <button
+                          type="button"
+                          className="profile-addr-action-btn"
+                          onClick={() => handleOpenEditAddress(addr)}
+                          title="Edit address"
+                        >
+                          <FiEdit2 />
+                        </button>
+                        <button
+                          type="button"
+                          className="profile-addr-action-btn is-delete"
+                          onClick={() => handleDeleteAddress(addr._id)}
+                          title="Delete address"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="profile-addr-card-body">
+                      <div>{addr.addressLine}</div>
+                      <div>{addr.city}, {addr.state} - <strong>{addr.pincode}</strong></div>
+                      <div className="profile-addr-card-phone">📞 {addr.phone}</div>
+                    </div>
+
+                    {!addr.default && (
+                      <div className="profile-addr-card-footer">
+                        <button
+                          type="button"
+                          className="profile-btn-set-default"
+                          onClick={() => handleSetDefaultAddress(addr._id)}
+                        >
+                          Set as Default
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: Retailer B2B Application */}
+        {activeTab === 'retailer' && !isRetailer && (
+          <div className="profile-card fade-in">
+            <div className="profile-card-top">
+              <div>
+                <h2 className="profile-card-title">Apply for Retailer Wholesale Access</h2>
+                <p className="profile-card-sub">
+                  Unlock Tier-1 wholesale bulk pricing, live dealer margins, and priority freight consignments.
+                </p>
+              </div>
+            </div>
+
+            {user?.retailerRequestStatus === 'pending' ? (
+              <div className="profile-retailer-status-box is-pending">
+                <FiClock className="profile-status-icon" />
+                <div>
+                  <strong>Application Under Review</strong>
+                  <p>Our business verification team is evaluating your application. You will be notified shortly.</p>
+                </div>
+              </div>
+            ) : isCooldown ? (
+              <div className="profile-retailer-status-box is-rejected">
+                <FiAlertCircle className="profile-status-icon" />
+                <div>
+                  <strong>Application Rejected</strong>
+                  <p>You may submit a revised application once the cooldown window has elapsed.</p>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleRetailerSubmit} className="profile-retailer-form">
+                <div className="profile-form-grid">
+                  <div className="profile-field-group">
+                    <label>Retail Shop / Business Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Sharma Electronics & Appliances"
+                      value={retailerForm.shopName}
+                      onChange={(e) => setRetailerForm({ ...retailerForm, shopName: e.target.value })}
+                      className="profile-input"
+                    />
+                  </div>
+
+                  <div className="profile-field-group">
+                    <label>Proprietor / Owner Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Rahul Sharma"
+                      value={retailerForm.ownerName}
+                      onChange={(e) => setRetailerForm({ ...retailerForm, ownerName: e.target.value })}
+                      className="profile-input"
+                    />
+                  </div>
+
+                  <div className="profile-field-group">
+                    <label>Business Phone Number *</label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. 9876543210"
+                      value={retailerForm.phone}
+                      onChange={(e) => setRetailerForm({ ...retailerForm, phone: e.target.value })}
+                      className="profile-input"
+                    />
+                  </div>
+
+                  <div className="profile-field-group">
+                    <label>GSTIN or Business Registration (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 23AAAAA0000A1Z5"
+                      value={retailerForm.businessProof}
+                      onChange={(e) => setRetailerForm({ ...retailerForm, businessProof: e.target.value })}
+                      className="profile-input"
+                    />
+                  </div>
+
+                  <div className="profile-field-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Commercial Shop Address *</label>
+                    <textarea
+                      required
+                      rows={3}
+                      placeholder="Full shop / warehouse address"
+                      value={retailerForm.shopAddress}
+                      onChange={(e) => setRetailerForm({ ...retailerForm, shopAddress: e.target.value })}
+                      className="profile-input"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="profile-btn-save"
+                  disabled={requestingRetailer}
+                  style={{ marginTop: 20 }}
+                >
+                  {requestingRetailer ? 'Submitting Application…' : 'Submit Retailer Application'}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+      </main>
+
+      {/* Add/Edit Address Modal */}
+      {addressModalOpen && (
+        <div className="profile-modal-overlay" role="dialog" aria-modal="true">
+          <div className="profile-modal-card">
+            <div className="profile-modal-header">
+              <h3>{editingAddress._id ? 'Edit Delivery Address' : 'Add New Delivery Address'}</h3>
+              <button
+                type="button"
+                className="profile-modal-close-btn"
+                onClick={() => setAddressModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <AddressForm
+              value={editingAddress}
+              onChange={setEditingAddress}
+              disabled={savingAddress}
+            />
+
+            <div className="profile-modal-footer">
+              <button
+                type="button"
+                className="profile-btn-cancel"
+                onClick={() => setAddressModalOpen(false)}
+                disabled={savingAddress}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="profile-btn-save"
+                onClick={handleSaveAddressModal}
+                disabled={savingAddress}
+              >
+                {savingAddress ? 'Saving…' : 'Save Address'}
+              </button>
             </div>
           </div>
         </div>
-      </main>
+      )}
 
       <Footer />
     </div>

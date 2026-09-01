@@ -18,3 +18,12 @@ export async function cancelOrder(orderId, token) {
   return apiFetch(`/api/orders/${orderId}/cancel`, { method: 'PUT', token })
 }
 
+export function getOrderInvoiceUrl(orderId, token) {
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+  return `${BASE_URL}/api/orders/${orderId}/invoice?token=${encodeURIComponent(token || '')}`
+}
+
+export async function downloadInvoicePdf(orderId, token) {
+  const url = getOrderInvoiceUrl(orderId, token)
+  window.open(url, '_blank')
+}

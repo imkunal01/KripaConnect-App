@@ -1,17 +1,29 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { listProducts } from '../../services/products'
 import {
-  createProductAdmin,
-  updateProductAdmin,
   deleteProductAdmin,
   listSubcategoriesAdmin,
   listCategoriesAdmin,
 } from '../../services/admin'
 import { AdminTableSkeleton } from '../../components/SkeletonLoader'
+import Pagination from '../../components/Pagination'
 import CsvImportModal from './CsvImportModal'
 import BulkProductActionsBar from './BulkProductActionsBar'
-import { FiUploadCloud, FiPlus } from 'react-icons/fi'
+import ProductFormModal from './ProductFormModal'
+import {
+  FiUploadCloud,
+  FiPlus,
+  FiSearch,
+  FiEdit2,
+  FiTrash2,
+  FiBox,
+  FiFilter,
+  FiCheckCircle,
+  FiEyeOff,
+  FiAlertTriangle
+} from 'react-icons/fi'
+import toast from 'react-hot-toast'
 
 function getMongoObjectIdTimeMs(id) {
   if (typeof id !== 'string' || id.length < 8) return 0
@@ -33,26 +45,24 @@ export default function ProductManagement() {
   const [categories, setCategories] = useState([])
   const [subcategories, setSubcategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+
+  // Modal States
+  const [showStudioModal, setShowStudioModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
-  const [search, setSearch] = useState('')
   const [showCsvModal, setShowCsvModal] = useState(false)
+
+  // Filters & Search
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all') // 'all' | 'active' | 'inactive' | 'low_stock' | 'out_of_stock'
+
+  // Pagination State
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+
+  // Batch Selection State
   const [selectedIds, setSelectedIds] = useState([])
   const selectAllRef = useRef(null)
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    subcategory: '',
-    price: '',
-    retailer_price: '',
-    price_bulk: '',
-    min_bulk_qty: '',
-    stock: '',
-    tags: '',
-    active: true
-  })
-  const [images, setImages] = useState([])
 
   useEffect(() => {
     loadData()
@@ -61,111 +71,127 @@ export default function ProductManagement() {
   async function loadData() {
     try {
       setLoading(true)
-      const [prods, cats] = await Promise.all([
-        listProducts({ limit: 1000 }),
-        listCategoriesAdmin(token)
+      const [prods, cats, subs] = await Promise.all([
+        listProducts({ limit: 1000, active: 'all', includeInactive: true }),
+        listCategoriesAdmin(token),
+        listSubcategoriesAdmin(token),
       ])
-      const subs = await listSubcategoriesAdmin(token)
-      const items = prods.items || []
+      const items = prods?.items || []
       const sorted = Array.isArray(items)
         ? items.slice().sort((a, b) => getDocCreatedTimeMs(b) - getDocCreatedTimeMs(a))
         : []
       setProducts(sorted)
-      setCategories(cats || [])
+      setCategories(Array.isArray(cats) ? cats : [])
       setSubcategories(Array.isArray(subs) ? subs : [])
     } catch (err) {
-      console.error(err)
+      console.error('Failed to load products:', err)
+      toast.error('Failed to load inventory data')
     } finally {
       setLoading(false)
     }
   }
 
-  function handleEdit(product) {
+  function handleOpenAddProduct() {
+    setEditingProduct(null)
+    setShowStudioModal(true)
+  }
+
+  function handleOpenEditProduct(product) {
     setEditingProduct(product)
-    setFormData({
-      name: product.name || '',
-      description: product.description || '',
-      category: product.Category?._id || '',
-      subcategory: product.subcategory_id?._id || product.subcategory_id || '',
-      price: product.price || '',
-      retailer_price: product.retailer_price || '',
-      price_bulk: product.price_bulk || '',
-      min_bulk_qty: product.min_bulk_qty || '',
-      stock: product.stock || '',
-      tags: Array.isArray(product.tags) ? product.tags.join(', ') : '',
-      active: product.active !== false
-    })
-    setImages([])
-    setShowForm(true)
+    setShowStudioModal(true)
   }
 
-  function handleDelete(productId) {
-    if (confirm('Are you sure you want to delete this product?')) {
-      deleteProductAdmin(productId, token).then(() => loadData())
-    }
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function handleDelete(productId) {
+    if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) return
     try {
-      const productPayload = {
-        ...formData,
-        price: Number(formData.price),
-        retailer_price: Number(formData.retailer_price),
-        price_bulk: formData.price_bulk ? Number(formData.price_bulk) : undefined,
-        min_bulk_qty: formData.min_bulk_qty ? Number(formData.min_bulk_qty) : undefined,
-        stock: Number(formData.stock),
-        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
-        category: formData.category || undefined,
-        category_id: formData.category || undefined,
-        subcategory_id: formData.subcategory || undefined
-      }
-
-      if (editingProduct) {
-        await updateProductAdmin(editingProduct._id, productPayload, images, token)
-      } else {
-        await createProductAdmin(productPayload, images, token)
-      }
-      setShowForm(false)
-      setEditingProduct(null)
-      setFormData({
-        name: '', description: '', category: '', subcategory: '', price: '', retailer_price: '',
-        price_bulk: '', min_bulk_qty: '', stock: '', tags: '', active: true
-      })
-      setImages([])
+      await deleteProductAdmin(productId, token)
+      toast.success('Product deleted successfully')
       loadData()
     } catch (err) {
-      alert(err.message || 'Failed to save product')
+      toast.error(err.message || 'Failed to delete product')
     }
   }
 
-  const filteredProducts = products.filter(p => {
-    if (!search) return true
-    const s = search.toLowerCase()
-    return (
-      p.name?.toLowerCase().includes(s) ||
-      p.Category?.name?.toLowerCase().includes(s)
-    )
-  })
+  // Calculate status counts for filter pills
+  const statusCounts = useMemo(() => {
+    let total = products.length
+    let active = 0
+    let inactive = 0
+    let lowStock = 0
+    let outOfStock = 0
 
-  // Synchronize indeterminate state on header select-all checkbox
+    products.forEach((p) => {
+      const stock = Number(p.stock) || 0
+      if (p.active !== false) active++
+      else inactive++
+
+      if (stock === 0) outOfStock++
+      else if (stock < 10) lowStock++
+    })
+
+    return { total, active, inactive, lowStock, outOfStock }
+  }, [products])
+
+  // Filtered Products
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      // Search text filter
+      if (search.trim()) {
+        const q = search.toLowerCase()
+        const matchName = p.name?.toLowerCase().includes(q)
+        const matchCat = p.Category?.name?.toLowerCase().includes(q)
+        const matchTag = Array.isArray(p.tags) && p.tags.some(t => String(t).toLowerCase().includes(q))
+        if (!matchName && !matchCat && !matchTag) return false
+      }
+
+      // Category filter
+      if (categoryFilter !== 'all') {
+        const catId = p.Category?._id || p.Category || p.category_id
+        if (String(catId) !== String(categoryFilter)) return false
+      }
+
+      // Status filter
+      const stockNum = Number(p.stock) || 0
+      if (statusFilter === 'active' && p.active === false) return false
+      if (statusFilter === 'inactive' && p.active !== false) return false
+      if (statusFilter === 'low_stock' && (stockNum >= 10 || stockNum === 0)) return false
+      if (statusFilter === 'out_of_stock' && stockNum > 0) return false
+
+      return true
+    })
+  }, [products, search, categoryFilter, statusFilter])
+
+  // Reset page to 1 on filter changes
+  useEffect(() => {
+    setPage(1)
+  }, [search, categoryFilter, statusFilter, pageSize])
+
+  // Paginated Slicing
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize))
+  const paginatedProducts = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return filteredProducts.slice(start, start + pageSize)
+  }, [filteredProducts, page, pageSize])
+
+  // Checkbox Indeterminate & Selection State
+  const currentPageIds = useMemo(() => paginatedProducts.map(p => p._id), [paginatedProducts])
+  const isAllCurrentSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedIds.includes(id))
+
   useEffect(() => {
     if (!selectAllRef.current) return
-    const numSelected = selectedIds.length
-    const total = filteredProducts.length
-    if (numSelected > 0 && numSelected < total) {
+    const numSelectedInCurrentPage = currentPageIds.filter(id => selectedIds.includes(id)).length
+    if (numSelectedInCurrentPage > 0 && numSelectedInCurrentPage < currentPageIds.length) {
       selectAllRef.current.indeterminate = true
     } else {
       selectAllRef.current.indeterminate = false
     }
-  }, [selectedIds, filteredProducts.length])
+  }, [selectedIds, currentPageIds])
 
-  function handleToggleSelectAll() {
-    if (filteredProducts.length === 0) return
-    if (selectedIds.length === filteredProducts.length) {
-      setSelectedIds([])
+  function handleToggleSelectPage() {
+    if (isAllCurrentSelected) {
+      setSelectedIds(prev => prev.filter(id => !currentPageIds.includes(id)))
     } else {
-      setSelectedIds(filteredProducts.map(p => p._id))
+      setSelectedIds(prev => Array.from(new Set([...prev, ...currentPageIds])))
     }
   }
 
@@ -177,10 +203,13 @@ export default function ProductManagement() {
 
   return (
     <div className="adminPage">
+      {/* Header */}
       <div className="adminPageHeader">
         <div>
           <h1 className="adminPageHeader__title">Product Management</h1>
-          <p className="adminPageHeader__subtitle">Manage products, inventory, and pricing</p>
+          <p className="adminPageHeader__subtitle">
+            Manage catalog inventory, multi-tier pricing, product statuses, and bulk imports
+          </p>
         </div>
         <div className="adminActions">
           <button
@@ -200,15 +229,7 @@ export default function ProductManagement() {
           <button
             type="button"
             className="adminBtn adminBtnPrimary"
-            onClick={() => {
-              setEditingProduct(null)
-              setFormData({
-                name: '', description: '', category: '', subcategory: '', price: '', retailer_price: '',
-                price_bulk: '', min_bulk_qty: '', stock: '', tags: '', active: true
-              })
-              setImages([])
-              setShowForm(true)
-            }}
+            onClick={handleOpenAddProduct}
           >
             <FiPlus style={{ fontSize: '1.1rem' }} />
             <span>Add Product</span>
@@ -216,7 +237,7 @@ export default function ProductManagement() {
         </div>
       </div>
 
-      {/* Ultra-Modern CSV Bulk Import Modal */}
+      {/* CSV Bulk Import Modal */}
       <CsvImportModal
         token={token}
         isOpen={showCsvModal}
@@ -224,347 +245,382 @@ export default function ProductManagement() {
         onSuccess={loadData}
       />
 
-      {showForm && (
-        <div className="adminModalOverlay" role="dialog" aria-modal="true">
-          <div className="adminCard adminModal">
-            <div className="adminModal__header">
-              <h2 className="adminModal__title">{editingProduct ? 'Edit Product' : 'Add Product'}</h2>
-              <button
-                type="button"
-                className="adminBtn adminBtnGhost adminBtn--sm"
-                onClick={() => {
-                  setShowForm(false)
-                  setEditingProduct(null)
-                }}
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            </div>
+      {/* Modern Product Studio Modal (Add / Edit) */}
+      <ProductFormModal
+        isOpen={showStudioModal}
+        onClose={() => {
+          setShowStudioModal(false)
+          setEditingProduct(null)
+        }}
+        product={editingProduct}
+        categories={categories}
+        subcategories={subcategories}
+        token={token}
+        onSuccess={loadData}
+      />
 
-            <form onSubmit={handleSubmit}>
-              <div className="adminModal__body">
-                <div style={{ marginBottom: 12 }}>
-                  <label className="adminLabel">Name *</label>
-                  <input
-                    className="adminInput"
-                    type="text"
-                    value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div style={{ marginBottom: 12 }}>
-                  <label className="adminLabel">Description</label>
-                  <textarea
-                    className="adminTextarea"
-                    value={formData.description}
-                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-
-                <div style={{ marginBottom: 12 }}>
-                  <label className="adminLabel">Category</label>
-                  <select
-                    className="adminSelect"
-                    value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
-                    required
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map(cat => (
-                      <option key={cat._id} value={cat._id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ marginBottom: 12 }}>
-                  <label className="adminLabel">Subcategory</label>
-                  <select
-                    className="adminSelect"
-                    value={formData.subcategory}
-                    onChange={e => setFormData({ ...formData, subcategory: e.target.value })}
-                    required
-                    disabled={!formData.category}
-                  >
-                    <option value="">Select Subcategory</option>
-                    {subcategories
-                      .filter(sub => String(sub.category_id?._id || sub.category_id) === String(formData.category))
-                      .map(sub => (
-                        <option key={sub._id} value={sub._id}>{sub.name}</option>
-                      ))}
-                  </select>
-                  {!formData.category && <div className="adminHelp" style={{ marginTop: 6 }}>Select a category first.</div>}
-                </div>
-
-                <div className="adminFieldRow adminFieldRow--2" style={{ marginBottom: 12 }}>
-                  <div>
-                    <label className="adminLabel">Price *</label>
-                    <input
-                      className="adminInput"
-                      type="number"
-                      value={formData.price}
-                      onChange={e => setFormData({ ...formData, price: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="adminLabel">Retailer Price *</label>
-                    <input
-                      className="adminInput"
-                      type="number"
-                      value={formData.retailer_price}
-                      onChange={e => setFormData({ ...formData, retailer_price: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="adminFieldRow adminFieldRow--2" style={{ marginBottom: 12 }}>
-                  <div>
-                    <label className="adminLabel">Bulk Price</label>
-                    <input
-                      className="adminInput"
-                      type="number"
-                      value={formData.price_bulk}
-                      onChange={e => setFormData({ ...formData, price_bulk: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="adminLabel">Min Bulk Qty</label>
-                    <input
-                      className="adminInput"
-                      type="number"
-                      value={formData.min_bulk_qty}
-                      onChange={e => setFormData({ ...formData, min_bulk_qty: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="adminFieldRow adminFieldRow--2" style={{ marginBottom: 12 }}>
-                  <div>
-                    <label className="adminLabel">Stock *</label>
-                    <input
-                      className="adminInput"
-                      type="number"
-                      value={formData.stock}
-                      onChange={e => setFormData({ ...formData, stock: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="adminLabel">Tags</label>
-                    <input
-                      className="adminInput"
-                      type="text"
-                      value={formData.tags}
-                      onChange={e => setFormData({ ...formData, tags: e.target.value })}
-                      placeholder="comma separated"
-                    />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: 12 }}>
-                  <label className="adminLabel">Images</label>
-                  <input
-                    className="adminInput"
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={e => setImages(Array.from(e.target.files))}
-                  />
-                  <div className="adminHelp" style={{ marginTop: 6 }}>You can upload multiple images.</div>
-                </div>
-
-                <div style={{ marginBottom: 4 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <input
-                      type="checkbox"
-                      checked={formData.active}
-                      onChange={e => setFormData({ ...formData, active: e.target.checked })}
-                    />
-                    <span className="adminHelp" style={{ color: 'var(--text-primary)', fontWeight: 700 }}>Active</span>
-                    <span className="adminHelp">(visible to customers)</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="adminModal__footer">
-                <button type="submit" className="adminBtn adminBtnPrimary adminBtn--full">
-                  {editingProduct ? 'Update Product' : 'Create Product'}
-                </button>
-                <button
-                  type="button"
-                  className="adminBtn adminBtn--full"
-                  onClick={() => {
-                    setShowForm(false)
-                    setEditingProduct(null)
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+      {/* Filter & Search Toolbar */}
+      <div className="adminToolbarCard">
+        <div className="adminToolbarRow">
+          {/* Search Box */}
+          <div className="adminSearchWrapper">
+            <FiSearch className="adminSearchIcon" />
+            <input
+              className="adminSearchInput"
+              type="text"
+              placeholder="Search by product name, category, or tags..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-        </div>
-      )}
 
-      <div className="adminCard" style={{ marginBottom: 16 }}>
-        <div className="adminCard__section">
-          <label className="adminLabel">Search products</label>
-          <input
-            className="adminInput"
-            type="text"
-            placeholder="Search by product name or category…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          {/* Category Filter */}
+          <select
+            className="adminFilterSelect"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            aria-label="Filter by category"
+          >
+            <option value="all">All Categories ({products.length})</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Status Filter Pills */}
+        <div className="adminStatusPills">
+          <button
+            type="button"
+            className={`adminStatusPill ${statusFilter === 'all' ? 'is-active' : ''}`}
+            onClick={() => setStatusFilter('all')}
+          >
+            <FiBox />
+            <span>All</span>
+            <span className="adminStatusPillCount">{statusCounts.total}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`adminStatusPill ${statusFilter === 'active' ? 'is-active' : ''}`}
+            onClick={() => setStatusFilter('active')}
+          >
+            <FiCheckCircle />
+            <span>Active</span>
+            <span className="adminStatusPillCount">{statusCounts.active}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`adminStatusPill ${statusFilter === 'inactive' ? 'is-active' : ''}`}
+            onClick={() => setStatusFilter('inactive')}
+          >
+            <FiEyeOff />
+            <span>Inactive</span>
+            <span className="adminStatusPillCount">{statusCounts.inactive}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`adminStatusPill ${statusFilter === 'low_stock' ? 'is-active' : ''}`}
+            onClick={() => setStatusFilter('low_stock')}
+          >
+            <FiAlertTriangle />
+            <span>Low Stock (&lt;10)</span>
+            <span className="adminStatusPillCount">{statusCounts.lowStock}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`adminStatusPill ${statusFilter === 'out_of_stock' ? 'is-active' : ''}`}
+            onClick={() => setStatusFilter('out_of_stock')}
+          >
+            <FiAlertTriangle />
+            <span>Out of Stock</span>
+            <span className="adminStatusPillCount">{statusCounts.outOfStock}</span>
+          </button>
         </div>
       </div>
 
+      {/* Main Inventory Card */}
       <div className="adminCard">
         {loading ? (
           <AdminTableSkeleton rows={8} />
         ) : (
           <>
+            {/* Desktop Table View */}
             <div className="adminOnlyDesktop">
               <div className="adminTableWrap">
-            <table className="adminTable">
-              <thead>
-                <tr>
-                  <th style={{ width: 44, textAlign: 'center' }}>
-                    <input
-                      type="checkbox"
-                      ref={selectAllRef}
-                      checked={filteredProducts.length > 0 && selectedIds.length === filteredProducts.length}
-                      onChange={handleToggleSelectAll}
-                      className="bulk-row-checkbox"
-                      aria-label="Select all products"
-                    />
-                  </th>
-                  <th>Image</th>
-                  <th>Name</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.map(product => {
-                  const isSelected = selectedIds.includes(product._id)
-                  const stockNumber = typeof product.stock === 'number' ? product.stock : Number(product.stock)
-                  const stockColor = stockNumber < 10 ? 'var(--danger)' : stockNumber < 50 ? 'var(--text-secondary)' : 'var(--secondary)'
-                  return (
-                    <tr key={product._id} className={isSelected ? 'is-row-selected' : ''}>
-                      <td style={{ textAlign: 'center' }}>
+                <table className="adminTable">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 44, textAlign: 'center' }}>
                         <input
                           type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleRow(product._id)}
+                          ref={selectAllRef}
+                          checked={isAllCurrentSelected}
+                          onChange={handleToggleSelectPage}
                           className="bulk-row-checkbox"
-                          aria-label={`Select ${product.name}`}
+                          aria-label="Select all visible products"
                         />
-                      </td>
-                      <td>
-                        <img
-                          src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
-                          alt={product.name}
-                          style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 12, border: '1px solid var(--border-color)' }}
-                        />
-                      </td>
-                      <td style={{ fontWeight: 800 }}>{product.name}</td>
-                      <td>₹{product.price?.toLocaleString('en-IN')}</td>
-                      <td>
-                        <span style={{ color: stockColor, fontWeight: 900 }}>{product.stock}</span>
-                      </td>
-                      <td>
-                        <span className={`adminBadge ${product.active ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
-                          {product.active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="adminActions">
-                          <button type="button" className="adminBtn adminBtnPrimary adminBtn--sm" onClick={() => handleEdit(product)}>
-                            Edit
-                          </button>
-                          <button type="button" className="adminBtn adminBtnDanger adminBtn--sm" onClick={() => handleDelete(product._id)}>
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+                      </th>
+                      <th style={{ width: 70 }}>Image</th>
+                      <th>Product Info</th>
+                      <th>Category</th>
+                      <th>Selling Price</th>
+                      <th>Retailer (B2B)</th>
+                      <th>Stock Status</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-          {filteredProducts.length === 0 && <div className="adminEmpty">No products found</div>}
-        </div>
+                  </thead>
+                  <tbody>
+                    {paginatedProducts.map((product) => {
+                      const isSelected = selectedIds.includes(product._id)
+                      const stockNumber = Number(product.stock) || 0
+                      const isOut = stockNumber === 0
+                      const isLow = stockNumber > 0 && stockNumber < 10
+                      const catName = product.Category?.name || 'Uncategorized'
 
-        <div className="adminOnlyMobile">
-          {filteredProducts.length === 0 ? (
-            <div className="adminEmpty">No products found</div>
-          ) : (
-            <div className="adminMobileList">
-              {filteredProducts.map(product => {
-                const isSelected = selectedIds.includes(product._id)
-                return (
-                  <div key={product._id} className={`adminMobileCard ${isSelected ? 'is-card-selected' : ''}`}>
-                    <div className="adminMobileCardHeader">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleRow(product._id)}
-                          className="bulk-row-checkbox"
-                          aria-label={`Select ${product.name}`}
-                        />
-                        <img
-                          src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
-                          alt={product.name}
-                          className="adminMobileThumb"
-                        />
-                        <div style={{ minWidth: 0 }}>
-                          <div className="adminMobileCardTitle" title={product.name}>{product.name}</div>
-                          <div className="adminMobileCardSub" title={product.Category?.name || ''}>
-                            {product.Category?.name || 'Uncategorized'}
+                      return (
+                        <tr key={product._id} className={isSelected ? 'is-row-selected' : ''}>
+                          <td style={{ textAlign: 'center' }}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleRow(product._id)}
+                              className="bulk-row-checkbox"
+                              aria-label={`Select ${product.name}`}
+                            />
+                          </td>
+                          <td>
+                            <img
+                              src={product.images?.[0]?.url || 'https://via.placeholder.com/60?text=No+Image'}
+                              alt={product.name}
+                              style={{
+                                width: 52,
+                                height: 52,
+                                objectFit: 'cover',
+                                borderRadius: 12,
+                                border: '1px solid var(--border-color)',
+                                background: '#f8fafc'
+                              }}
+                            />
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
+                              {product.name}
+                            </div>
+                            {Array.isArray(product.tags) && product.tags.length > 0 && (
+                              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                                {product.tags.slice(0, 3).map((t) => (
+                                  <span
+                                    key={t}
+                                    style={{
+                                      fontSize: '0.72rem',
+                                      fontWeight: 700,
+                                      padding: '1px 6px',
+                                      borderRadius: 999,
+                                      background: '#f1f5f9',
+                                      color: '#475569'
+                                    }}
+                                  >
+                                    {t}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ fontWeight: 650, color: 'var(--text-secondary)' }}>
+                            {catName}
+                          </td>
+                          <td style={{ fontWeight: 800 }}>
+                            ₹{product.price?.toLocaleString('en-IN')}
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#2563eb' }}>
+                            {product.retailer_price ? `₹${product.retailer_price.toLocaleString('en-IN')}` : '—'}
+                          </td>
+                          <td>
+                            {isOut ? (
+                              <span style={{ color: 'var(--danger)', fontWeight: 800 }}>
+                                Out of Stock (0)
+                              </span>
+                            ) : isLow ? (
+                              <span style={{ color: '#d97706', fontWeight: 800 }}>
+                                Low: {stockNumber} left
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--secondary)', fontWeight: 800 }}>
+                                {stockNumber} in stock
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <span className={`adminBadge ${product.active !== false ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
+                              {product.active !== false ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div className="adminActions" style={{ justifyContent: 'flex-end' }}>
+                              <button
+                                type="button"
+                                className="adminBtn adminBtnPrimary adminBtn--sm"
+                                onClick={() => handleOpenEditProduct(product)}
+                                title="Edit Product"
+                              >
+                                <FiEdit2 />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="adminBtn adminBtnDanger adminBtn--sm"
+                                onClick={() => handleDelete(product._id)}
+                                title="Delete Product"
+                              >
+                                <FiTrash2 />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {filteredProducts.length === 0 && (
+                <div className="adminEmpty">
+                  <FiBox style={{ fontSize: '2rem', marginBottom: 8, opacity: 0.5 }} />
+                  <div>No products found matching your search or filters.</div>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="adminOnlyMobile">
+              {filteredProducts.length === 0 ? (
+                <div className="adminEmpty">
+                  <FiBox style={{ fontSize: '2rem', marginBottom: 8, opacity: 0.5 }} />
+                  <div>No products found matching your filters.</div>
+                </div>
+              ) : (
+                <div className="adminMobileList">
+                  {paginatedProducts.map((product) => {
+                    const isSelected = selectedIds.includes(product._id)
+                    const stockNumber = Number(product.stock) || 0
+
+                    return (
+                      <div
+                        key={product._id}
+                        className={`adminMobileCard ${isSelected ? 'is-card-selected' : ''}`}
+                      >
+                        <div className="adminMobileCardHeader">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleRow(product._id)}
+                              className="bulk-row-checkbox"
+                              aria-label={`Select ${product.name}`}
+                            />
+                            <img
+                              src={product.images?.[0]?.url || 'https://via.placeholder.com/50?text=No+Image'}
+                              alt={product.name}
+                              className="adminMobileThumb"
+                            />
+                            <div style={{ minWidth: 0 }}>
+                              <div className="adminMobileCardTitle" title={product.name}>
+                                {product.name}
+                              </div>
+                              <div className="adminMobileCardSub">
+                                {product.Category?.name || 'Uncategorized'}
+                              </div>
+                            </div>
+                          </div>
+                          <span
+                            className={`adminBadge ${product.active !== false ? 'adminBadge--ok' : 'adminBadge--danger'}`}
+                          >
+                            {product.active !== false ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+
+                        <div className="adminMobileCardBody">
+                          <div className="adminMobileMetaRow">
+                            <span className="adminHelp">Selling Price</span>
+                            <span className="adminMobileMetaValue">
+                              ₹{product.price?.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="adminMobileMetaRow">
+                            <span className="adminHelp">Retailer B2B</span>
+                            <span className="adminMobileMetaValue" style={{ color: '#2563eb' }}>
+                              ₹{product.retailer_price?.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="adminMobileMetaRow">
+                            <span className="adminHelp">Inventory</span>
+                            <span
+                              className="adminMobileMetaValue"
+                              style={{
+                                color: stockNumber === 0 ? 'var(--danger)' : stockNumber < 10 ? '#d97706' : 'var(--secondary)'
+                              }}
+                            >
+                              {stockNumber === 0 ? 'Out of stock' : `${stockNumber} units`}
+                            </span>
                           </div>
                         </div>
-                      </div>
-                      <span className={`adminBadge ${product.active ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
-                        {product.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
 
-                    <div className="adminMobileCardBody">
-                      <div className="adminMobileMetaRow">
-                        <span className="adminHelp">Price</span>
-                        <span className="adminMobileMetaValue">₹{product.price?.toLocaleString('en-IN')}</span>
+                        <div className="adminMobileActions">
+                          <button
+                            type="button"
+                            className="adminBtn adminBtnPrimary adminBtn--sm"
+                            onClick={() => handleOpenEditProduct(product)}
+                          >
+                            <FiEdit2 />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="adminBtn adminBtnDanger adminBtn--sm"
+                            onClick={() => handleDelete(product._id)}
+                          >
+                            <FiTrash2 />
+                            <span>Delete</span>
+                          </button>
+                        </div>
                       </div>
-                      <div className="adminMobileMetaRow">
-                        <span className="adminHelp">Stock</span>
-                        <span className="adminMobileMetaValue">{product.stock}</span>
-                      </div>
-                    </div>
-
-                    <div className="adminMobileActions">
-                      <button type="button" className="adminBtn adminBtnPrimary adminBtn--sm" onClick={() => handleEdit(product)}>
-                        Edit
-                      </button>
-                      <button type="button" className="adminBtn adminBtnDanger adminBtn--sm" onClick={() => handleDelete(product._id)}>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        </>
+
+            {/* Pagination Controls */}
+            {filteredProducts.length > 0 && (
+              <div style={{ padding: '0 20px 16px' }}>
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={filteredProducts.length}
+                  pageSize={pageSize}
+                  onPageChange={(p) => {
+                    setPage(p)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  onPageSizeChange={(newSize) => {
+                    setPageSize(newSize)
+                    setPage(1)
+                  }}
+                  pageSizeOptions={[10, 25, 50, 100]}
+                  showPageSize={true}
+                  showTotal={true}
+                  itemLabel="products"
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -580,4 +636,3 @@ export default function ProductManagement() {
     </div>
   )
 }
-

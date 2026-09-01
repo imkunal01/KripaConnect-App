@@ -582,3 +582,125 @@
   border-bottom: none;
 }
 
+/* Admin Product Management Toolbar & Filters */
+.adminToolbarCard {
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 18px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.adminToolbarRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.adminSearchWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.adminSearchInput {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--gray-50, #f9fafb);
+  color: var(--text-primary, #111827);
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.adminSearchInput:focus {
+  background: #ffffff;
+  border-color: var(--primary, #FF3D3D);
+  box-shadow: 0 0 0 3px rgba(var(--kc-primary-rgb, 255, 61, 61), 0.12);
+}
+
+.adminSearchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary, #6b7280);
+  pointer-events: none;
+  font-size: 1rem;
+}
+
+.adminFilterSelect {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--gray-50, #f9fafb);
+  color: var(--text-primary, #111827);
+  font-size: 0.88rem;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  min-width: 180px;
+}
+
+.adminFilterSelect:focus {
+  border-color: var(--primary, #FF3D3D);
+}
+
+.adminStatusPills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.adminStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.adminStatusPill:hover {
+  background: var(--gray-50, #f9fafb);
+  color: var(--text-primary, #111827);
+  border-color: #cbd5e1;
+}
+
+.adminStatusPill.is-active {
+  background: rgba(var(--kc-primary-rgb, 255, 61, 61), 0.1);
+  border-color: rgba(var(--kc-primary-rgb, 255, 61, 61), 0.35);
+  color: var(--primary, #FF3D3D);
+}
+
+.adminStatusPillCount {
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+  font-weight: 800;
+}
+
+.adminStatusPill.is-active .adminStatusPillCount {
+  background: var(--primary, #FF3D3D);
+  color: #ffffff;
+}
+
+
