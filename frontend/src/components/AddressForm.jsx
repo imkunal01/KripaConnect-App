@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import './AddressForm.css'
 
 const INDORE_AREAS = [
@@ -22,17 +22,18 @@ export default function AddressForm({ value, onChange, disabled }) {
     onChange({ ...v, [key]: val })
   }
 
-  // Pre-fill city and state defaults for single-city Indore operation
+  // Pre-fill city, state, and default pincode if empty
   useEffect(() => {
     const updates = {}
     if (!v.city) updates.city = 'Indore'
     if (!v.state) updates.state = 'Madhya Pradesh'
+    if (!v.pincode) updates.pincode = '452001'
     if (Object.keys(updates).length > 0) {
       onChange({ ...v, ...updates })
     }
   }, [])
 
-  // Optional Google Places Autocomplete if API Key is configured in environment
+  // Optional Google Places Autocomplete if configured
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
     if (!apiKey || typeof window === 'undefined') return
@@ -66,6 +67,7 @@ export default function AddressForm({ value, onChange, disabled }) {
             addressLine: place.formatted_address,
             city: v.city || 'Indore',
             state: v.state || 'Madhya Pradesh',
+            pincode: v.pincode || '452001'
           })
         }
       })
@@ -88,35 +90,41 @@ export default function AddressForm({ value, onChange, disabled }) {
         <span>Delivering across <strong>Indore, Madhya Pradesh</strong></span>
       </div>
 
-      <div className="field">
-        <label>Full Name</label>
-        <input
-          value={v.name || ''}
-          onChange={e => setField('name', e.target.value)}
-          disabled={disabled}
-          placeholder="e.g. Rahul Sharma"
-        />
+      <div className="field-grid-2">
+        <div className="field">
+          <label>Full Name *</label>
+          <input
+            value={v.name || ''}
+            onChange={e => setField('name', e.target.value)}
+            disabled={disabled}
+            placeholder="e.g. Rahul Sharma"
+            required
+          />
+        </div>
+
+        <div className="field">
+          <label>Phone Number *</label>
+          <input
+            value={v.phone || ''}
+            onChange={e => setField('phone', e.target.value)}
+            disabled={disabled}
+            placeholder="e.g. 9876543210"
+            type="tel"
+            maxLength={10}
+            required
+          />
+        </div>
       </div>
 
       <div className="field">
-        <label>Phone Number</label>
-        <input
-          value={v.phone || ''}
-          onChange={e => setField('phone', e.target.value)}
-          disabled={disabled}
-          placeholder="e.g. 9876543210"
-          type="tel"
-        />
-      </div>
-
-      <div className="field">
-        <label>Delivery Address / Street / Building</label>
+        <label>Delivery Address / Street / Building *</label>
         <input
           ref={addressInputRef}
           value={v.addressLine || ''}
           onChange={e => setField('addressLine', e.target.value)}
           disabled={disabled}
-          placeholder="Flat / House No., Landmark, Street"
+          placeholder="Flat / House No., Building Name, Street / Landmark"
+          required
         />
       </div>
 
@@ -137,24 +145,38 @@ export default function AddressForm({ value, onChange, disabled }) {
         </div>
       </div>
 
-      <div className="field-row">
+      <div className="field-grid-3">
         <div className="field">
-          <label>City</label>
+          <label>PIN Code *</label>
+          <input
+            value={v.pincode || ''}
+            onChange={e => setField('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
+            disabled={disabled}
+            placeholder="e.g. 452001"
+            maxLength={6}
+            required
+          />
+        </div>
+
+        <div className="field">
+          <label>City *</label>
           <input
             value={v.city || 'Indore'}
             onChange={e => setField('city', e.target.value)}
             disabled={disabled}
             placeholder="Indore"
+            required
           />
         </div>
 
         <div className="field">
-          <label>State</label>
+          <label>State *</label>
           <input
             value={v.state || 'Madhya Pradesh'}
             onChange={e => setField('state', e.target.value)}
             disabled={disabled}
             placeholder="Madhya Pradesh"
+            required
           />
         </div>
       </div>

@@ -2119,36 +2119,18 @@
 }
 
 /* ==========================================================================
-   RESPONSIVE BREAKPOINTS (Fluid Layout Mastery)
+   KRIPACONNECT MOBILE & RESPONSIVE ARCHITECTURE (BRAND NEW DESIGN)
    ========================================================================== */
 
-@media (max-width: 1360px) {
-  .dash-catalog-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .dash-bento-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .dash-bento--hero {
-    grid-column: span 2;
-  }
-
-  .dash-bento--wide {
-    grid-column: span 3;
-  }
-
-  .dash-bento--tall {
-    grid-column: span 1;
-    grid-row: span 2;
-  }
-}
-
 @media (max-width: 1024px) {
+  .dash-hero-stage {
+    min-height: auto;
+    padding: 40px 20px 32px;
+  }
+
   .dash-hero-content-wrap {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 32px;
   }
 
   .dash-hero-narrative {
@@ -2157,15 +2139,8 @@
   }
 
   .dash-hero-lead {
-    margin: 0 auto 24px;
-  }
-
-  .dash-hero-search-bar {
-    margin: 0 auto 16px;
-  }
-
-  .dash-hero-tag-pills {
-    justify-content: center;
+    margin: 0 auto 20px;
+    max-width: 540px;
   }
 
   .dash-hero-actions {
@@ -2176,101 +2151,408 @@
     margin: 0 auto;
   }
 
+  .dash-hero-showcase {
+    max-width: 520px;
+    margin: 0 auto;
+    transform: none !important;
+  }
+
   .dash-catalog-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dash-bento-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dash-bento--hero {
-    grid-column: span 2;
-    min-height: 400px;
-  }
-
-  .dash-bento--wide {
-    grid-column: span 2;
-  }
-
-  .dash-bento--tall {
-    grid-column: span 2;
-    grid-row: span 1;
-    min-height: auto;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
   }
 
   .dash-vault-container {
     grid-template-columns: 1fr;
-    padding: 36px 24px;
+    padding: 32px 20px;
+    gap: 28px;
   }
 
-  .dash-b2b-pillars-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .dash-vault-timer-block {
+    border-right: none;
+    border-bottom: 1px solid var(--dash-card-border);
+    padding-right: 0;
+    padding-bottom: 24px;
+    align-items: center;
+    text-align: center;
   }
 
-  .dash-trust-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dash-reviews-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .dash-hero-stage {
-    padding: 40px 16px 30px;
-  }
-
-  .dash-hero-headline {
-    font-size: 34px;
-  }
-
-  .dash-hero-metrics-bar {
-    flex-wrap: wrap;
-    gap: 12px;
+  .dash-vault-actions {
     justify-content: center;
   }
 
-  .dash-metric-separator {
-    display: none;
-  }
-
-  .dash-catalog-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dash-bento-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dash-bento--hero,
-  .dash-bento--wide,
-  .dash-bento--tall,
-  .dash-bento--medium {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-
   .dash-b2b-pillars-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 
   .dash-trust-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .dash-reviews-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ==========================================================================
+   PHONE & MOBILE VIEW (MAX-WIDTH: 768px)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .dash-canvas {
+    overflow-x: hidden;
+  }
+
+  .dash-main-flow {
+    gap: 36px;
+    padding-bottom: 90px;
+  }
+
+  /* 1. Hero Stage on Phone */
+  .dash-hero-stage {
+    padding: 24px 14px 20px;
+    min-height: auto;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .dash-hero-glow-1,
+  .dash-hero-glow-2 {
+    display: none; /* remove expensive blurs on mobile */
+  }
+
+  .dash-hero-pulse-chip {
+    padding: 4px 12px;
+    font-size: 0.72rem;
+    gap: 6px;
+  }
+
+  .dash-pulse-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .dash-hero-headline {
+    font-size: 1.75rem !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em;
+    margin: 12px 0 10px 0;
+  }
+
+  .dash-hero-lead {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-bottom: 18px;
+  }
+
+  .dash-hero-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .dash-btn-hero-primary,
+  .dash-btn-hero-secondary {
+    flex: 1;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    border-radius: 12px;
+    justify-content: center;
+  }
+
+  .dash-hero-metrics-bar {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    justify-content: space-around;
+  }
+
+  .dash-metric-num {
+    font-size: 1.1rem;
+  }
+
+  .dash-metric-lbl {
+    font-size: 0.65rem;
+  }
+
+  /* Hero Showcase Card */
+  .dash-hero-showcase {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 10px;
+    transform: none !important;
+    perspective: none !important;
+  }
+
+  .dash-hero-card-front {
+    border-radius: 18px;
+    padding: 16px;
+    transform: none !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  }
+
+  .dash-card-product-img {
+    height: 140px;
+    object-fit: contain;
+  }
+
+  /* 2. Value Proposition Trust Bar on Phone */
+  .dash-trust-stage {
+    padding: 0 14px;
+  }
+
+  .dash-trust-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .dash-trust-card {
+    padding: 14px 12px;
+    border-radius: 14px;
+    gap: 10px;
+  }
+
+  .dash-trust-icon-box {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+    border-radius: 10px;
+  }
+
+  .dash-trust-card-title {
+    font-size: 0.85rem;
+  }
+
+  .dash-trust-card-desc {
+    font-size: 0.72rem;
+    line-height: 1.3;
+  }
+
+  /* 3. Categories Rail on Phone */
+  .dash-section-header {
+    padding: 0 14px;
+    margin-bottom: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .dash-section-title {
+    font-size: 1.35rem;
+  }
+
+  .dash-section-sub {
+    font-size: 0.82rem;
+  }
+
+  .dash-categories-container {
+    padding: 0 14px;
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+
+  .dash-categories-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dash-category-chip {
+    flex-shrink: 0;
+    width: 130px;
+    padding: 12px 10px;
+    border-radius: 14px;
+    text-align: center;
+  }
+
+  /* 4. Flash Vault Stage on Phone */
+  .dash-vault-stage {
+    padding: 0 14px;
+  }
+
+  .dash-vault-container {
+    border-radius: 20px;
+    padding: 24px 16px;
+    gap: 20px;
+  }
+
+  .dash-vault-heading {
+    font-size: 1.4rem;
+    text-align: center;
   }
 
   .dash-countdown-row {
     justify-content: center;
+    gap: 6px;
+    margin: 14px 0;
+  }
+
+  .dash-countdown-box {
+    padding: 6px 10px;
+    border-radius: 10px;
+    min-width: 48px;
+  }
+
+  .dash-countdown-val {
+    font-size: 1.15rem;
+  }
+
+  .dash-countdown-lbl {
+    font-size: 0.6rem;
+  }
+
+  .dash-vault-claim-bar {
+    width: 100%;
+  }
+
+  /* 5. Product Grids on Phone (CRUCIAL 2-COLUMN DESIGN) */
+  .dash-catalog-stage {
+    padding: 0 14px;
+  }
+
+  .dash-catalog-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dash-catalog-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dash-tab-pill {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    border-radius: 999px;
+  }
+
+  .dash-catalog-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  /* 6. B2B Wholesale Banner on Phone */
+  .dash-b2b-stage {
+    padding: 0 14px;
+  }
+
+  .dash-b2b-card {
+    border-radius: 20px;
+    padding: 24px 16px;
+  }
+
+  .dash-b2b-heading {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .dash-b2b-lead {
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  .dash-b2b-pillars-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin: 18px 0;
+  }
+
+  .dash-b2b-pillar {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .dash-btn-b2b {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  /* 7. Testimonials on Phone */
+  .dash-reviews-stage {
+    padding: 0 14px;
+  }
+
+  .dash-reviews-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dash-review-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  /* 8. Newsletter on Phone */
+  .dash-newsletter-stage {
+    padding: 0 14px;
+  }
+
+  .dash-newsletter-card {
+    border-radius: 20px;
+    padding: 28px 16px;
+    text-align: center;
+  }
+
+  .dash-newsletter-heading {
+    font-size: 1.35rem;
+  }
+
+  .dash-newsletter-sub {
+    font-size: 0.85rem;
+    margin-bottom: 18px;
   }
 
   .dash-newsletter-form {
+    display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
+  }
+
+  .dash-newsletter-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
   }
 
   .dash-newsletter-btn {
     width: 100%;
+    padding: 12px;
+    border-radius: 12px;
     justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   EXTRA SMALL PHONE VIEW (MAX-WIDTH: 400px)
+   ========================================================================== */
+
+@media (max-width: 400px) {
+  .dash-hero-headline {
+    font-size: 1.55rem !important;
+  }
+
+  .dash-hero-actions {
+    flex-direction: column;
+  }
+
+  .dash-btn-hero-primary,
+  .dash-btn-hero-secondary {
+    width: 100%;
+  }
+
+  .dash-catalog-grid {
+    gap: 8px !important;
   }
 }

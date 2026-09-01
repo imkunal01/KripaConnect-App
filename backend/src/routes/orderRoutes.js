@@ -10,6 +10,7 @@ router.post("/", protect, orderCreateValidation, validate, orderController.creat
 router.get("/my", protect, orderController.getMyOrders);
 router.get("/", protect, adminOnly, orderController.getAllOrders);
 router.get("/:id", protect, orderController.getOrderById);
+router.get("/:id/invoice", protect, require("../controllers/invoiceController").downloadInvoice);
 router.put("/:id/cancel", protect, orderController.cancelOrder);
 router.put("/:id/status", protect, adminOnly, orderController.updateOrderStatus);
 router.delete("/:id", protect, adminOnly, orderController.deleteOrder);

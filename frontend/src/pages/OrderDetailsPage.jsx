@@ -1,32 +1,57 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
-import { getOrderById } from '../services/orders'
+import { getOrderById, cancelOrder, downloadInvoicePdf } from '../services/orders'
 import { subscribeToOrder } from '../services/socket'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import OrderTimeline from '../components/OrderTimeline'
+import SEO from '../components/SEO'
 import { OrderDetailsSkeleton } from '../components/SkeletonLoader'
+import {
+  FiArrowLeft,
+  FiPackage,
+  FiTruck,
+  FiCheckCircle,
+  FiClock,
+  FiXCircle,
+  FiDownload,
+  FiMapPin,
+  FiCreditCard,
+  FiShield,
+  FiPhone,
+  FiHelpCircle,
+  FiShoppingBag,
+  FiAlertTriangle
+} from 'react-icons/fi'
+import './OrderDetailsPage.css'
 
 function formatDate(dateString) {
-  if (!dateString) return 'N/A'
+  if (!dateString) return '—'
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('en-IN', {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
   })
 }
 
+function formatShortId(id) {
+  if (!id) return '—'
+  const s = String(id)
+  return s.length > 8 ? s.slice(-8).toUpperCase() : s.toUpperCase()
+}
+
 export default function OrderDetailsPage() {
   const { id } = useParams()
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const navigate = useNavigate()
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [cancelling, setCancelling] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -42,7 +67,6 @@ export default function OrderDetailsPage() {
         setOrder(prev => ({
           ...prev,
           ...updatedOrder,
-          // Preserve populated product references if socket update was partial
           items: updatedOrder.items || prev?.items || []
         }))
         toast.success(`Order status updated: ${String(updatedOrder.deliveryStatus || '').toUpperCase()} 🚚`, {
@@ -69,11 +93,29 @@ export default function OrderDetailsPage() {
     }
   }
 
+  const handleCancelOrder = async () => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return
+    try {
+      setCancelling(true)
+      await cancelOrder(order._id, token)
+      toast.success('Order cancelled successfully')
+      loadOrder()
+    } catch (err) {
+      toast.error(err.message || 'Failed to cancel order')
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  const handleDownloadInvoice = () => {
+    downloadInvoicePdf(order._id, token)
+  }
+
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="order-details-page">
         <Navbar />
-        <main style={{ flex: 1, padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+        <main className="order-details-container">
           <OrderDetailsSkeleton />
         </main>
         <Footer />
@@ -83,220 +125,263 @@ export default function OrderDetailsPage() {
 
   if (error || !order) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="order-details-page">
         <Navbar />
-        <main style={{ flex: 1, padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-          <div style={{
-            backgroundColor: '#fee',
-            color: '#c33',
-            padding: '20px',
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            {error || 'Order not found'}
+        <main className="order-details-container">
+          <div className="order-details-error-card">
+            <FiAlertTriangle className="order-error-icon" />
+            <h2>Order Not Found</h2>
+            <p>{error || 'We could not find details for this order. It may have been removed or the ID is invalid.'}</p>
+            <Link to="/orders" className="order-btn-back-link">
+              <FiArrowLeft /> Back to My Orders
+            </Link>
           </div>
-          <button
-            onClick={() => navigate('/orders')}
-            style={{
-              marginTop: '20px',
-              padding: '12px 24px',
-              backgroundColor: 'var(--primary)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            Back to Orders
-          </button>
         </main>
         <Footer />
       </div>
     )
   }
 
+  const status = (order.deliveryStatus || order.status || 'placed').toLowerCase()
+  const isCancelled = status === 'cancelled'
+  const canCancel = ['placed', 'processing'].includes(status)
+
+  // Timeline steps
+  const steps = [
+    { key: 'placed', label: 'Order Placed', desc: 'Received & Verified' },
+    { key: 'processing', label: 'Processing', desc: 'Quality Check & Packed' },
+    { key: 'shipped', label: 'Dispatched', desc: 'In-Transit to Destination' },
+    { key: 'delivered', label: 'Delivered', desc: 'Handed to Recipient' },
+  ]
+
+  const statusOrder = { placed: 0, processing: 1, shipped: 2, delivered: 3, cancelled: -1 }
+  const currentStepIdx = statusOrder[status] ?? 0
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="order-details-page">
+      <SEO
+        title={`Order #${formatShortId(order._id)} Details | KripaConnect`}
+        description={`Track shipment status, view invoice, and delivery destination for order #${formatShortId(order._id)}.`}
+        canonical={`/orders/${order._id}`}
+        robots="noindex, nofollow"
+      />
       <Navbar />
-      
-      <main style={{ flex: 1, padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-        <div style={{ marginBottom: '30px' }}>
+
+      <main className="order-details-container">
+        {/* Navigation Breadcrumb / Back button */}
+        <div className="order-details-top-bar">
           <button
+            type="button"
+            className="order-details-back-btn"
             onClick={() => navigate('/orders')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#f3f4f6',
-              color: '#374151',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              marginBottom: '20px',
-              fontSize: '14px'
-            }}
           >
-            ← Back to Orders
+            <FiArrowLeft /> Back to All Orders
           </button>
-          <h1 style={{ fontSize: '32px', marginBottom: '10px' }}>
-            Order Details
-          </h1>
-          <p style={{ color: '#666' }}>
-            Order #{order._id.slice(-8).toUpperCase()}
-          </p>
-        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
-          <div style={{
-            backgroundColor: '#fff',
-            borderRadius: '12px',
-            padding: '30px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <OrderTimeline status={order.deliveryStatus} orderDate={order.createdAt} />
-          </div>
-
-          <div style={{
-            backgroundColor: '#fff',
-            borderRadius: '12px',
-            padding: '30px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '20px', color: '#111827' }}>
-              Order Summary
-            </h3>
-            <div style={{ display: 'grid', gap: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
-                <span style={{ color: '#6b7280' }}>Order ID</span>
-                <span style={{ fontWeight: '500', color: '#111827' }}>
-                  #{order._id.slice(-8).toUpperCase()}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
-                <span style={{ color: '#6b7280' }}>Order Date</span>
-                <span style={{ fontWeight: '500', color: '#111827' }}>
-                  {formatDate(order.createdAt)}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
-                <span style={{ color: '#6b7280' }}>Payment Method</span>
-                <span style={{ fontWeight: '500', color: '#111827' }}>
-                  {order.paymentMethod === 'razorpay' ? 'Online Payment' : 'Cash on Delivery'}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
-                <span style={{ color: '#6b7280' }}>Payment Status</span>
-                <span style={{
-                  fontWeight: '500',
-                  color: order.paymentStatus === 'paid' ? '#10b981' : order.paymentStatus === 'failed' ? '#ef4444' : '#f59e0b'
-                }}>
-                  {order.paymentStatus === 'paid' ? 'Paid' : order.paymentStatus === 'failed' ? 'Failed' : 'Pending'}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px' }}>
-                <span style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>Total Amount</span>
-                <span style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>
-                  ₹{order.totalAmount?.toLocaleString('en-IN') || '0'}
-                </span>
-              </div>
-            </div>
+          <div className="order-details-live-beacon">
+            <span className="live-dot" />
+            <span>Live Order Tracking</span>
           </div>
         </div>
 
-        {order.shippingAddress && (
-          <div style={{
-            backgroundColor: '#fff',
-            borderRadius: '12px',
-            padding: '30px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            marginBottom: '30px'
-          }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '20px', color: '#111827' }}>
-              Delivery Address
-            </h3>
-            <div style={{ color: '#374151', lineHeight: '1.8' }}>
-              <p style={{ margin: '4px 0', fontWeight: '500' }}>{order.shippingAddress.name}</p>
-              {order.shippingAddress.phone && (
-                <p style={{ margin: '4px 0' }}>Phone: {order.shippingAddress.phone}</p>
-              )}
-              <p style={{ margin: '4px 0' }}>{order.shippingAddress.addressLine}</p>
-              <p style={{ margin: '4px 0' }}>
-                {order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}
-              </p>
+        {/* Hero Order Header */}
+        <header className="order-details-hero">
+          <div className="order-hero-left">
+            <div className="order-hero-id-row">
+              <h1 className="order-hero-title">Order #{formatShortId(order._id)}</h1>
+              <span className={`order-status-pill is-${status}`}>
+                {status === 'placed' && <FiClock />}
+                {status === 'processing' && <FiPackage />}
+                {status === 'shipped' && <FiTruck />}
+                {status === 'delivered' && <FiCheckCircle />}
+                {status === 'cancelled' && <FiXCircle />}
+                <span>{status.toUpperCase()}</span>
+              </span>
             </div>
+            <p className="order-hero-date">
+              Placed on {formatDate(order.createdAt)} • {order.items?.length || 0} {order.items?.length === 1 ? 'item' : 'items'}
+            </p>
           </div>
-        )}
 
-        <div style={{
-          backgroundColor: '#fff',
-          borderRadius: '12px',
-          padding: '30px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '20px', color: '#111827' }}>
-            Ordered Items ({order.items?.length || 0})
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {order.items && order.items.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: 'flex',
-                  gap: '20px',
-                  padding: '20px',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '8px',
-                  border: '1px solid #e5e7eb'
-                }}
+          <div className="order-hero-actions">
+            <button
+              type="button"
+              className="order-action-btn order-action-btn--invoice"
+              onClick={handleDownloadInvoice}
+            >
+              <FiDownload /> Download GST Invoice
+            </button>
+
+            {canCancel && (
+              <button
+                type="button"
+                className="order-action-btn order-action-btn--cancel"
+                onClick={handleCancelOrder}
+                disabled={cancelling}
               >
-                {item.product?.images?.[0] ? (
-                  <img
-                    src={item.product.images[0]}
-                    alt={item.name || item.product?.name}
-                    style={{
-                      width: '100px',
-                      height: '100px',
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                      backgroundColor: '#fff'
-                    }}
-                  />
-                ) : (
-                  <div style={{
-                    width: '100px',
-                    height: '100px',
-                    backgroundColor: '#e5e7eb',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#9ca3af'
-                  }}>
-                    No Image
+                <FiXCircle /> {cancelling ? 'Cancelling…' : 'Cancel Order'}
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* Live Tracking Progress Stepper Card */}
+        <section className="order-tracking-card">
+          <div className="order-tracking-header">
+            <h3>Shipment Progress</h3>
+            <span className="order-tracking-status-text">
+              {isCancelled ? 'Order Cancelled' : `Currently: ${status.charAt(0).toUpperCase() + status.slice(1)}`}
+            </span>
+          </div>
+
+          {!isCancelled ? (
+            <div className="order-stepper-track">
+              {steps.map((st, i) => {
+                const isComplete = i <= currentStepIdx
+                const isCurrent = i === currentStepIdx
+                return (
+                  <div
+                    key={st.key}
+                    className={`order-stepper-node ${isComplete ? 'is-complete' : ''} ${isCurrent ? 'is-current' : ''}`}
+                  >
+                    <div className="order-node-circle">
+                      {isComplete ? <FiCheckCircle /> : i + 1}
+                    </div>
+                    <div className="order-node-labels">
+                      <strong className="order-node-title">{st.label}</strong>
+                      <span className="order-node-desc">{st.desc}</span>
+                    </div>
+                    {i < steps.length - 1 && <div className="order-node-connector" />}
                   </div>
-                )}
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px', color: '#111827' }}>
-                    {item.name || item.product?.name || 'Product'}
-                  </h4>
-                  {item.product?.description && (
-                    <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
-                      {item.product.description.substring(0, 100)}...
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', gap: '20px', marginTop: '12px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '14px' }}>
-                      Quantity: <strong>{item.qty}</strong>
-                    </span>
-                    <span style={{ color: '#6b7280', fontSize: '14px' }}>
-                      Price: <strong>₹{item.price?.toLocaleString('en-IN')}</strong>
-                    </span>
-                    <span style={{ color: '#111827', fontSize: '16px', fontWeight: '600', marginLeft: 'auto' }}>
-                      ₹{(item.price * item.qty)?.toLocaleString('en-IN')}
-                    </span>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="order-cancelled-notice">
+              <FiXCircle className="order-cancelled-icon" />
+              <div>
+                <strong>Order Cancelled</strong>
+                <p>This order was cancelled. Any online payment initiated will be refunded to your original payment method within 3-5 business days.</p>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Main 2-Column Responsive Body */}
+        <div className="order-details-grid">
+          {/* Left Column: Items Manifest */}
+          <section className="order-items-manifest-card">
+            <div className="order-card-header">
+              <FiPackage className="order-card-header-icon" />
+              <div>
+                <h2>Ordered Items ({order.items?.length || 0})</h2>
+                <p>Detailed breakdown of products in this shipment.</p>
+              </div>
+            </div>
+
+            <div className="order-manifest-list">
+              {order.items?.map((item, idx) => {
+                const img = item.product?.images?.[0]?.url || item.image || item.product?.images?.[0] || 'https://via.placeholder.com/100'
+                const name = item.name || item.product?.name || 'Electronic Product'
+                const qty = item.qty || 1
+                const unitPrice = Number(item.price || 0)
+                const itemTotal = unitPrice * qty
+                const cat = item.product?.category_id?.name || item.product?.Category?.name || 'Consumer Appliance'
+
+                return (
+                  <div key={item._id || idx} className="order-manifest-row">
+                    <div className="order-manifest-thumb-wrap">
+                      <img src={img} alt={name} loading="lazy" />
+                    </div>
+
+                    <div className="order-manifest-info">
+                      <span className="order-manifest-cat">{cat}</span>
+                      <h3 className="order-manifest-name">{name}</h3>
+                      <div className="order-manifest-meta">
+                        <span>Unit Rate: <strong>₹{unitPrice.toLocaleString('en-IN')}</strong></span>
+                        <span>Quantity: <strong>{qty}</strong></span>
+                      </div>
+                    </div>
+
+                    <div className="order-manifest-price-block">
+                      <span className="order-manifest-total">₹{itemTotal.toLocaleString('en-IN')}</span>
+                    </div>
                   </div>
+                )
+              })}
+            </div>
+          </section>
+
+          {/* Right Column: Destination, Billing & Guarantee */}
+          <aside className="order-details-sidebar">
+            {/* Delivery Destination */}
+            <div className="order-sidebar-card">
+              <div className="order-sidebar-header">
+                <FiMapPin className="order-sidebar-icon" />
+                <h3>Delivery Destination</h3>
+              </div>
+              <div className="order-address-box">
+                <strong className="order-address-name">{order.shippingAddress?.name || user?.name || 'Customer'}</strong>
+                <p className="order-address-line">{order.shippingAddress?.addressLine || 'Indore Delivery Depot'}</p>
+                <p className="order-address-city">
+                  {order.shippingAddress?.city || 'Indore'}, {order.shippingAddress?.state || 'Madhya Pradesh'} - <strong>{order.shippingAddress?.pincode || '452001'}</strong>
+                </p>
+                <div className="order-address-phone">
+                  <FiPhone /> {order.shippingAddress?.phone || user?.phone || 'Contact on file'}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+
+            {/* Billing & Payment Details */}
+            <div className="order-sidebar-card">
+              <div className="order-sidebar-header">
+                <FiCreditCard className="order-sidebar-icon" />
+                <h3>Payment & Billing</h3>
+              </div>
+
+              <div className="order-billing-breakdown">
+                <div className="order-billing-row">
+                  <span>Payment Method</span>
+                  <strong className="order-payment-method">
+                    {order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Payment (Razorpay)'}
+                  </strong>
+                </div>
+
+                <div className="order-billing-row">
+                  <span>Payment Status</span>
+                  <span className={`order-pay-status-pill is-${(order.paymentStatus || 'pending').toLowerCase()}`}>
+                    {order.paymentStatus === 'paid' ? 'PAID' : order.paymentStatus === 'failed' ? 'FAILED' : 'PENDING'}
+                  </span>
+                </div>
+
+                <div className="order-billing-row">
+                  <span>Shipping & Handling</span>
+                  <span className="order-free-badge">FREE Express Delivery</span>
+                </div>
+
+                <div className="order-billing-row">
+                  <span>GST & Applicable Taxes</span>
+                  <span className="order-tax-incl">Included (18% GST)</span>
+                </div>
+
+                <div className="order-billing-divider" />
+
+                <div className="order-billing-total-row">
+                  <span>Total Amount</span>
+                  <span className="order-grand-total">₹{Number(order.totalAmount || 0).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Official Warranty & Guarantee */}
+            <div className="order-sidebar-card order-guarantee-box">
+              <FiShield className="order-guarantee-icon" />
+              <div>
+                <strong>Official Brand Warranty Included</strong>
+                <p>All items in this order are 100% genuine and eligible for manufacturer warranty and 7-day hassle-free replacements.</p>
+              </div>
+            </div>
+          </aside>
         </div>
       </main>
 
@@ -304,4 +389,3 @@ export default function OrderDetailsPage() {
     </div>
   )
 }
-

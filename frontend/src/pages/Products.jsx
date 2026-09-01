@@ -133,7 +133,7 @@ export default function Products() {
      =============================== */
   const updateParams = useCallback((newParams, resetPage = true) => {
     const next = new URLSearchParams(params)
-    
+
     // Reset page to 1 when changing filters unless explicitly specified
     if (resetPage && !('page' in newParams)) {
       next.delete('page')
@@ -251,11 +251,10 @@ export default function Products() {
 
         {/* Product Feed */}
         <main className="product-feed">
-          <h1 className="sr-only">
-            {selectedCategoryObj ? `${selectedCategoryObj.name} Products` : 'Electronics & Home Appliances Catalog'}
-          </h1>
-
           <ProductHeroCarousel banners={banners} fallbackProducts={dealProducts} />
+          <h1 className=" py-5">
+            {selectedCategoryObj ? `${selectedCategoryObj.name}` : 'Appliances Catalog'}
+          </h1>
 
           {categories.length > 0 && (
             <div className="category-strip" aria-label="Product categories">
@@ -266,37 +265,30 @@ export default function Products() {
               >
                 All
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat._id}
-                  type="button"
-                  className={`category-strip__item ${category === cat._id ? 'is-active' : ''}`}
-                  onClick={() => updateParams({ category: cat._id, subcategory: '' })}
-                >
-                  {cat.logo && <img src={cat.logo} alt={`${cat.name} icon`} loading="lazy" decoding="async" />}
-                  <span>{cat.name}</span>
-                </button>
-              ))}
+              {categories.map((cat) => {
+                const displayName = cat.name.toLowerCase().includes('computer')
+                  ? 'Computers'
+                  : cat.name.toLowerCase().includes('deals')
+                    ? 'Deals & Wholesale'
+                    : cat.name
+
+                return (
+                  <button
+                    key={cat._id}
+                    type="button"
+                    className={`category-strip__item ${category === cat._id ? 'is-active' : ''}`}
+                    onClick={() => updateParams({ category: cat._id, subcategory: '' })}
+                  >
+                    {cat.logo && <img src={cat.logo} alt={`${cat.name} icon`} loading="lazy" decoding="async" />}
+                    <span>{displayName}</span>
+                  </button>
+                )
+              })}
             </div>
           )}
 
           {/* Controls */}
           <div className="controls-bar">
-            <button
-              className="btn-filter-mobile"
-              onClick={handleFiltersOpen}
-              type="button"
-              aria-label="Open filters"
-            >
-              <FaSlidersH aria-hidden="true" />
-              <span>Filters</span>
-              {activeFiltersCount > 0 && (
-                <span className="filter-count-badge" aria-label={`${activeFiltersCount} active filters`}>
-                  {activeFiltersCount}
-                </span>
-              )}
-            </button>
-
             <div className="search-container">
               <SearchBar
                 value={searchDraft}
@@ -308,11 +300,28 @@ export default function Products() {
               />
             </div>
 
-            <div className="sort-container">
-              <SortBar
-                value={sort}
-                onChange={handleSortChange}
-              />
+            <div className="controls-secondary-row">
+              <div className="sort-container">
+                <SortBar
+                  value={sort}
+                  onChange={handleSortChange}
+                />
+              </div>
+
+              <button
+                className="btn-filter-mobile"
+                onClick={handleFiltersOpen}
+                type="button"
+                aria-label="Open filters"
+              >
+                <FaSlidersH aria-hidden="true" />
+                <span>Filters</span>
+                {activeFiltersCount > 0 && (
+                  <span className="filter-count-badge" aria-label={`${activeFiltersCount} active filters`}>
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 

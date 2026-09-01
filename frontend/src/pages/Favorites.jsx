@@ -1,7 +1,14 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FaHeart, FaHeartBroken, FaSpinner, FaShoppingCart } from 'react-icons/fa'
-import { FiHeart } from 'react-icons/fi'
+import {
+  FiHeart,
+  FiShoppingBag,
+  FiTrash2,
+  FiArrowRight,
+  FiPlus,
+  FiCheck
+} from 'react-icons/fi'
+import { FaHeart } from 'react-icons/fa'
 import ShopContext from '../context/ShopContext.jsx'
 import AuthContext from '../context/AuthContext.jsx'
 import { listFavorites } from '../services/favorites'
@@ -11,6 +18,7 @@ import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import SEO from '../components/SEO.jsx'
 import { ProductGridSkeleton } from '../components/SkeletonLoader.jsx'
+import toast from 'react-hot-toast'
 import './Favorites.css'
 
 export default function Favorites() {
@@ -18,6 +26,7 @@ export default function Favorites() {
   const { addToCart, toggleFavorite, favorites } = useContext(ShopContext)
   const { role } = useAuth()
   const { mode } = usePurchaseMode()
+  
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const loadedRef = useRef(false)
@@ -31,152 +40,158 @@ export default function Favorites() {
     return items.filter(p => favSet.has(p._id))
   }, [token, favorites, items])
 
-  // Only fetch full item details on initial load or when favorites length changes significantly
   useEffect(() => {
     if (!token) {
-      const t = setTimeout(() => {
-        setItems([])
-        setLoading(false)
-        loadedRef.current = false
-      }, 0)
-
-      return () => clearTimeout(t)
+      setItems([])
+      setLoading(false)
+      loadedRef.current = false
+      return
     }
 
-    // If we already loaded and the user removed favorites, no refetch needed.
-    // If favorites increased (new items), refetch to get full product details.
     if (loadedRef.current && favorites.length <= items.length) return
 
     let active = true
-    const t = setTimeout(() => {
-      if (!active) return
-      setLoading(true)
-      listFavorites(token)
-        .then(data => {
-          if (active) {
-            setItems(data)
-            loadedRef.current = true
-          }
-        })
-        .catch(err => console.error('Failed to load favorites:', err))
-        .finally(() => {
-          if (active) setLoading(false)
-        })
-    }, 0)
+    setLoading(true)
+    listFavorites(token)
+      .then(data => {
+        if (active) {
+          setItems(Array.isArray(data) ? data : [])
+          loadedRef.current = true
+        }
+      })
+      .catch(err => console.error('Failed to load favorites:', err))
+      .finally(() => {
+        if (active) setLoading(false)
+      })
 
-    return () => {
-      active = false
-      clearTimeout(t)
-    }
-  }, [token, favorites.length]) // Only depend on length, not the full array
+    return () => { active = false }
+  }, [token, favorites.length])
+
+  const handleMoveToCart = async (product) => {
+    const minQty = retailerBulk ? (product.min_bulk_qty || 1) : 1
+    await addToCart(product, minQty)
+    toast.success(`Added ${product.name} to cart!`, { icon: '🛒' })
+  }
 
   return (
     <div className="favorites-page">
       <SEO
-        title="Your Wishlist & Saved Products | KripaConnect"
-        description="View and manage your favorite electronics and appliances on KripaConnect."
+        title="Saved Wishlist & Favorites | KripaConnect"
+        description="View and manage your favorite electronics, appliances, and saved products on KripaConnect."
         canonical="/favorites"
         robots="noindex, follow"
       />
       <Navbar />
-      <div className="favorites-container">
+
+      <main className="favorites-container">
+        {/* Header */}
+        <header className="favorites-header">
+          <div>
+            <span className="favorites-eyebrow">Saved Wishlist</span>
+            <h1 className="favorites-title">Your Favorite Products</h1>
+            <p className="favorites-subtitle">
+              Quickly re-visit and purchase the appliances and gadgets you have saved.
+            </p>
+          </div>
+          <span className="favorites-count-badge">
+            {visibleItems.length} {visibleItems.length === 1 ? 'saved item' : 'saved items'}
+          </span>
+        </header>
+
         {loading ? (
           <ProductGridSkeleton count={4} />
         ) : visibleItems.length === 0 ? (
-          <div className="favorites-empty-state">
-            <FiHeart className="favorites-empty-icon" />
-            <h2 className="favorites-empty-title">You haven't saved any items yet</h2>
-            <p className="favorites-empty-text">
-              Keep track of your favorite products by clicking the heart icon. Start browsing to find something you'll love!
-            </p>
-            <Link to="/products" className="favorites-empty-btn">
-              Explore Products
+          <div className="favorites-empty-card">
+            <div className="favorites-empty-icon-wrap">
+              <FiHeart />
+            </div>
+            <h2>Your wishlist is empty</h2>
+            <p>Save items you are interested in by tapping the heart icon on any product card.</p>
+            <Link to="/products" className="favorites-empty-cta">
+              <FiShoppingBag /> Explore Catalog
             </Link>
           </div>
         ) : (
           <div className="favorites-grid">
-            {visibleItems.map(p => (
-              <div key={p._id} className="favorite-card">
-                <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleFavorite(p._id);
-                  }} 
-                  className="favorite-remove-icon-btn"
-                  title="Remove from favorites"
-                >
-                  <FaHeartBroken />
-                </button>
-                <Link to={`/product/${p._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                  <div className="favorite-image-wrapper">
-                    {p.images?.[0]?.url ? (
-                      <img src={p.images[0].url} alt={p.name} className="favorite-image" />
-                    ) : (
-                      <div className="favorite-image-placeholder">📦</div>
-                    )}
-                  </div>
-                  <div className="favorite-content">
-                    <h3 className="favorite-name">{p.name}</h3>
+            {visibleItems.map(p => {
+              const inStock = (p.stock || 0) > 0
+              const priceNum = Number(p.price) || 0
+              const bulkPrice = Number(p.price_bulk || p.retailer_price || p.price) || 0
+              const minBulkQty = p?.min_bulk_qty > 0 ? p.min_bulk_qty : 1
 
-                    <div className="favorite-pricing">
-                      {(() => {
-                        const minBulkQty = p?.min_bulk_qty > 0 ? p.min_bulk_qty : 1
-                        const bulkUnitPrice = p?.price_bulk || p?.retailer_price || p?.price
-                        const hasBulkPricing = !!p?.price_bulk && minBulkQty > 1
+              return (
+                <article key={p._id} className="favorite-card">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      toggleFavorite(p._id)
+                      toast.success(`Removed "${p.name}" from wishlist`)
+                    }}
+                    className="favorite-remove-btn"
+                    title="Remove from favorites"
+                    aria-label={`Remove ${p.name} from wishlist`}
+                  >
+                    <FaHeart className="favorite-heart-active" />
+                  </button>
 
-                        if (retailerBulk && hasBulkPricing) {
-                          return (
-                            <>
-                              <div className="favorite-price-row">
-                                <span className="favorite-price">₹{bulkUnitPrice?.toLocaleString('en-IN')}</span>
-                                <span className="favorite-price-strike">₹{p.price?.toLocaleString('en-IN')}</span>
-                              </div>
-                              <div className="favorite-bulk-hint">Min bulk qty: {minBulkQty}</div>
-                            </>
-                          )
-                        }
-
-                        return (
-                          <>
-                            <div className="favorite-price">₹{p.price?.toLocaleString('en-IN')}</div>
-                            {isRetailer && hasBulkPricing && (
-                              <div className="favorite-bulk-hint">
-                                Bulk pricing available in Retailer Mode (min {minBulkQty})
-                              </div>
-                            )}
-                          </>
-                        )
-                      })()}
+                  <Link to={`/product/${p._id}`} className="favorite-img-link">
+                    <div className="favorite-img-wrap">
+                      <img
+                        src={p.images?.[0]?.url || 'https://via.placeholder.com/200'}
+                        alt={p.name}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
+                  </Link>
+
+                  <div className="favorite-body">
+                    <div className="favorite-cat">
+                      {p.Category?.name || (typeof p.category_id === 'object' ? p.category_id?.name : 'Electronics')}
+                    </div>
+
+                    <Link to={`/product/${p._id}`} className="favorite-name-link">
+                      <h3 className="favorite-name" title={p.name}>{p.name}</h3>
+                    </Link>
+
+                    <div className="favorite-pricing-row">
+                      {retailerBulk ? (
+                        <div className="favorite-price-group">
+                          <span className="favorite-price">₹{bulkPrice.toLocaleString('en-IN')}</span>
+                          <span className="favorite-strike">₹{priceNum.toLocaleString('en-IN')}</span>
+                        </div>
+                      ) : (
+                        <span className="favorite-price">₹{priceNum.toLocaleString('en-IN')}</span>
+                      )}
+
+                      <span className={`favorite-stock-dot ${inStock ? 'is-in' : 'is-out'}`}>
+                        {inStock ? 'In Stock' : 'Sold Out'}
+                      </span>
+                    </div>
+
+                    {retailerBulk && minBulkQty > 1 && (
+                      <div className="favorite-min-bulk">Min order: {minBulkQty} units</div>
+                    )}
 
                     <div className="favorite-actions">
-                      {(() => {
-                        const minBulkQty = p?.min_bulk_qty > 0 ? p.min_bulk_qty : 1
-                        const hasBulkPricing = !!p?.price_bulk && minBulkQty > 1
-                        const canQuickAdd = !retailerBulk || !hasBulkPricing
-
-                        return (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              addToCart(p, 1);
-                            }}
-                            className="favorite-add-cart-btn"
-                            disabled={!canQuickAdd}
-                            title={!canQuickAdd ? `Minimum ${minBulkQty} units required in Retailer Mode` : undefined}
-                          >
-                            <FaShoppingCart /> {!canQuickAdd ? `Min Qty: ${minBulkQty}` : 'Move to Cart'}
-                          </button>
-                        )
-                      })()}
+                      <button
+                        type="button"
+                        className="favorite-btn-add"
+                        disabled={!inStock}
+                        onClick={() => handleMoveToCart(p)}
+                      >
+                        <FiShoppingBag /> Move to Cart
+                      </button>
                     </div>
                   </div>
-                </Link>
-              </div>
-            ))}
+                </article>
+              )
+            })}
           </div>
         )}
-      </div>
+      </main>
+
       <Footer />
     </div>
   )
