@@ -79,17 +79,19 @@
 
 @media (max-width: 600px) {
   .sort-dd {
-    width: 44px;
+    width: 42px;
     min-width: 0;
   }
 
   .sort-dd-btn {
-    width: 44px;
-    min-height: 44px;
-    height: 44px;
+    width: 42px;
+    min-height: 42px;
+    height: 42px;
     padding: 0;
     justify-content: center;
-    border-radius: 999px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
   }
 
   .sort-dd-btn > span:first-child {
@@ -98,12 +100,13 @@
 
   .chev {
     font-size: 0.85rem;
-    color: #111827;
+    color: #334155;
   }
 
   .sort-dd-menu {
     left: auto;
     right: 0;
     width: min(220px, calc(100vw - 24px));
+    border-radius: 14px;
   }
 }

@@ -1,4 +1,6 @@
 import { useContext, useState } from 'react'
+import { FaHeart } from 'react-icons/fa'
+import { FiHeart } from 'react-icons/fi'
 import ShopContext from '../context/ShopContext.jsx'
 import { usePreventRageTap } from '../hooks/usePreventRageTap.js'
 import './FavoritesButton.css'
@@ -19,9 +21,11 @@ export default function FavoritesButton({ productId, active }) {
       className={`wish-btn ${active ? "wish-active" : ""} ${anim ? "wish-pop" : ""}`}
       onClick={handleClick}
       disabled={isProcessing}
+      type="button"
+      aria-label={active ? "Remove from Wishlist" : "Add to Wishlist"}
     >
       <span className="wish-icon">
-        {active ? '❤️' : '🤍'}
+        {active ? <FaHeart style={{ color: '#FF3D3D' }} /> : <FiHeart />}
       </span>
 
       <span className="wish-text">

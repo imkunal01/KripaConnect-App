@@ -1,3 +1,4 @@
+const http = require("http");
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -6,6 +7,7 @@ const morgan = require("morgan");
 
 const connectDB = require("./config/db");
 const { createRedisClient } = require("./config/redis");
+const { initSocket } = require("./config/socket");
 const errorHandler = require("./middleware/errorHandler");
 const { helmet, apiLimiter, sanitizeRequest } = require("./middleware/security");
 
@@ -343,10 +345,15 @@ app.get("/api/sitemap.xml", async (req, res) => {
 app.use(errorHandler);
 
 /* =========================
-   SERVER
+   SERVER & WEBSOCKETS
 ========================= */
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on port ${PORT}`)
+const server = http.createServer(app);
+
+// Initialize Socket.io with matching CORS policy
+initSocket(server, corsOptions);
+
+server.listen(PORT, () =>
+  console.log(`🚀 Server with Socket.io running on port ${PORT}`)
 );

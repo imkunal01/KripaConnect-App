@@ -2,18 +2,21 @@ import { createContext, useContext, useEffect, useMemo, useState, useCallback, u
 import AuthContext from './AuthContext.jsx'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import { listFavorites, addFavorite, removeFavorite } from '../services/favorites'
-import { getCart, addToCart as apiAddToCart, updateCartItem, removeCartItem } from '../services/cart'
+import { getCart, addToCart as apiAddToCart, updateCartItem, removeCartItem, mergeCart } from '../services/cart'
 import toast from 'react-hot-toast'
 
 const ShopContext = createContext(null)
 
+const GUEST_CART_KEY = 'kc_guest_cart'
+const GUEST_FAVS_KEY = 'kc_guest_favs'
+
 // Helper to map cart item from API response
 function mapCartItem(i) {
   return {
-    productId: i.product,
+    productId: i.product || i.productId,
     name: i.name,
     price: i.price,
-    image: i.image,
+    image: i.image || i.images?.[0]?.url,
     qty: i.qty,
     stock: i.stock,
     regularPrice: i.regularPrice,
@@ -24,55 +27,120 @@ function mapCartItem(i) {
   }
 }
 
+function loadGuestCart() {
+  try {
+    return JSON.parse(localStorage.getItem(GUEST_CART_KEY)) || []
+  } catch {
+    return []
+  }
+}
+
+function loadGuestFavs() {
+  try {
+    return JSON.parse(localStorage.getItem(GUEST_FAVS_KEY)) || []
+  } catch {
+    return []
+  }
+}
+
 export function ShopProvider({ children }) {
   const { token } = useContext(AuthContext)
   const { mode } = usePurchaseMode()
+
   const [cart, setCart] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('kc_cart')) || [] } catch { return [] }
+    return loadGuestCart()
   })
   const [favorites, setFavorites] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('kc_favs')) || [] } catch { return [] }
+    return loadGuestFavs()
   })
   const [loading, setLoading] = useState(false)
+  const prevTokenRef = useRef(token)
   const initialLoadDone = useRef(false)
 
-  useEffect(() => { localStorage.setItem('kc_cart', JSON.stringify(cart)) }, [cart])
-  useEffect(() => { localStorage.setItem('kc_favs', JSON.stringify(favorites)) }, [favorites])
-
-  // Clear cart/favorites on logout
+  // Persist guest cart & favorites when unauthenticated
   useEffect(() => {
     if (!token) {
-      const t = setTimeout(() => {
-        setCart([])
-        setFavorites([])
-        localStorage.removeItem('kc_cart')
-        localStorage.removeItem('kc_favs')
-        initialLoadDone.current = false
-      }, 0)
-
-      return () => clearTimeout(t)
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(cart))
     }
-  }, [token])
+  }, [cart, token])
+
+  useEffect(() => {
+    if (!token) {
+      localStorage.setItem(GUEST_FAVS_KEY, JSON.stringify(favorites))
+    }
+  }, [favorites, token])
+
+  // Handle Login & Logout state transitions (including Guest Cart Merge)
+  useEffect(() => {
+    const wasGuest = !prevTokenRef.current && !!token
+    const wasAuth = !!prevTokenRef.current && !token
+    prevTokenRef.current = token
+
+    if (wasAuth) {
+      // User logged out: clear state and reset to fresh guest state
+      setCart([])
+      setFavorites([])
+      localStorage.removeItem(GUEST_CART_KEY)
+      localStorage.removeItem(GUEST_FAVS_KEY)
+      initialLoadDone.current = false
+      return
+    }
+
+    if (token) {
+      let cancelled = false
+      setLoading(true)
+
+      const guestItems = wasGuest ? loadGuestCart() : []
+
+      const loadPromise = (guestItems.length > 0)
+        ? mergeCart(guestItems, token, mode).then((merged) => {
+            localStorage.removeItem(GUEST_CART_KEY)
+            return merged
+          })
+        : getCart(token, mode)
+
+      Promise.all([listFavorites(token).catch(() => []), loadPromise.catch(() => [])])
+        .then(([favItems, cartItems]) => {
+          if (cancelled) return
+          setFavorites(favItems.map(p => p._id || p))
+          setCart((cartItems || []).map(mapCartItem))
+          initialLoadDone.current = true
+        })
+        .catch(err => {
+          console.error('Failed to sync cart/favorites on auth change:', err)
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+
+      return () => {
+        cancelled = true
+      }
+    }
+  }, [token, mode])
 
   const addToCart = useCallback(async (product, qty = 1) => {
-    // INSTANT UI UPDATE - no awaits before this
+    const pId = product._id || product.productId
     const tempItem = {
-      productId: product._id,
+      productId: pId,
       name: product.name,
       price: product.price,
-      image: product.images?.[0]?.url,
+      image: product.image || product.images?.[0]?.url,
       qty,
-      stock: product.stock,
-      regularPrice: product.regularPrice,
+      stock: product.stock ?? 999,
+      regularPrice: product.regularPrice || product.price,
       retailerPrice: product.retailerPrice,
       bulkPrice: product.bulkPrice,
       minBulkQty: product.minBulkQty,
       isBulkPrice: false
     }
 
-    // Update UI INSTANTLY
+    let snapshot = null
+
+    // INSTANT OPTIMISTIC UI UPDATE
     setCart(prev => {
-      const idx = prev.findIndex(i => i.productId === product._id)
+      snapshot = prev
+      const idx = prev.findIndex(i => i.productId === pId)
       if (idx >= 0) {
         const updated = [...prev]
         updated[idx] = { ...updated[idx], qty: updated[idx].qty + qty }
@@ -81,18 +149,15 @@ export function ShopProvider({ children }) {
       return [...prev, tempItem]
     })
 
-    // Show success immediately
     toast.success('Added to cart')
 
-    // Then sync with backend
     if (token) {
       try {
-        const res = await apiAddToCart(product._id, qty, token, mode)
-        // Update with real data from server
+        const res = await apiAddToCart(pId, qty, token, mode)
         if (res.data?.item) {
           const newItem = mapCartItem(res.data.item)
           setCart(prev => {
-            const idx = prev.findIndex(i => i.productId === product._id)
+            const idx = prev.findIndex(i => i.productId === pId)
             if (idx >= 0) {
               const updated = [...prev]
               updated[idx] = { ...updated[idx], ...newItem }
@@ -102,18 +167,8 @@ export function ShopProvider({ children }) {
           })
         }
       } catch (err) {
-        console.error('Add to cart failed:', err)
-        // Rollback on error
-        setCart(prev => {
-          const idx = prev.findIndex(i => i.productId === product._id)
-          if (idx >= 0) {
-            const updated = [...prev]
-            updated[idx].qty -= qty
-            if (updated[idx].qty <= 0) return prev.filter((_, i) => i !== idx)
-            return updated
-          }
-          return prev.filter(i => i.productId !== product._id)
-        })
+        console.error('Add to cart failed, rolling back:', err)
+        if (snapshot) setCart(snapshot)
         toast.error(err?.message || 'Failed to add to cart')
         throw err
       }
@@ -121,31 +176,42 @@ export function ShopProvider({ children }) {
   }, [token, mode])
 
   const removeFromCart = useCallback(async (productId) => {
+    let snapshot = null
+    // Optimistically remove from UI
+    setCart(prev => {
+      snapshot = prev
+      return prev.filter(i => i.productId !== productId)
+    })
+    toast.success('Removed from cart')
+
     if (token) {
-      // Optimistically remove from UI first
-      setCart(prev => prev.filter(i => i.productId !== productId))
       try {
         await removeCartItem(productId, token)
-        toast.success('Removed from cart')
       } catch (err) {
-        // Revert on error - refetch cart
-        const items = await getCart(token, mode)
-        setCart(items.map(mapCartItem))
+        console.error('Remove from cart failed, rolling back:', err)
+        if (snapshot) setCart(snapshot)
         toast.error(err?.message || 'Failed to remove item')
         throw err
       }
-    } else {
-      setCart(prev => prev.filter(i => i.productId !== productId))
-      toast.success('Removed from cart')
     }
-  }, [token, mode])
+  }, [token])
 
   const updateQty = useCallback(async (productId, qty) => {
+    let snapshot = null
+    const targetQty = Number(qty)
+
+    // Optimistically update quantity
+    setCart(prev => {
+      snapshot = prev
+      if (targetQty <= 0) {
+        return prev.filter(i => i.productId !== productId)
+      }
+      return prev.map(i => i.productId === productId ? { ...i, qty: targetQty } : i)
+    })
+
     if (token) {
-      // Optimistically update UI
-      setCart(prev => prev.map(i => i.productId === productId ? { ...i, qty } : i))
       try {
-        const res = await updateCartItem(productId, qty, token, mode)
+        const res = await updateCartItem(productId, targetQty, token, mode)
         if (res.data?.removed) {
           setCart(prev => prev.filter(i => i.productId !== productId))
         } else if (res.data?.item) {
@@ -153,24 +219,25 @@ export function ShopProvider({ children }) {
           setCart(prev => prev.map(i => i.productId === productId ? { ...i, ...updated } : i))
         }
       } catch (err) {
-        // Revert on error - refetch cart
-        const items = await getCart(token, mode)
-        setCart(items.map(mapCartItem))
+        console.error('Update quantity failed, rolling back:', err)
+        if (snapshot) setCart(snapshot)
+        toast.error(err?.message || 'Failed to update quantity')
         throw err
       }
-    } else {
-      setCart(prev => prev.map(i => i.productId === productId ? { ...i, qty } : i))
     }
   }, [token, mode])
 
   const toggleFavorite = useCallback(async (productId) => {
     const exists = favorites.includes(productId)
-    
-    // INSTANT UI UPDATE - no conditions, no awaits
-    setFavorites(prev => exists ? prev.filter(id => id !== productId) : [...prev, productId])
+    let snapshot = null
+
+    // INSTANT OPTIMISTIC UI UPDATE
+    setFavorites(prev => {
+      snapshot = prev
+      return exists ? prev.filter(id => id !== productId) : [...prev, productId]
+    })
     toast.success(exists ? 'Removed from wishlist' : 'Added to wishlist')
 
-    // Then sync with backend
     if (token) {
       try {
         if (exists) {
@@ -179,81 +246,50 @@ export function ShopProvider({ children }) {
           await addFavorite(productId, token)
         }
       } catch (err) {
-        // Rollback on error
-        setFavorites(prev => exists ? [...prev, productId] : prev.filter(id => id !== productId))
+        console.error('Wishlist sync failed, rolling back:', err)
+        if (snapshot) setFavorites(snapshot)
         toast.error(err?.message || 'Wishlist update failed')
         throw err
       }
     }
   }, [token, favorites])
 
-  // Initial load - only once when token becomes available
-  useEffect(() => {
-    if (!token || initialLoadDone.current) return
-
-    let cancelled = false
-    const t = setTimeout(() => {
-      if (cancelled) return
-      setLoading(true)
-      Promise.all([listFavorites(token), getCart(token, mode)])
-        .then(([favItems, cartItems]) => {
-          if (cancelled) return
-          setFavorites(favItems.map(p => p._id))
-          setCart(cartItems.map(mapCartItem))
-          initialLoadDone.current = true
-        })
-        .catch(err => console.error('Failed to load cart/favorites:', err))
-        .finally(() => {
-          if (!cancelled) setLoading(false)
-        })
-    }, 0)
-
-    return () => {
-      cancelled = true
-      clearTimeout(t)
-    }
-  }, [token, mode])
-
   const clearCart = useCallback(async () => {
+    setCart([])
     if (token) {
-      // Fetch latest cart state (after order placement, cart should be empty)
       try {
         const items = await getCart(token, mode)
-        setCart(items.map(mapCartItem))
+        setCart((items || []).map(mapCartItem))
       } catch {
         setCart([])
       }
     } else {
-      setCart([])
+      localStorage.removeItem(GUEST_CART_KEY)
     }
   }, [token, mode])
 
-  // Phase 3: used when switching purchase modes (must fully empty cart)
   const wipeCart = useCallback(async () => {
-    // Always clear local cart immediately; if server clearing fails we will restore from server.
     const prev = cart
     setCart([])
 
-    if (!token) return true
+    if (!token) {
+      localStorage.removeItem(GUEST_CART_KEY)
+      return true
+    }
 
     try {
       const ids = Array.isArray(prev) ? prev.map(i => i.productId).filter(Boolean) : []
       for (const productId of ids) {
-        // best-effort delete; backend cart endpoints don't have a single clear route
         await removeCartItem(productId, token)
       }
-
       const items = await getCart(token, mode)
-      setCart(items.map(mapCartItem))
+      setCart((items || []).map(mapCartItem))
       return items.length === 0
     } catch {
-      // Restore UI from server as source of truth
       try {
         const items = await getCart(token, mode)
-        setCart(items.map(mapCartItem))
-      } catch {
-        // If even refresh fails, keep UI empty (user can refresh)
-      }
+        setCart((items || []).map(mapCartItem))
+      } catch {}
       return false
     }
   }, [token, cart, mode])
@@ -262,7 +298,7 @@ export function ShopProvider({ children }) {
     if (!token) return
     try {
       const items = await getCart(token, mode)
-      setCart(items.map(mapCartItem))
+      setCart((items || []).map(mapCartItem))
     } catch (err) {
       console.error('Failed to refresh cart:', err)
     }
@@ -285,3 +321,4 @@ export function ShopProvider({ children }) {
 }
 
 export default ShopContext
+

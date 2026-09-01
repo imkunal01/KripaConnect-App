@@ -20,7 +20,7 @@ const Icons = {
 }
 
 export default function Navbar() {
-  const { user, role } = useAuth()
+  const { user, role, openAuthModal } = useAuth()
   const { mode, setMode, canSwitchMode } = usePurchaseMode()
   const { cart, favorites, wipeCart } = useContext(ShopContext)
   const [q, setQ] = useState('')
@@ -187,9 +187,21 @@ export default function Navbar() {
             {favoritesCount > 0 && <span className="badge-dot" />}
         </Link>
         
-        <Link to={user ? "/profile" : "/login"} className={`dock-item ${isActive('/profile') ? 'active' : ''}`} aria-label={user ? 'My profile' : 'Sign in'}>
-          <Icons.User />
-        </Link>
+        {user ? (
+          <Link to="/profile" className={`dock-item ${isActive('/profile') ? 'active' : ''}`} aria-label="My profile">
+            <Icons.User />
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => openAuthModal('login')}
+            className="dock-item"
+            aria-label="Sign in"
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            <Icons.User />
+          </button>
+        )}
 
         {role === 'retailer' && mode === 'retailer' && (
           <Link to="/b2b" className={`dock-item ${isActive('/b2b') ? 'active' : ''}`} aria-label="Retailer Dashboard">
@@ -268,8 +280,12 @@ export default function Navbar() {
               </Link>
             ) : (
               <div className="auth-buttons">
-                <Link to="/login" className="btn-text">Sign In</Link>
-                <Link to="/signup" className="btn-primary-red">Sign Up</Link>
+                <button type="button" onClick={() => openAuthModal('login')} className="btn-text">
+                  Sign In
+                </button>
+                <button type="button" onClick={() => openAuthModal('signup')} className="btn-primary-red">
+                  Sign Up
+                </button>
               </div>
             )}
           </div>

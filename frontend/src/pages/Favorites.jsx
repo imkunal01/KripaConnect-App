@@ -10,6 +10,7 @@ import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import SEO from '../components/SEO.jsx'
+import { ProductGridSkeleton } from '../components/SkeletonLoader.jsx'
 import './Favorites.css'
 
 export default function Favorites() {
@@ -80,10 +81,7 @@ export default function Favorites() {
       <Navbar />
       <div className="favorites-container">
         {loading ? (
-          <div className="favorites-loading">
-            <FaSpinner className="favorites-loading-icon" />
-            <p>Loading your saved items...</p>
-          </div>
+          <ProductGridSkeleton count={4} />
         ) : visibleItems.length === 0 ? (
           <div className="favorites-empty-state">
             <FiHeart className="favorites-empty-icon" />

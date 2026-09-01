@@ -10,6 +10,7 @@ import SearchBar from '../components/SearchBar.jsx'
 import SortBar from '../components/SortBar.jsx'
 import ProductGrid from '../components/ProductGrid.jsx'
 import ProductHeroCarousel from '../components/ProductHeroCarousel.jsx'
+import { ProductGridSkeleton } from '../components/SkeletonLoader.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import SEO from '../components/SEO.jsx'
@@ -136,8 +137,8 @@ export default function Products() {
   const pageTitle = selectedCategoryObj
     ? `${selectedCategoryObj.name} | Buy Online | KripaConnect`
     : search
-    ? `"${search}" - Electronics Search Results | KripaConnect`
-    : 'Electronics & Appliances Catalog | KripaConnect'
+      ? `"${search}" - Electronics Search Results | KripaConnect`
+      : 'Electronics & Appliances Catalog | KripaConnect'
 
   const pageDescription = selectedCategoryObj
     ? `Browse ${selectedCategoryObj.name} at KripaConnect. Great prices, verified quality, and fast shipping across India.`
@@ -166,17 +167,25 @@ export default function Products() {
         },
         ...(selectedCategoryObj
           ? [
-              {
-                '@type': 'ListItem',
-                position: 3,
-                name: selectedCategoryObj.name,
-                item: `https://kripaconnect.in/products?category=${selectedCategoryObj._id}`,
-              },
-            ]
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: selectedCategoryObj.name,
+              item: `https://kripaconnect.in/products?category=${selectedCategoryObj._id}`,
+            },
+          ]
           : []),
       ],
     },
   }
+
+  const activeFiltersCount = [
+    category,
+    subcategory,
+    minPrice,
+    maxPrice,
+    availability,
+  ].filter(Boolean).length
 
   return (
     <div className="page-wrapper">
@@ -244,6 +253,11 @@ export default function Products() {
             >
               <FaSlidersH aria-hidden="true" />
               <span>Filters</span>
+              {activeFiltersCount > 0 && (
+                <span className="filter-count-badge" aria-label={`${activeFiltersCount} active filters`}>
+                  {activeFiltersCount}
+                </span>
+              )}
             </button>
 
             <div className="search-container">
@@ -267,10 +281,7 @@ export default function Products() {
 
           {/* Content */}
           {loading ? (
-            <div className="loading-state">
-              <div className="spinner" />
-              <span>Loading products...</span>
-            </div>
+            <ProductGridSkeleton count={12} />
           ) : items.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">🔍</div>

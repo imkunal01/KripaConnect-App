@@ -53,11 +53,24 @@ function makeOfflineError() {
 }
 
 async function runFetch(path, { method, body, token, headers, credentials }) {
+  let authToken = token
+  if (!authToken && typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem('auth')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        authToken = parsed?.token
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   return fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,

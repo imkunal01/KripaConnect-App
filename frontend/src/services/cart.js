@@ -18,3 +18,13 @@ export async function removeCartItem(productId, token) {
   return apiFetch(`/api/cart/item/${productId}`, { method: 'DELETE', token })
 }
 
+export async function mergeCart(items, token, purchaseMode) {
+  const res = await apiFetch('/api/cart/merge', {
+    method: 'POST',
+    body: { items, purchaseMode },
+    token
+  })
+  return res.data?.data || []
+}
+
+

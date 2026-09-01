@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { getAllOrdersAdmin, updateOrderStatus, getOrderByIdAdmin, deleteOrderAdmin } from '../../services/admin'
+import { subscribeToAdminOrders } from '../../services/socket'
+import { AdminTableSkeleton } from '../../components/SkeletonLoader'
 import OrderTimeline from '../../components/OrderTimeline'
 
 const statusOptions = ['pending', 'shipped', 'delivered', 'cancelled']
@@ -76,6 +78,18 @@ export default function OrderManagement() {
 
   useEffect(() => {
     loadOrders()
+    const unsubscribe = subscribeToAdminOrders((updatedOrder) => {
+      setOrders(prev => {
+        const idx = prev.findIndex(o => (o._id || o.id) === (updatedOrder._id || updatedOrder.id))
+        if (idx >= 0) {
+          const updated = [...prev]
+          updated[idx] = { ...updated[idx], ...updatedOrder }
+          return updated
+        }
+        return [updatedOrder, ...prev]
+      })
+    })
+    return () => unsubscribe()
   }, [token])
 
   async function loadOrders() {
@@ -211,7 +225,9 @@ export default function OrderManagement() {
           </div>
 
           <div style={{ maxHeight: 640, overflowY: 'auto' }}>
-            {filteredOrders.length === 0 ? (
+            {loading ? (
+              <AdminTableSkeleton rows={6} />
+            ) : filteredOrders.length === 0 ? (
               <div className="adminEmpty">No orders found</div>
             ) : (
               <div className="adminList">

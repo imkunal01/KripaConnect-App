@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import SEO from '../components/SEO.jsx'
+import { CategoryGridSkeleton } from '../components/SkeletonLoader.jsx'
 import './Categories.css'
 
 export default function Categories() {
@@ -79,10 +80,7 @@ export default function Categories() {
         </header>
 
         {loading ? (
-          <div className="categories-loading" aria-busy="true" aria-live="polite">
-            <div className="categories-loading-icon">⏳</div>
-            <p style={{ color: '#6b7280' }}>Loading categories...</p>
-          </div>
+          <CategoryGridSkeleton count={8} />
         ) : items.length === 0 ? (
           <div className="categories-empty-state">
             <div className="categories-empty-icon">📂</div>

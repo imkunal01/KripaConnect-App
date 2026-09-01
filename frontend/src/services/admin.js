@@ -392,3 +392,116 @@ export async function deleteBannerAdmin(bannerId, token) {
   return res.data
 }
 
+// Bulk Product CSV Import
+export async function importProductsCsv(file, updateExisting, token) {
+  let authToken = token
+  if (!authToken && typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem('auth')
+      if (raw) authToken = JSON.parse(raw)?.token
+    } catch {}
+  }
+
+  const formData = new FormData()
+  formData.append('file', file)
+  if (updateExisting !== undefined) {
+    formData.append('updateExisting', String(updateExisting))
+  }
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+  const res = await fetch(`${BASE_URL}/api/admin/products/import-csv`, {
+    method: 'POST',
+    headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+    credentials: 'include',
+    body: formData,
+  })
+
+  const data = await res.json().catch(() => ({ message: 'Failed to import CSV' }))
+  if (!res.ok) {
+    const error = new Error(data.message || 'Failed to import products from CSV')
+    error.status = res.status
+    error.data = data
+    throw error
+  }
+
+  return data
+}
+
+export async function downloadCsvTemplate(token) {
+  let authToken = token
+  if (!authToken && typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem('auth')
+      if (raw) authToken = JSON.parse(raw)?.token
+    } catch {}
+  }
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+  const res = await fetch(`${BASE_URL}/api/admin/products/csv-template`, {
+    headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    throw new Error('Failed to download CSV template')
+  }
+
+  const blob = await res.blob()
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'kripaconnect_products_template.csv'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+// Bulk Product Actions
+export async function bulkProductAction(productIds, action, payload = {}, token) {
+  const res = await apiFetch('/api/admin/products/bulk-action', {
+    method: 'POST',
+    body: { productIds, action, payload },
+    token,
+  })
+  return res.data
+}
+
+// Bulk Export Selected Products
+export async function bulkExportProducts(productIds, token) {
+  let authToken = token
+  if (!authToken && typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem('auth')
+      if (raw) authToken = JSON.parse(raw)?.token
+    } catch {}
+  }
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+  const res = await fetch(`${BASE_URL}/api/admin/products/bulk-export`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    },
+    credentials: 'include',
+    body: JSON.stringify({ productIds }),
+  })
+
+  if (!res.ok) {
+    throw new Error('Failed to export selected products')
+  }
+
+  const blob = await res.blob()
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `kripaconnect_products_export_${Date.now()}.csv`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+
+

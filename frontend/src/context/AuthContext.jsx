@@ -53,8 +53,37 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => initialStored?.user || null)
   const [role, setRole] = useState(() => initialStored?.role || null)
   const [loading, setLoading] = useState(true)
+  const [authModalState, setAuthModalState] = useState({
+    isOpen: false,
+    mode: 'login', // 'login' | 'signup' | 'forgot'
+    options: {}
+  })
   const refreshTimer = useRef(null)
   const initialized = useRef(false)
+
+  const openAuthModal = (modeOrOptions = 'login') => {
+    if (typeof modeOrOptions === 'string') {
+      setAuthModalState({
+        isOpen: true,
+        mode: modeOrOptions,
+        options: {}
+      })
+    } else if (typeof modeOrOptions === 'object' && modeOrOptions !== null) {
+      setAuthModalState({
+        isOpen: true,
+        mode: modeOrOptions.mode || 'login',
+        options: modeOrOptions
+      })
+    }
+  }
+
+  const closeAuthModal = () => {
+    setAuthModalState((prev) => ({ ...prev, isOpen: false }))
+  }
+
+  const setAuthModalMode = (mode) => {
+    setAuthModalState((prev) => ({ ...prev, mode }))
+  }
 
   async function refreshMe(accessToken = token) {
     if (!accessToken) return null
@@ -261,7 +290,27 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
   }, [])
 
-  const value = useMemo(() => ({ token, user, role, loading, signIn, signInWithOtp, signUp, signOut, googleSignIn, refreshMe }), [token, user, role, loading])
+  const value = useMemo(
+    () => ({
+      token,
+      user,
+      role,
+      loading,
+      signIn,
+      signInWithOtp,
+      signUp,
+      signOut,
+      googleSignIn,
+      refreshMe,
+      isAuthModalOpen: authModalState.isOpen,
+      authModalMode: authModalState.mode,
+      authModalOptions: authModalState.options,
+      openAuthModal,
+      closeAuthModal,
+      setAuthModalMode,
+    }),
+    [token, user, role, loading, authModalState, openAuthModal, closeAuthModal, setAuthModalMode]
+  )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 export default AuthContext

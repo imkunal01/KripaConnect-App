@@ -1,50 +1,10 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth.js'
-import { useGoogleLogin } from '@react-oauth/google'
-import PasswordStrengthMeter from '../components/PasswordStrengthMeter.jsx'
+import { useNavigate, Link } from 'react-router-dom'
 import SEO from '../components/SEO.jsx'
-import './FormStyles.css'
+import AuthCard from '../components/AuthCard.jsx'
+import '../components/AuthModal.css'
 
 export default function Signup() {
-  const { signUp, googleSignIn } = useAuth()
   const navigate = useNavigate()
-  
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const payload = await googleSignIn(null, tokenResponse.access_token);
-        const hasAddress = Array.isArray(payload?.savedAddresses) && payload.savedAddresses.length > 0
-        const needsOnboarding = !!payload?.isNewUser || !hasAddress
-        navigate(needsOnboarding ? '/onboarding' : '/');
-      } catch (e) {
-        console.error(e);
-        alert("Google Signup Failed");
-      }
-    },
-    onError: () => {
-      console.log('Signup Failed');
-      alert("Google Signup Failed");
-    }
-  });
-
-  const handleSignup = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      await signUp({ name, email, password })
-      navigate('/onboarding')
-    } catch (err) {
-      alert("Signup failed: " + err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const goBack = () => {
     try {
@@ -56,83 +16,147 @@ export default function Signup() {
   }
 
   return (
-    <div className="auth-wrapper">
+    <div className="auth-page-container">
       <SEO
-        title="Create an Account | Sign Up | KripaConnect"
-        description="Join KripaConnect to discover top electronics, track shipments, and unlock wholesale B2B pricing."
+        title="Create Account | KripaConnect Electronics & Wholesale"
+        description="Create your KripaConnect account to shop certified electronics, unlock wholesale B2B pricing, and track shipments."
         canonical="/signup"
         robots="noindex, follow"
       />
-      {/* LEFT: Form Section */}
-      <div className="auth-left">
-        <button type="button" className="auth-back-btn" onClick={goBack}>
-          ← Back
-        </button>
 
-        <header className="auth-header">
-          <div className="brand">KripaConnect</div>
-          <div className="auth-toggle">
-            <Link to="/login" className="toggle-btn">Log In</Link>
-            <Link to="/signup" className="toggle-btn active">Sign Up</Link>
-          </div>
-        </header>
-
-        <div className="welcome-text">
-          <h1>Create Account</h1>
-          <p>Enter your details to create your account.</p>
-        </div>
-
-        <form onSubmit={handleSignup} className="form-stack">
-          <input
-            className="input-field"
-            type="text"
-            placeholder="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <input
-            className="input-field"
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            className="input-field"
-            type="password"
-            placeholder="Create Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          <PasswordStrengthMeter
-            password={password}
-            visible={true}
-            title="Password requirements"
-          />
-
-          <button className="btn-primary" type="submit" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Sign Up'}
-          </button>
-        </form>
-
-        <div className="divider">or continue with</div>
-
-        <button className="btn-google" onClick={() => loginWithGoogle()}>
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="Google" />
-          Google
-        </button>
+      {/* Cyber Aurora Floating Background */}
+      <div className="auth-aurora-bg" aria-hidden="true">
+        <div className="aurora-blob aurora-blob--1" />
+        <div className="aurora-blob aurora-blob--2" />
+        <div className="aurora-blob aurora-blob--3" />
       </div>
+      <div className="auth-grid-overlay" aria-hidden="true" />
 
-      {/* RIGHT: Visual Section (Hidden on Mobile) */}
-      <div className="auth-right">
-        <div className="visual-content">
-          <h2>Start your journey.</h2>
-          <p>Create an account to unlock exclusive features, track your orders, and join our global community.</p>
+      {/* Dual Cyber Studio Layout */}
+      <div className="auth-studio-wrapper">
+        {/* Left Side: Auth Card Form */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button
+              type="button"
+              className="cyber-secondary-btn"
+              style={{ width: 'auto', padding: '6px 14px', height: '36px', borderRadius: '999px', fontSize: '0.82rem' }}
+              onClick={goBack}
+              aria-label="Back to store"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              <span>Back to store</span>
+            </button>
+
+            <Link
+              to="/"
+              style={{ color: '#94A3B8', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none' }}
+            >
+              Explore Store →
+            </Link>
+          </div>
+
+          <AuthCard
+            initialMode="signup"
+            isModal={false}
+            title="Create Account"
+            description="Choose your account type and unlock direct wholesale B2B pricing."
+          />
         </div>
+
+        {/* Right Side: Interactive Showcase Studio */}
+        <aside className="auth-studio-showcase" aria-label="KripaConnect account benefits">
+          {/* Header Pill */}
+          <div className="showcase-header-pill">
+            <span className="pulse-dot" aria-hidden="true" />
+            <span>Instant Activation • 0% Onboarding Fee</span>
+          </div>
+
+          {/* Main Headline */}
+          <div className="showcase-main-content">
+            <h1 className="showcase-headline">
+              Unlock <span className="neon-highlight--b2b">Wholesale Tiers</span> & Bulk Margins.
+            </h1>
+
+            <p className="showcase-description">
+              Whether you are shopping for your personal setup or sourcing inventory for your electronics store, KripaConnect gives you unmatchable brand-direct prices.
+            </p>
+
+            {/* Interactive Live Cards Deck */}
+            <div className="showcase-cards-deck">
+              <div className="showcase-card-item">
+                <div className="showcase-card-left">
+                  <div className="showcase-card-icon blue-theme">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                      <line x1="7" y1="7" x2="7.01" y2="7" />
+                    </svg>
+                  </div>
+                  <div className="showcase-card-text">
+                    <h4>Volume-Based Discounts</h4>
+                    <p>Up to 40% margin benefit on wholesale electronics orders</p>
+                  </div>
+                </div>
+                <span className="showcase-card-chip highlight-b2b">Up to 40% Off</span>
+              </div>
+
+              <div className="showcase-card-item">
+                <div className="showcase-card-left">
+                  <div className="showcase-card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                  </div>
+                  <div className="showcase-card-text">
+                    <h4>Automated GST Invoicing</h4>
+                    <p>Instant tax invoice download with full input credit</p>
+                  </div>
+                </div>
+                <span className="showcase-card-chip highlight">Tax Credit</span>
+              </div>
+
+              <div className="showcase-card-item">
+                <div className="showcase-card-left">
+                  <div className="showcase-card-icon green-theme">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="1" y="3" width="15" height="13" />
+                      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                      <circle cx="5.5" cy="18.5" r="2.5" />
+                      <circle cx="18.5" cy="18.5" r="2.5" />
+                    </svg>
+                  </div>
+                  <div className="showcase-card-text">
+                    <h4>Priority Courier Dispatch</h4>
+                    <p>Same-day dispatch with insured priority transit</p>
+                  </div>
+                </div>
+                <span className="showcase-card-chip">Fast Transit</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Trust Metrics */}
+          <div className="showcase-trust-bar">
+            <div className="trust-stat">
+              <span className="trust-number">₹10Cr+</span>
+              <span className="trust-caption">Wholesale Volume</span>
+            </div>
+            <div className="trust-stat">
+              <span className="trust-number">100%</span>
+              <span className="trust-caption">GST Invoiced</span>
+            </div>
+            <div className="trust-stat">
+              <span className="trust-number">24/7</span>
+              <span className="trust-caption">B2B Support</span>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   )

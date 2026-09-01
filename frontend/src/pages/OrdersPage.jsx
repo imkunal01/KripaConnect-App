@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
+import toast from "react-hot-toast"
 import { useAuth } from "../hooks/useAuth"
 import { getMyOrders, cancelOrder } from "../services/orders"
+import { subscribeToUserOrders } from "../services/socket"
 import Navbar from "../components/Navbar"
 import Footer from "../components/Footer"
 import SEO from "../components/SEO"
+import { OrdersListSkeleton } from "../components/SkeletonLoader"
 import "./OrdersPage.css"
 
 function formatDate(dateString) {
@@ -20,7 +23,7 @@ function formatDate(dateString) {
 }
 
 export default function OrdersPage() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const navigate = useNavigate()
 
   const [orders, setOrders] = useState([])
@@ -44,7 +47,18 @@ export default function OrdersPage() {
   useEffect(() => {
     if (!token) return navigate("/login")
     loadOrders()
-  }, [token, navigate, loadOrders])
+
+    const uId = user?._id || user?.id
+    if (uId) {
+      const unsubscribe = subscribeToUserOrders(uId, (updatedOrder) => {
+        setOrders(prev => prev.map(o => (o._id === updatedOrder._id ? { ...o, ...updatedOrder } : o)))
+        toast.success(`Order #${(updatedOrder._id || '').slice(-8).toUpperCase()} is now ${updatedOrder.deliveryStatus?.toUpperCase()} 🚚`, {
+          id: `order-status-${updatedOrder._id}`
+        })
+      })
+      return () => unsubscribe()
+    }
+  }, [token, user, navigate, loadOrders])
 
   function handleBuyAgain() {
     navigate("/products")
@@ -65,7 +79,13 @@ export default function OrdersPage() {
     return (
       <div className="orders-page">
         <Navbar />
-        <div className="orders-loading">Loading orders...</div>
+        <main className="orders-main">
+          <header className="orders-header">
+            <h1 className="orders-title">My Orders</h1>
+            <p className="orders-subtitle">View and track your order history</p>
+          </header>
+          <OrdersListSkeleton count={4} />
+        </main>
         <Footer />
       </div>
     )

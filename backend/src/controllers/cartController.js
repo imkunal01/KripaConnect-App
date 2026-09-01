@@ -246,5 +246,61 @@ async function removeItem(req, res) {
   }
 }
 
-module.exports = { getCart, addItem, updateItem, removeItem };
+// 🛒 Merge guest cart into authenticated user cart
+async function mergeCart(req, res) {
+  try {
+    const { items = [], purchaseMode } = req.body;
+    const isRetailer = req.user.role === "retailer";
+    const effectivePurchaseMode = normalizePurchaseMode(purchaseMode, isRetailer);
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return getCart(req, res);
+    }
+
+    const user = await User.findById(req.user._id).select("cart");
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // Fetch products to validate stocks
+    const productIds = items.map(i => i.productId || i.product).filter(Boolean);
+    const products = await Product.find({ _id: { $in: productIds }, active: { $ne: false } }).select("stock min_bulk_qty price_bulk name price images retailer_price");
+    const productMap = new Map(products.map(p => [p._id.toString(), p]));
+
+    for (const item of items) {
+      const pId = String(item.productId || item.product || "");
+      const product = productMap.get(pId);
+      if (!product || product.stock <= 0) continue;
+
+      const requestedQty = Math.max(1, Number(item.qty) || 1);
+      const existingIdx = user.cart.findIndex(i => String(i.product) === pId);
+
+      if (existingIdx >= 0) {
+        user.cart[existingIdx].qty = Math.min(user.cart[existingIdx].qty + requestedQty, product.stock);
+      } else {
+        user.cart.push({
+          product: product._id,
+          qty: Math.min(requestedQty, product.stock)
+        });
+      }
+    }
+
+    await user.save();
+    await invalidateCache(`cart:user:${req.user._id}`);
+
+    // Return the updated populated cart
+    const populatedUser = await User.findById(req.user._id)
+      .select("cart")
+      .populate("cart.product", "name price images stock retailer_price price_bulk min_bulk_qty")
+      .lean();
+
+    const validItems = (populatedUser.cart || []).filter(it => it.product && it.product._id);
+    const cartData = mapCartItems(validItems, isRetailer, effectivePurchaseMode);
+
+    res.json({ success: true, data: cartData });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+module.exports = { getCart, addItem, updateItem, removeItem, mergeCart };
+
 

@@ -1,7 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { listProducts } from '../../services/products'
-import { createProductAdmin, updateProductAdmin, deleteProductAdmin, listSubcategoriesAdmin, listCategoriesAdmin } from '../../services/admin'
+import {
+  createProductAdmin,
+  updateProductAdmin,
+  deleteProductAdmin,
+  listSubcategoriesAdmin,
+  listCategoriesAdmin,
+} from '../../services/admin'
+import { AdminTableSkeleton } from '../../components/SkeletonLoader'
+import CsvImportModal from './CsvImportModal'
+import BulkProductActionsBar from './BulkProductActionsBar'
+import { FiUploadCloud, FiPlus } from 'react-icons/fi'
 
 function getMongoObjectIdTimeMs(id) {
   if (typeof id !== 'string' || id.length < 8) return 0
@@ -26,6 +36,9 @@ export default function ProductManagement() {
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [search, setSearch] = useState('')
+  const [showCsvModal, setShowCsvModal] = useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
+  const selectAllRef = useRef(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -126,8 +139,6 @@ export default function ProductManagement() {
     }
   }
 
-  if (loading) return <div className="adminEmpty">Loading…</div>
-
   const filteredProducts = products.filter(p => {
     if (!search) return true
     const s = search.toLowerCase()
@@ -137,6 +148,33 @@ export default function ProductManagement() {
     )
   })
 
+  // Synchronize indeterminate state on header select-all checkbox
+  useEffect(() => {
+    if (!selectAllRef.current) return
+    const numSelected = selectedIds.length
+    const total = filteredProducts.length
+    if (numSelected > 0 && numSelected < total) {
+      selectAllRef.current.indeterminate = true
+    } else {
+      selectAllRef.current.indeterminate = false
+    }
+  }, [selectedIds, filteredProducts.length])
+
+  function handleToggleSelectAll() {
+    if (filteredProducts.length === 0) return
+    if (selectedIds.length === filteredProducts.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(filteredProducts.map(p => p._id))
+    }
+  }
+
+  function handleToggleRow(id) {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
   return (
     <div className="adminPage">
       <div className="adminPageHeader">
@@ -145,6 +183,20 @@ export default function ProductManagement() {
           <p className="adminPageHeader__subtitle">Manage products, inventory, and pricing</p>
         </div>
         <div className="adminActions">
+          <button
+            type="button"
+            className="adminBtn"
+            style={{
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              color: '#334155',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            }}
+            onClick={() => setShowCsvModal(true)}
+          >
+            <FiUploadCloud style={{ color: 'var(--primary)', fontSize: '1.1rem' }} />
+            <span>Bulk Import CSV</span>
+          </button>
           <button
             type="button"
             className="adminBtn adminBtnPrimary"
@@ -158,10 +210,19 @@ export default function ProductManagement() {
               setShowForm(true)
             }}
           >
-            + Add Product
+            <FiPlus style={{ fontSize: '1.1rem' }} />
+            <span>Add Product</span>
           </button>
         </div>
       </div>
+
+      {/* Ultra-Modern CSV Bulk Import Modal */}
+      <CsvImportModal
+        token={token}
+        isOpen={showCsvModal}
+        onClose={() => setShowCsvModal(false)}
+        onSuccess={loadData}
+      />
 
       {showForm && (
         <div className="adminModalOverlay" role="dialog" aria-modal="true">
@@ -364,11 +425,25 @@ export default function ProductManagement() {
       </div>
 
       <div className="adminCard">
-        <div className="adminOnlyDesktop">
-          <div className="adminTableWrap">
+        {loading ? (
+          <AdminTableSkeleton rows={8} />
+        ) : (
+          <>
+            <div className="adminOnlyDesktop">
+              <div className="adminTableWrap">
             <table className="adminTable">
               <thead>
                 <tr>
+                  <th style={{ width: 44, textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      ref={selectAllRef}
+                      checked={filteredProducts.length > 0 && selectedIds.length === filteredProducts.length}
+                      onChange={handleToggleSelectAll}
+                      className="bulk-row-checkbox"
+                      aria-label="Select all products"
+                    />
+                  </th>
                   <th>Image</th>
                   <th>Name</th>
                   <th>Price</th>
@@ -379,10 +454,20 @@ export default function ProductManagement() {
               </thead>
               <tbody>
                 {filteredProducts.map(product => {
+                  const isSelected = selectedIds.includes(product._id)
                   const stockNumber = typeof product.stock === 'number' ? product.stock : Number(product.stock)
                   const stockColor = stockNumber < 10 ? 'var(--danger)' : stockNumber < 50 ? 'var(--text-secondary)' : 'var(--secondary)'
                   return (
-                    <tr key={product._id}>
+                    <tr key={product._id} className={isSelected ? 'is-row-selected' : ''}>
+                      <td style={{ textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleRow(product._id)}
+                          className="bulk-row-checkbox"
+                          aria-label={`Select ${product.name}`}
+                        />
+                      </td>
                       <td>
                         <img
                           src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
@@ -424,52 +509,74 @@ export default function ProductManagement() {
             <div className="adminEmpty">No products found</div>
           ) : (
             <div className="adminMobileList">
-              {filteredProducts.map(product => (
-                <div key={product._id} className="adminMobileCard">
-                  <div className="adminMobileCardHeader">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                      <img
-                        src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
-                        alt={product.name}
-                        className="adminMobileThumb"
-                      />
-                      <div style={{ minWidth: 0 }}>
-                        <div className="adminMobileCardTitle" title={product.name}>{product.name}</div>
-                        <div className="adminMobileCardSub" title={product.Category?.name || ''}>
-                          {product.Category?.name || 'Uncategorized'}
+              {filteredProducts.map(product => {
+                const isSelected = selectedIds.includes(product._id)
+                return (
+                  <div key={product._id} className={`adminMobileCard ${isSelected ? 'is-card-selected' : ''}`}>
+                    <div className="adminMobileCardHeader">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleRow(product._id)}
+                          className="bulk-row-checkbox"
+                          aria-label={`Select ${product.name}`}
+                        />
+                        <img
+                          src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
+                          alt={product.name}
+                          className="adminMobileThumb"
+                        />
+                        <div style={{ minWidth: 0 }}>
+                          <div className="adminMobileCardTitle" title={product.name}>{product.name}</div>
+                          <div className="adminMobileCardSub" title={product.Category?.name || ''}>
+                            {product.Category?.name || 'Uncategorized'}
+                          </div>
                         </div>
                       </div>
+                      <span className={`adminBadge ${product.active ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
+                        {product.active ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
-                    <span className={`adminBadge ${product.active ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
-                      {product.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
 
-                  <div className="adminMobileCardBody">
-                    <div className="adminMobileMetaRow">
-                      <span className="adminHelp">Price</span>
-                      <span className="adminMobileMetaValue">₹{product.price?.toLocaleString('en-IN')}</span>
+                    <div className="adminMobileCardBody">
+                      <div className="adminMobileMetaRow">
+                        <span className="adminHelp">Price</span>
+                        <span className="adminMobileMetaValue">₹{product.price?.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="adminMobileMetaRow">
+                        <span className="adminHelp">Stock</span>
+                        <span className="adminMobileMetaValue">{product.stock}</span>
+                      </div>
                     </div>
-                    <div className="adminMobileMetaRow">
-                      <span className="adminHelp">Stock</span>
-                      <span className="adminMobileMetaValue">{product.stock}</span>
-                    </div>
-                  </div>
 
-                  <div className="adminMobileActions">
-                    <button type="button" className="adminBtn adminBtnPrimary adminBtn--sm" onClick={() => handleEdit(product)}>
-                      Edit
-                    </button>
-                    <button type="button" className="adminBtn adminBtnDanger adminBtn--sm" onClick={() => handleDelete(product._id)}>
-                      Delete
-                    </button>
+                    <div className="adminMobileActions">
+                      <button type="button" className="adminBtn adminBtnPrimary adminBtn--sm" onClick={() => handleEdit(product)}>
+                        Edit
+                      </button>
+                      <button type="button" className="adminBtn adminBtnDanger adminBtn--sm" onClick={() => handleDelete(product._id)}>
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
+
+      {/* Floating Batch Actions Bar */}
+      <BulkProductActionsBar
+        selectedIds={selectedIds}
+        onClearSelection={() => setSelectedIds([])}
+        onSuccess={loadData}
+        token={token}
+        categories={categories}
+        subcategories={subcategories}
+      />
     </div>
   )
 }
