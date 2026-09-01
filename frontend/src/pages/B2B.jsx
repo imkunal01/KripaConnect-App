@@ -5,6 +5,7 @@ import ShopContext from '../context/ShopContext.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import { getMyOrders, downloadInvoicePdf } from '../services/orders.js'
+import { listCategories } from '../services/categories.js'
 import { apiFetch } from '../services/api.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
@@ -27,7 +28,9 @@ import {
   FiTruck,
   FiShield,
   FiCheck,
-  FiUser
+  FiUser,
+  FiChevronLeft,
+  FiChevronRight
 } from 'react-icons/fi'
 import './B2B.css'
 
@@ -61,40 +64,81 @@ export default function B2B() {
   const { cart, addToCart } = useContext(ShopContext)
   const navigate = useNavigate()
 
-  const [activeTab, setActiveTab] = useState('wholesale') // 'wholesale' | 'orders' | 'analytics' | 'savings' | 'profile'
+  const [activeTab, setActiveTab] = useState('wholesale') // 'wholesale' | 'orders' | 'profile'
   const [period, setPeriod] = useState('month') // 'month' | '3months' | 'all'
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // Paginated Wholesale Products
   const [products, setProducts] = useState([])
   const [productsLoading, setProductsLoading] = useState(true)
   const [qtyByProductId, setQtyByProductId] = useState({})
-  
-  // Filters
+  const [categories, setCategories] = useState([])
+
+  // Pagination & Filtering State
+  const [page, setPage] = useState(1)
+  const [limit] = useState(12)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalProducts, setTotalProducts] = useState(0)
   const [productSearch, setProductSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [orderSearch, setOrderSearch] = useState('')
-  const [orderStatus, setOrderStatus] = useState('all')
 
+  // Auth Guard
   useEffect(() => {
     if (!token) { navigate('/login'); return }
     if (role !== 'retailer') { navigate('/'); return }
   }, [token, role, navigate])
 
-  // Load Data
+  // Load Orders & Categories once
   useEffect(() => {
     if (!token || role !== 'retailer') return
 
-    async function loadData() {
+    async function loadMeta() {
       setLoading(true)
       try {
-        const [ordersData, productsRes] = await Promise.all([
+        const [ordersData, catsData] = await Promise.all([
           getMyOrders(token).catch(() => []),
-          apiFetch('/api/retailer/products', { token }).catch(() => ({ data: { data: [] } }))
+          listCategories().catch(() => [])
         ])
-
         setOrders(Array.isArray(ordersData) ? ordersData : [])
-        const pList = productsRes?.data?.data || []
-        setProducts(Array.isArray(pList) ? pList : [])
+        setCategories(Array.isArray(catsData) ? catsData : [])
+      } catch (err) {
+        console.error('B2B Meta Load Error', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadMeta()
+  }, [token, role])
+
+  // Fetch Paginated Products whenever page, search, or category changes
+  useEffect(() => {
+    if (!token || role !== 'retailer') return
+    let isMounted = true
+
+    const timer = setTimeout(async () => {
+      setProductsLoading(true)
+      try {
+        const queryParams = new URLSearchParams({
+          page: String(page),
+          limit: String(limit)
+        })
+        if (productSearch.trim()) {
+          queryParams.set('search', productSearch.trim())
+        }
+        if (selectedCategory && selectedCategory !== 'all') {
+          queryParams.set('category', selectedCategory)
+        }
+
+        const res = await apiFetch(`/api/retailer/products?${queryParams.toString()}`, { token })
+        if (!isMounted) return
+
+        const pList = res?.data?.data || []
+        const pagination = res?.data?.pagination || { page: 1, totalPages: 1, total: pList.length }
+
+        setProducts(pList)
+        setTotalPages(pagination.totalPages || 1)
+        setTotalProducts(pagination.total || pList.length)
 
         const initialQtys = {}
         for (const p of pList) {
@@ -104,15 +148,29 @@ export default function B2B() {
         }
         setQtyByProductId(initialQtys)
       } catch (err) {
-        console.error('B2B Load Error', err)
+        console.error('B2B Products Load Error', err)
+        if (isMounted) setProducts([])
       } finally {
-        setLoading(false)
-        setProductsLoading(false)
+        if (isMounted) setProductsLoading(false)
       }
-    }
+    }, 250)
 
-    loadData()
-  }, [token, role])
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
+  }, [token, role, page, limit, productSearch, selectedCategory])
+
+  // Reset page to 1 when search or category filter changes
+  const handleSearchChange = (val) => {
+    setProductSearch(val)
+    setPage(1)
+  }
+
+  const handleCategoryChange = (val) => {
+    setSelectedCategory(val)
+    setPage(1)
+  }
 
   // Overview Metrics
   const filteredOrders = useMemo(() => {
@@ -154,28 +212,6 @@ export default function B2B() {
     return { totalOrders, totalSpend, totalUnits, totalSavings, savingsRate }
   }, [filteredOrders])
 
-  // Filtered Products
-  const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchesSearch = !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase())
-      const catId = p.Category?._id || p.category_id
-      const matchesCat = selectedCategory === 'all' || catId === selectedCategory
-      return matchesSearch && matchesCat
-    })
-  }, [products, productSearch, selectedCategory])
-
-  // Categories List
-  const categoriesList = useMemo(() => {
-    const map = new Map()
-    for (const p of products) {
-      const cat = p.Category || (typeof p.category_id === 'object' ? p.category_id : null)
-      if (cat?._id && !map.has(cat._id)) {
-        map.set(cat._id, cat.name)
-      }
-    }
-    return Array.from(map.entries()).map(([id, name]) => ({ id, name }))
-  }, [products])
-
   // Handlers
   const handleQtyChange = (productId, val, minVal) => {
     const num = Math.max(minVal, Number(val) || minVal)
@@ -185,7 +221,6 @@ export default function B2B() {
   const handleAddSingleToCart = async (product) => {
     const qty = qtyByProductId[product._id] || normalizeMinBulkQty(product.min_bulk_qty)
     await addToCart(product, qty)
-    toast.success(`Added ${qty} × ${product.name} to bulk cart!`, { icon: '📦' })
   }
 
   const handleReorder = async (order) => {
@@ -201,6 +236,15 @@ export default function B2B() {
 
   const handleDownloadInvoice = (orderId) => {
     downloadInvoicePdf(orderId, token)
+  }
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages || newPage === page) return
+    setPage(newPage)
+    const toolbar = document.querySelector('.b2b-catalog-toolbar')
+    if (toolbar) {
+      toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }
 
   return (
@@ -345,7 +389,7 @@ export default function B2B() {
                   type="text"
                   placeholder="Search wholesale SKUs, brands or models..."
                   value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="b2b-search-input"
                 />
               </div>
@@ -353,12 +397,12 @@ export default function B2B() {
               <div className="b2b-filter-group">
                 <select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                   className="b2b-cat-select"
                 >
-                  <option value="all">All Categories ({products.length})</option>
-                  {categoriesList.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                  <option value="all">All Categories</option>
+                  {categories.map(c => (
+                    <option key={c._id} value={c._id}>{c.name}</option>
                   ))}
                 </select>
 
@@ -375,125 +419,178 @@ export default function B2B() {
             {/* Products Table */}
             {productsLoading ? (
               <div className="b2b-loading-state">Loading Wholesale Catalog…</div>
-            ) : filteredProducts.length === 0 ? (
+            ) : products.length === 0 ? (
               <div className="b2b-empty-state">
                 <FiBox className="b2b-empty-icon" />
                 <h3>No Wholesale Products Found</h3>
                 <p>Try modifying your search query or category filter.</p>
               </div>
             ) : (
-              <div className="b2b-table-container">
-                <table className="b2b-table">
-                  <thead>
-                    <tr>
-                      <th>Product / SKU</th>
-                      <th>Category</th>
-                      <th>Retail MRP</th>
-                      <th>Wholesale Rate</th>
-                      <th>Your Margin</th>
-                      <th>Stock Status</th>
-                      <th>Order Quantity</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProducts.map((p) => {
-                      const minBulk = normalizeMinBulkQty(p.min_bulk_qty)
-                      const stock = Number(p.stock) || 0
-                      const inStock = stock > 0
-                      const priceRetail = Number(p.price) || 0
-                      const priceBulk = Number(p.price_bulk || p.retailer_price || p.price) || 0
-                      const margin = priceRetail > priceBulk ? priceRetail - priceBulk : 0
-                      const marginPct = priceRetail > 0 ? Math.round((margin / priceRetail) * 100) : 0
-                      const currentQty = qtyByProductId[p._id] || minBulk
+              <>
+                <div className="b2b-table-container">
+                  <table className="b2b-table">
+                    <thead>
+                      <tr>
+                        <th>Product / SKU</th>
+                        <th>Category</th>
+                        <th>Retail MRP</th>
+                        <th>Wholesale Rate</th>
+                        <th>Your Margin</th>
+                        <th>Stock Status</th>
+                        <th>Order Quantity</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((p) => {
+                        const minBulk = normalizeMinBulkQty(p.min_bulk_qty)
+                        const stock = Number(p.stock) || 0
+                        const inStock = stock > 0
+                        const priceRetail = Number(p.price) || 0
+                        const priceBulk = Number(p.price_bulk || p.retailer_price || p.price) || 0
+                        const margin = priceRetail > priceBulk ? priceRetail - priceBulk : 0
+                        const marginPct = priceRetail > 0 ? Math.round((margin / priceRetail) * 100) : 0
+                        const currentQty = qtyByProductId[p._id] || minBulk
 
-                      return (
-                        <tr key={p._id}>
-                          <td>
-                            <div className="b2b-prod-cell">
-                              <img
-                                src={p.images?.[0]?.url || 'https://via.placeholder.com/60'}
-                                alt={p.name}
-                                className="b2b-prod-thumb"
-                              />
-                              <div>
-                                <Link to={`/product/${p._id}`} className="b2b-prod-name">
-                                  {p.name}
-                                </Link>
-                                <div className="b2b-prod-sku">SKU: {p._id.slice(-6).toUpperCase()}</div>
+                        return (
+                          <tr key={p._id}>
+                            <td>
+                              <div className="b2b-prod-cell">
+                                <img
+                                  src={p.images?.[0]?.url || 'https://via.placeholder.com/60'}
+                                  alt={p.name}
+                                  className="b2b-prod-thumb"
+                                />
+                                <div>
+                                  <Link to={`/product/${p._id}`} className="b2b-prod-name">
+                                    {p.name}
+                                  </Link>
+                                  <span className="b2b-prod-sku">ID: {formatShortOrderId(p._id)}</span>
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="b2b-cat-badge">
-                              {p.Category?.name || (typeof p.category_id === 'object' ? p.category_id?.name : 'Electronics')}
-                            </span>
-                          </td>
-                          <td>
-                            <span className="b2b-mrp-strike">₹{priceRetail.toLocaleString('en-IN')}</span>
-                          </td>
-                          <td>
-                            <span className="b2b-bulk-price">₹{priceBulk.toLocaleString('en-IN')}</span>
-                          </td>
-                          <td>
-                            <span className="b2b-margin-pill">
-                              Save ₹{margin.toLocaleString('en-IN')} ({marginPct}%)
-                            </span>
-                          </td>
-                          <td>
-                            {inStock ? (
-                              <span className="b2b-stock-pill is-in">
-                                {stock} available
+                            </td>
+                            <td>
+                              <span className="b2b-cat-badge">
+                                {p.Category?.name || 'Electronics'}
                               </span>
-                            ) : (
-                              <span className="b2b-stock-pill is-out">Sold Out</span>
-                            )}
-                          </td>
-                          <td>
-                            <div className="b2b-qty-stepper">
+                            </td>
+                            <td>
+                              <span className="b2b-price-retail">{formatCurrency(priceRetail)}</span>
+                            </td>
+                            <td>
+                              <strong className="b2b-price-bulk">{formatCurrency(priceBulk)}</strong>
+                            </td>
+                            <td>
+                              <div className="b2b-margin-cell">
+                                <span className="b2b-margin-val">+{formatCurrency(margin)}</span>
+                                <span className="b2b-margin-pct">({marginPct}%)</span>
+                              </div>
+                            </td>
+                            <td>
+                              {inStock ? (
+                                <span className="b2b-stock-pill in-stock">
+                                  <FiCheck /> {stock} in Hub
+                                </span>
+                              ) : (
+                                <span className="b2b-stock-pill out-stock">Out of Stock</span>
+                              )}
+                            </td>
+                            <td>
+                              <div className="b2b-qty-ctrl">
+                                <button
+                                  type="button"
+                                  onClick={() => handleQtyChange(p._id, currentQty - 5, minBulk)}
+                                  disabled={currentQty <= minBulk}
+                                >
+                                  -5
+                                </button>
+                                <input
+                                  type="number"
+                                  min={minBulk}
+                                  max={stock || 999}
+                                  value={currentQty}
+                                  onChange={(e) => handleQtyChange(p._id, e.target.value, minBulk)}
+                                  className="b2b-qty-input"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleQtyChange(p._id, currentQty + 5, minBulk)}
+                                  disabled={stock > 0 && currentQty + 5 > stock}
+                                >
+                                  +5
+                                </button>
+                              </div>
+                              {minBulk > 1 && (
+                                <div className="b2b-min-hint">Min: {minBulk} units</div>
+                              )}
+                            </td>
+                            <td>
                               <button
                                 type="button"
-                                onClick={() => handleQtyChange(p._id, currentQty - 5, minBulk)}
-                                disabled={currentQty <= minBulk}
+                                className="b2b-add-btn"
+                                disabled={!inStock}
+                                onClick={() => handleAddSingleToCart(p)}
                               >
-                                -5
+                                <FiPlus /> Add {currentQty}
                               </button>
-                              <input
-                                type="number"
-                                min={minBulk}
-                                max={stock || 999}
-                                value={currentQty}
-                                onChange={(e) => handleQtyChange(p._id, e.target.value, minBulk)}
-                                className="b2b-qty-input"
-                              />
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="b2b-pagination-bar">
+                    <div className="b2b-pagination-info">
+                      Showing <strong>{(page - 1) * limit + 1}</strong> to <strong>{Math.min(page * limit, totalProducts)}</strong> of <strong>{totalProducts}</strong> wholesale products
+                    </div>
+
+                    <div className="b2b-pagination-actions">
+                      <button
+                        type="button"
+                        className="b2b-page-btn"
+                        onClick={() => handlePageChange(page - 1)}
+                        disabled={page <= 1}
+                        aria-label="Previous Page"
+                      >
+                        <FiChevronLeft /> Previous
+                      </button>
+
+                      <div className="b2b-page-numbers">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                          .filter(pNum => pNum === 1 || pNum === totalPages || Math.abs(pNum - page) <= 2)
+                          .map((pNum, idx, arr) => (
+                            <React.Fragment key={pNum}>
+                              {idx > 0 && arr[idx - 1] !== pNum - 1 && (
+                                <span className="b2b-page-ellipsis">…</span>
+                              )}
                               <button
                                 type="button"
-                                onClick={() => handleQtyChange(p._id, currentQty + 5, minBulk)}
-                                disabled={stock > 0 && currentQty + 5 > stock}
+                                className={`b2b-page-num ${pNum === page ? 'is-active' : ''}`}
+                                onClick={() => handlePageChange(pNum)}
                               >
-                                +5
+                                {pNum}
                               </button>
-                            </div>
-                            {minBulk > 1 && (
-                              <div className="b2b-min-hint">Min: {minBulk} units</div>
-                            )}
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className="b2b-add-btn"
-                              disabled={!inStock}
-                              onClick={() => handleAddSingleToCart(p)}
-                            >
-                              <FiPlus /> Add {currentQty}
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            </React.Fragment>
+                          ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="b2b-page-btn"
+                        onClick={() => handlePageChange(page + 1)}
+                        disabled={page >= totalPages}
+                        aria-label="Next Page"
+                      >
+                        Next <FiChevronRight />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -519,64 +616,58 @@ export default function B2B() {
                 {orders.map((o) => {
                   const status = o.status || 'placed'
                   const totalUnits = Array.isArray(o.items)
-                    ? o.items.reduce((s, it) => s + (Number(it.qty) || 0), 0)
+                    ? o.items.reduce((sum, it) => sum + (Number(it.qty) || 0), 0)
                     : 0
 
                   return (
                     <article key={o._id} className="b2b-order-card">
-                      <div className="b2b-order-header">
-                        <div>
-                          <div className="b2b-order-id-row">
-                            <span className="b2b-order-id">Consignment #{formatShortOrderId(o._id)}</span>
-                            <span className={`b2b-status-badge is-${status.toLowerCase()}`}>
-                              {status}
-                            </span>
-                          </div>
-                          <div className="b2b-order-date">Placed on {formatDate(o.createdAt)}</div>
+                      <div className="b2b-order-top">
+                        <div className="b2b-order-id-col">
+                          <span className="b2b-order-label">Consignment No.</span>
+                          <span className="b2b-order-id">#{formatShortOrderId(o._id)}</span>
+                          <span className="b2b-order-date">{formatDate(o.createdAt)}</span>
                         </div>
 
-                        <div className="b2b-order-actions">
-                          <button
-                            type="button"
-                            className="b2b-btn-invoice"
-                            onClick={() => handleDownloadInvoice(o._id)}
-                          >
-                            <FiDownload /> Tax Invoice
-                          </button>
-                          <button
-                            type="button"
-                            className="b2b-btn-reorder"
-                            onClick={() => handleReorder(o)}
-                          >
-                            <FiRefreshCw /> 1-Click Reorder
-                          </button>
+                        <div className="b2b-order-status-col">
+                          <span className={`b2b-status-pill status-${status.toLowerCase()}`}>
+                            {status.toUpperCase()}
+                          </span>
+                          <span className="b2b-units-badge">{totalUnits} units in lot</span>
                         </div>
                       </div>
 
-                      <div className="b2b-order-summary-row">
-                        <div className="b2b-order-metric">
-                          <span>Total Units</span>
-                          <strong>{totalUnits} Items</strong>
-                        </div>
-                        <div className="b2b-order-metric">
-                          <span>Payment Method</span>
-                          <strong>{o.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Prepaid'}</strong>
-                        </div>
-                        <div className="b2b-order-metric">
-                          <span>Wholesale Total</span>
-                          <strong className="b2b-order-total-price">
-                            {formatCurrency(o.totalAmount)}
-                          </strong>
-                        </div>
-                      </div>
-
-                      {/* Items Thumbnails */}
                       <div className="b2b-order-items-preview">
-                        {o.items?.map((it, idx) => (
-                          <div key={idx} className="b2b-order-item-pill">
-                            <span>{it.qty}×</span> {it.name || it.product?.name || 'Item'}
+                        {Array.isArray(o.items) && o.items.map((it, idx) => (
+                          <div key={idx} className="b2b-item-chip">
+                            <span className="b2b-item-name">{it.product?.name || it.name || 'Wholesale SKU'}</span>
+                            <span className="b2b-item-qty">×{it.qty}</span>
+                            <span className="b2b-item-cost">{formatCurrency((Number(it.price) || 0) * (Number(it.qty) || 1))}</span>
                           </div>
                         ))}
+                      </div>
+
+                      <div className="b2b-order-bottom">
+                        <div className="b2b-order-total-block">
+                          <span className="b2b-total-label">Invoice Total (inc. GST)</span>
+                          <div className="b2b-total-amt">{formatCurrency(o.totalAmount)}</div>
+                        </div>
+
+                        <div className="b2b-order-action-btns">
+                          <button
+                            type="button"
+                            className="b2b-btn-secondary"
+                            onClick={() => handleDownloadInvoice(o._id)}
+                          >
+                            <FiDownload /> Tax Invoice PDF
+                          </button>
+                          <button
+                            type="button"
+                            className="b2b-btn-primary"
+                            onClick={() => handleReorder(o)}
+                          >
+                            <FiRefreshCw /> Reorder Consignment
+                          </button>
+                        </div>
                       </div>
                     </article>
                   )
@@ -586,45 +677,50 @@ export default function B2B() {
           </div>
         )}
 
-        {/* TAB 3: Business Profile & Tax Details */}
+        {/* TAB 3: Business & Tax Details */}
         {activeTab === 'profile' && (
           <div className="b2b-tab-pane fade-in">
-            <div className="b2b-profile-grid">
-              <div className="b2b-profile-card">
-                <h3>Business Registration</h3>
-                <div className="b2b-profile-field">
-                  <label>Business / Enterprise Name</label>
-                  <div className="b2b-field-val">{user?.businessName || 'Kripa Retail Partner'}</div>
+            <div className="b2b-profile-card">
+              <div className="b2b-profile-header">
+                <div>
+                  <h3 className="b2b-profile-title">Verified Business Profile</h3>
+                  <p className="b2b-profile-sub">Your registered enterprise & GSTIN details for tax invoice computation.</p>
                 </div>
-                <div className="b2b-profile-field">
-                  <label>GSTIN Number</label>
-                  <div className="b2b-field-val">{user?.gstin || '23AAAAA0000A1Z5 (Verified)'}</div>
-                </div>
-                <div className="b2b-profile-field">
-                  <label>Authorized Contact Person</label>
-                  <div className="b2b-field-val">{user?.name}</div>
-                </div>
-                <div className="b2b-profile-field">
-                  <label>Email & Phone</label>
-                  <div className="b2b-field-val">{user?.email} • {user?.phone || 'Not configured'}</div>
-                </div>
+                <span className="b2b-verified-tag">
+                  <FiCheckCircle /> Verified Enterprise
+                </span>
               </div>
 
-              <div className="b2b-profile-card">
-                <h3>Consignment Delivery Depot</h3>
-                {user?.savedAddresses?.length > 0 ? (
-                  <div className="b2b-depot-address">
-                    <strong>{user.savedAddresses[0].name}</strong>
-                    <div>{user.savedAddresses[0].addressLine}</div>
-                    <div>{user.savedAddresses[0].city}, {user.savedAddresses[0].state} - {user.savedAddresses[0].pincode}</div>
-                    <div>Depot Phone: {user.savedAddresses[0].phone}</div>
-                  </div>
-                ) : (
-                  <p className="b2b-muted">No saved depot address.</p>
-                )}
-                <Link to="/profile" className="b2b-btn-secondary">
-                  Manage Addresses & Security in Profile →
-                </Link>
+              <div className="b2b-profile-grid">
+                <div className="b2b-profile-item">
+                  <span className="b2b-profile-label">Registered Enterprise Name</span>
+                  <div className="b2b-profile-value">{user?.businessName || user?.shopName || 'Kripa Retail Partner'}</div>
+                </div>
+
+                <div className="b2b-profile-item">
+                  <span className="b2b-profile-label">Authorized Signatory</span>
+                  <div className="b2b-profile-value">{user?.name}</div>
+                </div>
+
+                <div className="b2b-profile-item">
+                  <span className="b2b-profile-label">GSTIN / Tax ID</span>
+                  <div className="b2b-profile-value is-mono">{user?.gstin || '23AAAAA0000A1Z5'}</div>
+                </div>
+
+                <div className="b2b-profile-item">
+                  <span className="b2b-profile-label">Billing & Depot Address</span>
+                  <div className="b2b-profile-value">{user?.shopAddress || 'Indore Wholesale Market, MP'}</div>
+                </div>
+
+                <div className="b2b-profile-item">
+                  <span className="b2b-profile-label">Registered Phone</span>
+                  <div className="b2b-profile-value">{user?.phone || '+91 98765 43210'}</div>
+                </div>
+
+                <div className="b2b-profile-item">
+                  <span className="b2b-profile-label">Payment & Credit Terms</span>
+                  <div className="b2b-profile-value">Standard Net-0 / Instant Bank & COD</div>
+                </div>
               </div>
             </div>
           </div>

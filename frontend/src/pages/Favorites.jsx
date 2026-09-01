@@ -70,7 +70,6 @@ export default function Favorites() {
   const handleMoveToCart = async (product) => {
     const minQty = retailerBulk ? (product.min_bulk_qty || 1) : 1
     await addToCart(product, minQty)
-    toast.success(`Added ${product.name} to cart!`, { icon: '🛒' })
   }
 
   return (
@@ -126,7 +125,6 @@ export default function Favorites() {
                     onClick={(e) => {
                       e.preventDefault()
                       toggleFavorite(p._id)
-                      toast.success(`Removed "${p.name}" from wishlist`)
                     }}
                     className="favorite-remove-btn"
                     title="Remove from favorites"

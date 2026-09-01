@@ -194,10 +194,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             className="cart-item-remove-btn"
-                            onClick={() => {
-                              removeFromCart(item.productId)
-                              toast.success(`Removed "${item.name}" from cart`)
-                            }}
+                            onClick={() => removeFromCart(item.productId)}
                             title="Remove item"
                             aria-label={`Remove ${item.name}`}
                           >

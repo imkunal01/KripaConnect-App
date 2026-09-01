@@ -1,140 +1,83 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 import {
-  FiShield,
-  FiTruck,
-  FiRefreshCw,
-  FiHeadphones,
-  FiMail,
-  FiArrowRight,
-  FiCheckCircle,
-  FiPhone,
-  FiMapPin,
-  FiHeart,
-  FiArrowUp,
-  FiPackage,
-  FiCheck
-} from 'react-icons/fi'
+  LuTruck,
+  LuShieldCheck,
+  LuRefreshCw,
+  LuHeadphones,
+  LuMapPin,
+  LuMail,
+  LuPhone,
+  LuArrowUp
+} from 'react-icons/lu'
 import { FaInstagram, FaLinkedin, FaTwitter, FaYoutube, FaFacebook } from 'react-icons/fa'
-import toast from 'react-hot-toast'
 import './Footer.css'
 
 export default function Footer() {
-  const [email, setEmail] = useState('')
-  const [subscribed, setSubscribed] = useState(false)
-
-  const handleSubscribe = (e) => {
-    e.preventDefault()
-    if (!email || !email.includes('@')) {
-      toast.error('Please enter a valid email address')
-      return
-    }
-    setSubscribed(true)
-    toast.success('Thank you for subscribing to KripaConnect exclusive deals!', { icon: '✨' })
-    setEmail('')
-  }
-
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
-    <footer className="kc-footer">
-      {/* Dynamic Theme Glow Line */}
-      <div className="kc-footer__glow-line" />
-
-      {/* Trust Highlights Section */}
-      <div className="kc-footer__trust-section">
-        <div className="kc-footer__container">
-          <div className="kc-footer__trust-grid">
-            <div className="kc-footer__trust-card">
-              <div className="kc-footer__trust-icon-wrap">
-                <FiTruck className="kc-footer__trust-icon" />
+    <footer className="kc-shot-footer">
+      {/* 4 Trust Highlights Strip */}
+      <div className="kc-shot-footer__trust">
+        <div className="kc-shot-footer__container">
+          <div className="kc-shot-footer__trust-grid">
+            <div className="kc-shot-footer__trust-item">
+              <div className="kc-shot-footer__trust-icon-box">
+                <LuTruck />
               </div>
-              <div className="kc-footer__trust-info">
-                <h4>Free Express Delivery</h4>
-                <p>Lightning fast doorstep dispatch across Indore & Madhya Pradesh</p>
+              <div className="kc-shot-footer__trust-text">
+                <strong>10-15 Min Express Delivery</strong>
+                <span>Dispatched instantly from local hub</span>
               </div>
             </div>
 
-            <div className="kc-footer__trust-card">
-              <div className="kc-footer__trust-icon-wrap">
-                <FiShield className="kc-footer__trust-icon" />
+            <div className="kc-shot-footer__trust-item">
+              <div className="kc-shot-footer__trust-icon-box">
+                <LuShieldCheck />
               </div>
-              <div className="kc-footer__trust-info">
-                <h4>100% Genuine Brands</h4>
-                <p>Direct manufacturer warranty on all electronics & appliances</p>
-              </div>
-            </div>
-
-            <div className="kc-footer__trust-card">
-              <div className="kc-footer__trust-icon-wrap">
-                <FiRefreshCw className="kc-footer__trust-icon" />
-              </div>
-              <div className="kc-footer__trust-info">
-                <h4>7-Day Easy Returns</h4>
-                <p>Zero questions asked replacement & refund guarantee</p>
+              <div className="kc-shot-footer__trust-text">
+                <strong>100% Genuine Brand Warranty</strong>
+                <span>Direct OEM sourcing & guarantee</span>
               </div>
             </div>
 
-            <div className="kc-footer__trust-card">
-              <div className="kc-footer__trust-icon-wrap">
-                <FiHeadphones className="kc-footer__trust-icon" />
+            <div className="kc-shot-footer__trust-item">
+              <div className="kc-shot-footer__trust-icon-box">
+                <LuRefreshCw />
               </div>
-              <div className="kc-footer__trust-info">
-                <h4>Dedicated Support</h4>
-                <p>Expert local technical assistance 7 days a week</p>
+              <div className="kc-shot-footer__trust-text">
+                <strong>7-Day Easy Replacement</strong>
+                <span>Hassle-free support & returns</span>
+              </div>
+            </div>
+
+            <div className="kc-shot-footer__trust-item">
+              <div className="kc-shot-footer__trust-icon-box">
+                <LuHeadphones />
+              </div>
+              <div className="kc-shot-footer__trust-text">
+                <strong>Dedicated Support Desk</strong>
+                <span>Help via call & WhatsApp 7 days</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Footer Directory */}
-      <div className="kc-footer__main">
-        <div className="kc-footer__container kc-footer__grid">
-          {/* Brand & Newsletter Column */}
-          <div className="kc-footer__col kc-footer__col--brand">
-            <Link to="/" className="kc-footer__brand-logo" onClick={scrollToTop}>
-              <span className="kc-footer__logo-mark">K</span>
-              <span className="kc-footer__logo-text">
-                Kripa<span className="kc-footer__logo-accent">Connect</span>
-              </span>
-            </Link>
+      {/* Main Grid: Screenshot 1 Replica */}
+      <div className="kc-shot-footer__main">
+        <div className="kc-shot-footer__container kc-shot-footer__grid">
 
-            <p className="kc-footer__tagline">
-              Your premier electronics, appliances & wholesale B2B destination. Empowering households and retailers with genuine technology at unmatched prices.
-            </p>
-
-            <div className="kc-footer__newsletter-card">
-              <div className="kc-footer__newsletter-header">
-                <FiMail className="kc-footer__newsletter-icon" />
-                <div>
-                  <strong>Get VIP Price Drop Alerts</strong>
-                  <p>Subscribe for weekly flash deals and coupons</p>
-                </div>
-              </div>
-
-              <form onSubmit={handleSubscribe} className="kc-footer__newsletter-form">
-                <input
-                  type="email"
-                  placeholder="Enter your email address..."
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="kc-footer__newsletter-input"
-                  required
-                />
-                <button type="submit" className="kc-footer__newsletter-btn">
-                  {subscribed ? <FiCheck /> : <span>Join VIP</span>}
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Quicklinks: Shop Catalog */}
-          <div className="kc-footer__col">
-            <h4 className="kc-footer__col-title">Shop Catalog</h4>
-            <ul className="kc-footer__nav-list">
+          {/* Column 1: SHOP CATALOG */}
+          <div className="kc-shot-footer__col">
+            <h4 className="kc-shot-footer__heading">
+              <span>SHOP CATALOG</span>
+              <span className="kc-shot-footer__red-bar" />
+            </h4>
+            <ul className="kc-shot-footer__links">
               <li><Link to="/products">All Products</Link></li>
               <li><Link to="/categories">Product Categories</Link></li>
               <li><Link to="/products?sort=-sold">Trending Best Sellers</Link></li>
@@ -144,10 +87,13 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Quicklinks: Customer Care */}
-          <div className="kc-footer__col">
-            <h4 className="kc-footer__col-title">Customer Care</h4>
-            <ul className="kc-footer__nav-list">
+          {/* Column 2: CUSTOMER CARE */}
+          <div className="kc-shot-footer__col">
+            <h4 className="kc-shot-footer__heading">
+              <span>CUSTOMER CARE</span>
+              <span className="kc-shot-footer__red-bar" />
+            </h4>
+            <ul className="kc-shot-footer__links">
               <li><Link to="/orders">My Orders & Tracking</Link></li>
               <li><Link to="/profile">Account Settings</Link></li>
               <li><Link to="/faq">Frequently Asked Questions</Link></li>
@@ -157,36 +103,38 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Quicklinks: Legal & Connect */}
-          <div className="kc-footer__col">
-            <h4 className="kc-footer__col-title">Contact & Help</h4>
-            <div className="kc-footer__contact-box">
-              <div className="kc-footer__contact-item">
-                <FiMapPin className="kc-footer__contact-item-icon" />
+          {/* Column 3: CONTACT & HELP */}
+          <div className="kc-shot-footer__col">
+            <h4 className="kc-shot-footer__heading">
+              <span>CONTACT & HELP</span>
+              <span className="kc-shot-footer__red-bar" />
+            </h4>
+            <div className="kc-shot-footer__contact-list">
+              <div className="kc-shot-footer__contact-row">
+                <LuMapPin className="kc-shot-footer__contact-ico" />
                 <span>Indore, Madhya Pradesh, India</span>
               </div>
-              <div className="kc-footer__contact-item">
-                <FiMail className="kc-footer__contact-item-icon" />
+              <div className="kc-shot-footer__contact-row">
+                <LuMail className="kc-shot-footer__contact-ico" />
                 <a href="mailto:support@kripaconnect.in">support@kripaconnect.in</a>
               </div>
-              <div className="kc-footer__contact-item">
-                <FiPhone className="kc-footer__contact-item-icon" />
+              <div className="kc-shot-footer__contact-row">
+                <LuPhone className="kc-shot-footer__contact-ico" />
                 <span>+91 98765 43210</span>
               </div>
             </div>
 
-            <h5 className="kc-footer__social-heading">Follow Our Community</h5>
-            <div className="kc-footer__social-rail">
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="kc-footer__social-link" aria-label="Instagram">
+            <div className="kc-shot-footer__socials">
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram">
                 <FaInstagram />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="kc-footer__social-link" aria-label="Twitter">
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter">
                 <FaTwitter />
               </a>
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="kc-footer__social-link" aria-label="LinkedIn">
+              <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn">
                 <FaLinkedin />
               </a>
-              <a href="https://youtube.com" target="_blank" rel="noreferrer" className="kc-footer__social-link" aria-label="YouTube">
+              <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="YouTube">
                 <FaYoutube />
               </a>
             </div>
@@ -195,24 +143,15 @@ export default function Footer() {
       </div>
 
       {/* Bottom Sub-Footer Bar */}
-      <div className="kc-footer__bottom">
-        <div className="kc-footer__container kc-footer__bottom-inner">
-          <div className="kc-footer__copyright">
+      <div className="kc-shot-footer__bottom">
+        <div className="kc-shot-footer__container kc-shot-footer__bottom-inner">
+          <div className="kc-shot-footer__copy">
             © {new Date().getFullYear()} <strong>KripaConnect Electronics & Appliances</strong>. All rights reserved.
           </div>
 
-          <div className="kc-footer__payment-gateways">
-            <span className="kc-pay-pill">UPI</span>
-            <span className="kc-pay-pill">Visa</span>
-            <span className="kc-pay-pill">Mastercard</span>
-            <span className="kc-pay-pill">RuPay</span>
-            <span className="kc-pay-pill">Razorpay 256-Bit SSL</span>
-            <span className="kc-pay-pill">Cash on Delivery</span>
-          </div>
-
-          <button type="button" onClick={scrollToTop} className="kc-footer__back-to-top" aria-label="Scroll back to top">
+          <button type="button" onClick={scrollToTop} className="kc-shot-footer__top-btn" aria-label="Back to top">
             <span>Back to top</span>
-            <FiArrowUp />
+            <LuArrowUp />
           </button>
         </div>
       </div>

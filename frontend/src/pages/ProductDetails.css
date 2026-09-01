@@ -7,14 +7,26 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 100px;
+  padding-top: 14px;
+}
+
+@media (min-width: 769px) {
+  .pdp-page {
+    padding-top: 24px;
+  }
 }
 
 .pdp-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px 24px 80px;
+  padding: 12px 14px 80px;
   width: 100%;
+}
+
+@media (min-width: 769px) {
+  .pdp-container {
+    padding: 20px 24px 80px;
+  }
 }
 
 /* Breadcrumbs */

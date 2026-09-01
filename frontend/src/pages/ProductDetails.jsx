@@ -126,14 +126,12 @@ export default function ProductDetails() {
   }
 
   const handleAddToCart = async () => {
+    if (!product) return
     setAddingToCart(true)
     try {
       await addToCart(product, qty)
-      toast.success(`Added ${qty} × ${product.name} to cart!`, {
-        icon: '🛒',
-      })
     } catch (err) {
-      toast.error('Could not add to cart')
+      // error is handled in ShopContext
     } finally {
       setAddingToCart(false)
     }

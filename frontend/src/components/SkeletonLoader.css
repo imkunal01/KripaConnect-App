@@ -1,9 +1,14 @@
-/* Skeleton shimmer base */
+/* =========================================================
+   SkeletonLoader.css - Blinkit App Replica Skeleton Styles
+   Smooth Shimmer • Compact High-Density Cards • Responsive Grid
+   ========================================================= */
+
+/* Shimmer Animation Base */
 .kc-skeleton-base {
-  background: linear-gradient(90deg, #f0f2f5 25%, #e6e9ee 37%, #f0f2f5 63%);
+  background: linear-gradient(90deg, #f1f3f5 25%, #e8ecf0 37%, #f1f3f5 63%);
   background-size: 400% 100%;
   animation: kc-shimmer 1.4s ease infinite;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 @keyframes kc-shimmer {
@@ -15,296 +20,404 @@
   }
 }
 
-/* Product Card Skeleton */
-.product-card-skeleton {
+/* =========================================================
+   1. PRODUCT CARD SKELETON (Blinkit Compact Card Match)
+   ========================================================= */
+.bk-sk-product-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #f1f2f4;
   border-radius: 12px;
-  padding: 16px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.sk-img {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 8px;
-}
-
-.sk-badge {
-  width: 35%;
-  height: 14px;
-}
-
-.sk-title {
-  width: 85%;
-  height: 18px;
-}
-
-.sk-title-sub {
-  width: 60%;
-  height: 14px;
-}
-
-.sk-price {
-  width: 45%;
-  height: 22px;
-  margin-top: 4px;
-}
-
-.sk-btn {
-  width: 100%;
-  height: 40px;
-  border-radius: 8px;
-  margin-top: auto;
-}
-
-/* Product Grid */
-.product-grid-skeleton {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 24px;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
   width: 100%;
 }
 
-/* Category Grid Skeleton */
-.category-grid-skeleton {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 20px;
-  width: 100%;
-}
-
-.category-card-skeleton {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
+.bk-sk-top-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  text-align: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
 }
 
-.sk-cat-icon {
-  width: 64px;
-  height: 64px;
+.bk-sk-discount-pill {
+  width: 42px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.bk-sk-fav-circle {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
 }
 
-.sk-cat-name {
-  width: 70%;
-  height: 18px;
+/* Image Stage */
+.bk-sk-img-stage {
+  width: 100%;
+  height: 85px;
+  position: relative;
+  margin: 3px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Orders List Skeleton */
-.orders-list-skeleton {
+@media (min-width: 768px) {
+  .bk-sk-img-stage {
+    height: 110px;
+  }
+}
+
+.bk-sk-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.bk-sk-time-pill {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  width: 52px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+/* Card Body */
+.bk-sk-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  flex: 1;
+  margin-top: 4px;
+}
+
+.bk-sk-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.bk-sk-weight {
+  width: 40px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.bk-sk-rating {
+  width: 32px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.bk-sk-title {
+  width: 95%;
+  height: 12px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+}
+
+.bk-sk-title-short {
+  width: 65%;
+  height: 12px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+}
+
+/* Bottom Row */
+.bk-sk-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.bk-sk-pricing {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bk-sk-price {
+  width: 45px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.bk-sk-mrp {
+  width: 32px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.bk-sk-add-btn {
+  width: 48px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+/* =========================================================
+   2. PRODUCT GRID SKELETON (3-col mobile / 4-5 col desk)
+   ========================================================= */
+.bk-sk-product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   width: 100%;
 }
 
-.order-card-skeleton {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+@media (max-width: 400px) {
+  .bk-sk-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
 }
 
-.order-card-sk-header {
+@media (min-width: 768px) {
+  .bk-sk-product-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bk-sk-product-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+  }
+}
+
+/* =========================================================
+   3. CATEGORY SKELETON (Matrix / Filter Strip)
+   ========================================================= */
+.bk-sk-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .bk-sk-cat-grid {
+    grid-template-columns: repeat(8, 1fr);
+    gap: 12px;
+  }
+}
+
+.bk-sk-cat-card {
+  background: #ffffff;
+  border: 1px solid #f1f2f4;
+  border-radius: 12px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.bk-sk-cat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.bk-sk-cat-name {
+  width: 80%;
+  height: 10px;
+  border-radius: 3px;
+}
+
+/* =========================================================
+   4. ORDERS LIST SKELETON
+   ========================================================= */
+.bk-sk-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.bk-sk-order-card {
+  background: #ffffff;
+  border: 1px solid #f1f2f4;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bk-sk-order-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.sk-order-id {
-  width: 140px;
-  height: 20px;
+.bk-sk-order-id {
+  width: 120px;
+  height: 16px;
 }
 
-.sk-order-status {
-  width: 80px;
-  height: 24px;
+.bk-sk-order-status {
+  width: 75px;
+  height: 20px;
   border-radius: 999px;
 }
 
-.order-card-sk-body {
+.bk-sk-order-body {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
 }
 
-.sk-item-thumb {
-  width: 60px;
-  height: 60px;
+.bk-sk-order-thumb {
+  width: 52px;
+  height: 52px;
   border-radius: 8px;
   flex-shrink: 0;
 }
 
-.sk-item-details {
+.bk-sk-order-details {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
-/* Order Details Skeleton */
-.order-details-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  max-width: 1000px;
+.bk-sk-order-title {
+  width: 80%;
+  height: 14px;
+}
+
+.bk-sk-order-sub {
+  width: 50%;
+  height: 11px;
+}
+
+.bk-sk-order-price {
+  width: 60px;
+  height: 14px;
+}
+
+/* =========================================================
+   5. PRODUCT DETAILS (PDP) SKELETON
+   ========================================================= */
+.bk-sk-pdp-stage {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 1100px;
   margin: 0 auto;
-  width: 100%;
-  padding: 20px;
+  padding: 16px;
 }
 
-.sk-details-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 48px;
-}
-
-.sk-timeline {
-  height: 80px;
-  border-radius: 12px;
-  width: 100%;
-}
-
-.sk-details-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-}
-
-@media (max-width: 768px) {
-  .sk-details-grid {
-    grid-template-columns: 1fr;
+@media (min-width: 768px) {
+  .bk-sk-pdp-stage {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
   }
 }
 
-.sk-details-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
+.bk-sk-pdp-gallery {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
-/* Product Details Skeleton */
-.product-details-skeleton {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 0 20px;
-  width: 100%;
-}
-
-@media (max-width: 768px) {
-  .product-details-skeleton {
-    grid-template-columns: 1fr;
-  }
-}
-
-.sk-gallery {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.sk-gallery-main {
+.bk-sk-pdp-img {
   width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 16px;
 }
 
-.sk-gallery-thumbs {
+.bk-sk-pdp-thumbs {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
-.sk-thumb {
-  width: 70px;
-  height: 70px;
+.bk-sk-pdp-thumb {
+  width: 55px;
+  height: 55px;
   border-radius: 8px;
 }
 
-.sk-info {
+.bk-sk-pdp-info {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
-/* Admin Dashboard Stats Skeleton */
+.bk-sk-pdp-title {
+  width: 85%;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.bk-sk-pdp-price {
+  width: 40%;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.bk-sk-pdp-box {
+  width: 100%;
+  height: 90px;
+  border-radius: 12px;
+}
+
+.bk-sk-pdp-cta {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+/* =========================================================
+   6. ADMIN STATS & TABLES SKELETON
+   ========================================================= */
 .admin-stats-skeleton {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  width: 100%;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
 
 .admin-stat-card-skeleton {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 .sk-stat-title {
-  width: 50%;
-  height: 16px;
+  width: 45%;
+  height: 14px;
 }
 
 .sk-stat-val {
-  width: 75%;
-  height: 32px;
+  width: 70%;
+  height: 28px;
 }
 
-/* Admin Table Skeleton */
 .admin-table-skeleton {
-  width: 100%;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .sk-table-header {
-  height: 40px;
-  width: 100%;
-  border-radius: 6px;
+  height: 38px;
+  border-radius: 8px;
 }
 
 .sk-table-row {
   height: 48px;
-  width: 100%;
-  border-radius: 6px;
-}
-
-/* Hero Skeleton */
-.hero-skeleton {
-  width: 100%;
-  height: 380px;
-  border-radius: 16px;
-  margin-bottom: 32px;
+  border-radius: 8px;
 }

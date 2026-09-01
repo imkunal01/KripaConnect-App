@@ -401,7 +401,7 @@ async function removeImage(req, res) {
 }
 
 /* =====================================
-   RETAILER PRODUCTS
+   RETAILER PRODUCTS (With Pagination & Search)
    ===================================== */
 async function getRetailerProducts(req, res) {
   try {
@@ -412,12 +412,48 @@ async function getRetailerProducts(req, res) {
       });
     }
 
-    const products = await Product.find({ active: true })
-      .select("name description images stock price retailer_price price_bulk min_bulk_qty Category tags")
-      .populate("Category", "name slug")
-      .lean();
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 12));
+    const skip = (page - 1) * limit;
 
-    res.json({ success: true, data: products });
+    const query = { active: true };
+
+    if (req.query.search) {
+      const q = String(req.query.search).trim();
+      query.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } },
+        { tags: { $regex: q, $options: "i" } }
+      ];
+    }
+
+    if (req.query.category && req.query.category !== 'all') {
+      query.Category = req.query.category;
+    }
+
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .select("name description images stock price retailer_price price_bulk min_bulk_qty Category tags")
+        .populate("Category", "name slug")
+        .sort(req.query.sort === 'price' ? { price: 1 } : req.query.sort === '-price' ? { price: -1 } : { createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Product.countDocuments(query)
+    ]);
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages
+      }
+    });
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

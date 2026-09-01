@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useContext } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { usePurchaseMode } from '../hooks/usePurchaseMode'
+import ShopContext from '../context/ShopContext.jsx'
 import { profile, updateProfile, uploadProfilePhoto, requestRetailerRole } from '../services/auth'
 import AddressForm from '../components/AddressForm.jsx'
 import Navbar from '../components/Navbar'
@@ -31,8 +33,11 @@ import './ProfilePage.css'
 
 export default function ProfilePage() {
   const { token, signOut, refreshMe } = useAuth()
+  const { mode, setMode, canSwitchMode } = usePurchaseMode()
+  const { wipeCart } = useContext(ShopContext)
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
+  const [modeSwitchBusy, setModeSwitchBusy] = useState(false)
 
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -282,6 +287,15 @@ export default function ProfilePage() {
           </div>
 
           <div className="profile-hero-actions">
+            {isRetailer && (
+              <button
+                type="button"
+                className="profile-quick-btn profile-quick-btn--b2b"
+                onClick={() => navigate('/b2b')}
+              >
+                <FiBriefcase /> B2B Wholesale Hub
+              </button>
+            )}
             <button
               type="button"
               className="profile-quick-btn"
@@ -299,6 +313,92 @@ export default function ProfilePage() {
             >
               <FiLogOut /> Sign Out
             </button>
+          </div>
+        </section>
+
+        {/* Prominent Purchase Mode Changer Card */}
+        <section className="profile-mode-spotlight-card">
+          <div className="profile-mode-spotlight-left">
+            <div className="profile-mode-badge-wrap">
+              <span className={`profile-mode-indicator ${mode === 'retailer' ? 'is-bulk' : 'is-cust'}`}>
+                {mode === 'retailer' ? <FiBriefcase /> : <FiShield />}
+                <strong>{mode === 'retailer' ? 'Retailer Bulk Mode Active' : 'Customer Mode Active'}</strong>
+              </span>
+            </div>
+            <h3 className="profile-mode-spotlight-title">Store Pricing & Sourcing Mode</h3>
+            <p className="profile-mode-spotlight-desc">
+              {mode === 'retailer'
+                ? 'Browsing with wholesale master carton pricing, bulk quantity tiers, and GST ITC credit invoices enabled.'
+                : 'Browsing individual consumer products with standard retail pricing and 10-15 minute doorstep delivery.'}
+            </p>
+            {mode === 'retailer' && (
+              <div style={{ marginTop: '10px' }}>
+                <Link to="/b2b" className="profile-mode-open-portal-link">
+                  <FiBriefcase /> Open B2B Wholesale Portal & Invoices →
+                </Link>
+              </div>
+            )}
+          </div>
+
+          <div className="profile-mode-spotlight-right">
+            {canSwitchMode ? (
+              <div className="profile-mode-btn-group">
+                <button
+                  type="button"
+                  className={`profile-mode-choice-btn ${mode === 'customer' ? 'active' : ''}`}
+                  onClick={async () => {
+                    if (mode === 'customer' || modeSwitchBusy) return
+                    if (window.confirm('Switch to Customer Mode? Your cart will be cleared to prevent mixed-tier orders.')) {
+                      setModeSwitchBusy(true)
+                      try {
+                        await wipeCart()
+                        setMode('customer')
+                        toast.success('Switched to Customer Mode')
+                      } finally {
+                        setModeSwitchBusy(false)
+                      }
+                    }
+                  }}
+                  disabled={modeSwitchBusy}
+                >
+                  <FiShield />
+                  <span>Customer (Retail)</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`profile-mode-choice-btn is-retail-btn ${mode === 'retailer' ? 'active' : ''}`}
+                  onClick={async () => {
+                    if (mode === 'retailer' || modeSwitchBusy) return
+                    if (window.confirm('Switch to Retailer B2B Mode? Your cart will be cleared to prevent mixed-tier orders.')) {
+                      setModeSwitchBusy(true)
+                      try {
+                        await wipeCart()
+                        setMode('retailer')
+                        toast.success('Switched to Retailer B2B Wholesale Mode')
+                      } finally {
+                        setModeSwitchBusy(false)
+                      }
+                    }
+                  }}
+                  disabled={modeSwitchBusy}
+                >
+                  <FiBriefcase />
+                  <span>Retailer (Bulk B2B)</span>
+                </button>
+              </div>
+            ) : (
+              <div className="profile-mode-upgrade-box">
+                <button
+                  type="button"
+                  className="profile-mode-apply-btn"
+                  onClick={() => setActiveTab('retailer')}
+                >
+                  <FiBriefcase />
+                  <span>Apply for B2B Retailer Access →</span>
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
@@ -410,6 +510,62 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
+
+            {/* Shopping & Purchase Mode Setting */}
+            {canSwitchMode && (
+              <div className="profile-purchase-mode-card">
+                <div className="profile-mode-text">
+                  <h3>Purchase & Shopping Mode</h3>
+                  <p>Choose whether to browse store at retail prices or wholesale master carton bulk rates.</p>
+                </div>
+
+                <div className="profile-mode-selector-row">
+                  <button
+                    type="button"
+                    className={`profile-mode-toggle-btn ${mode === 'customer' ? 'is-active' : ''}`}
+                    onClick={async () => {
+                      if (mode === 'customer' || modeSwitchBusy) return
+                      if (window.confirm('Switch to Customer Mode? Your cart will be cleared to avoid mixed pricing.')) {
+                        setModeSwitchBusy(true)
+                        try {
+                          await wipeCart()
+                          setMode('customer')
+                          toast.success('Switched to Customer Mode')
+                        } finally {
+                          setModeSwitchBusy(false)
+                        }
+                      }
+                    }}
+                    disabled={modeSwitchBusy}
+                  >
+                    <FiShield />
+                    <span>Customer Mode (Individual)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`profile-mode-toggle-btn is-retailer-btn ${mode === 'retailer' ? 'is-active' : ''}`}
+                    onClick={async () => {
+                      if (mode === 'retailer' || modeSwitchBusy) return
+                      if (window.confirm('Switch to Retailer B2B Mode? Your cart will be cleared to avoid mixed pricing.')) {
+                        setModeSwitchBusy(true)
+                        try {
+                          await wipeCart()
+                          setMode('retailer')
+                          toast.success('Switched to Retailer B2B Mode')
+                        } finally {
+                          setModeSwitchBusy(false)
+                        }
+                      }
+                    }}
+                    disabled={modeSwitchBusy}
+                  >
+                    <FiBriefcase />
+                    <span>Retailer Mode (Bulk / ITC GST)</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

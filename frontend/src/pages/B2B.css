@@ -893,3 +893,103 @@
     justify-content: center;
   }
 }
+
+/* =========================================================
+   Wholesale Catalog Pagination Bar
+   ========================================================= */
+.b2b-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.b2b-pagination-info {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.b2b-pagination-info strong {
+  color: #0f172a;
+}
+
+.b2b-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.b2b-page-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.b2b-page-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.b2b-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.b2b-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.b2b-page-num {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.b2b-page-num:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.b2b-page-num.is-active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+.b2b-page-ellipsis {
+  padding: 0 4px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
