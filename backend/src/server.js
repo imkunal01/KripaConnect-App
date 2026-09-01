@@ -261,33 +261,33 @@ app.get("/api/sitemap.xml", async (req, res) => {
 ========================= */
 // health check with good styled message
 
-  const os = require("os");
+const os = require("os");
 
-  app.get("/", (req, res) => {
-    // Compute memory usage
-    const memUsageMB = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
-    // Compute CPU usage
-    const cpuUsageMs = (process.cpuUsage().user / 1000).toFixed(2);
-    // Environment
-    const env = process.env.NODE_ENV || "development";
-    // Get port
-    const port = process.env.PORT || 5000;
-    // Try to get DB string
-    const dbStr = process.env.MONGO_URI ? "****" + process.env.MONGO_URI.slice(-8) : "(not set)";
-    // Uptime (rounded)
-    const uptime = process.uptime().toFixed(0);
+app.get("/", (req, res) => {
+  // Compute memory usage
+  const memUsageMB = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
+  // Compute CPU usage
+  const cpuUsageMs = (process.cpuUsage().user / 1000).toFixed(2);
+  // Environment
+  const env = process.env.NODE_ENV || "development";
+  // Get port
+  const port = process.env.PORT || 5000;
+  // Try to get DB string
+  const dbStr = process.env.MONGO_URI ? "****" + process.env.MONGO_URI.slice(-8) : "(not set)";
+  // Uptime (rounded)
+  const uptime = process.uptime().toFixed(0);
 
-    // Try to get network addresses safely
-    const ifaces = os.networkInterfaces();
-    const addrs = [];
-    for (let key in ifaces) {
-      ifaces[key].forEach(i => {
-        if (i.family === "IPv4" && !i.internal) addrs.push(i.address);
-      });
-    }
+  // Try to get network addresses safely
+  const ifaces = os.networkInterfaces();
+  const addrs = [];
+  for (let key in ifaces) {
+    ifaces[key].forEach(i => {
+      if (i.family === "IPv4" && !i.internal) addrs.push(i.address);
+    });
+  }
 
-    // HTML Response
-    res.send(`
+  // HTML Response
+  res.send(`
       <!DOCTYPE html>
       <html>
         <head>
@@ -335,7 +335,7 @@ app.get("/api/sitemap.xml", async (req, res) => {
         </body>
       </html>
     `);
-  });
+});
 
 
 /* =========================

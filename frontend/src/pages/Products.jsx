@@ -10,6 +10,7 @@ import SearchBar from '../components/SearchBar.jsx'
 import SortBar from '../components/SortBar.jsx'
 import ProductGrid from '../components/ProductGrid.jsx'
 import ProductHeroCarousel from '../components/ProductHeroCarousel.jsx'
+import Pagination from '../components/Pagination.jsx'
 import { ProductGridSkeleton } from '../components/SkeletonLoader.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
@@ -20,6 +21,7 @@ export default function Products() {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const [items, setItems] = useState([])
+  const [meta, setMeta] = useState({ page: 1, limit: 24, total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [searchDraft, setSearchDraft] = useState('')
@@ -40,6 +42,10 @@ export default function Products() {
   const maxPrice = params.get('maxPrice') || ''
   const sort = params.get('sort') || ''
   const availability = params.get('availability') || ''
+  const pageParam = parseInt(params.get('page') || '1', 10)
+  const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1
+  const limitParam = parseInt(params.get('limit') || '24', 10)
+  const limit = [12, 24, 48].includes(limitParam) ? limitParam : 24
 
   const activeFilters = useMemo(
     () => ({ category, subcategory, minPrice, maxPrice, availability }),
@@ -79,16 +85,27 @@ export default function Products() {
           maxPrice,
           sort,
           availability,
-          limit: 24,
+          page,
+          limit,
         })
-        setItems(data.items || [])
+        const productItems = data?.items || []
+        setItems(productItems)
+        setMeta(data?.meta || {
+          page,
+          limit,
+          total: productItems.length,
+          totalPages: Math.ceil(productItems.length / limit) || 1,
+        })
+      } catch (err) {
+        console.error('Failed to load products:', err)
+        setItems([])
       } finally {
         setLoading(false)
       }
     }, 400)
 
     return () => clearTimeout(t)
-  }, [search, category, subcategory, minPrice, maxPrice, sort, availability])
+  }, [search, category, subcategory, minPrice, maxPrice, sort, availability, page, limit])
 
   useEffect(() => {
     const q = searchDraft.trim()
@@ -114,8 +131,14 @@ export default function Products() {
   /* ===============================
      Callbacks
      =============================== */
-  const updateParams = useCallback((newParams) => {
+  const updateParams = useCallback((newParams, resetPage = true) => {
     const next = new URLSearchParams(params)
+    
+    // Reset page to 1 when changing filters unless explicitly specified
+    if (resetPage && !('page' in newParams)) {
+      next.delete('page')
+    }
+
     Object.entries(newParams).forEach(([k, v]) => {
       if (v === '' || v === undefined || v === null) {
         next.delete(k)
@@ -125,6 +148,20 @@ export default function Products() {
     })
     setParams(next)
   }, [params, setParams])
+
+  const handlePageChange = useCallback((newPage) => {
+    updateParams({ page: newPage === 1 ? '' : newPage }, false)
+    const feedEl = document.querySelector('.product-feed')
+    if (feedEl) {
+      feedEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [updateParams])
+
+  const handlePageSizeChange = useCallback((newSize) => {
+    updateParams({ limit: newSize, page: '' }, false)
+  }, [updateParams])
 
   const handleSearchChange = useCallback((val) => updateParams({ search: val || '' }), [updateParams])
   const handleSearchInputChange = useCallback((val) => setSearchDraft(val), [])
@@ -292,7 +329,20 @@ export default function Products() {
               </button>
             </div>
           ) : (
-            <ProductGrid items={items} />
+            <>
+              <ProductGrid items={items} />
+              <Pagination
+                currentPage={meta.page || page}
+                totalPages={meta.totalPages || Math.ceil((meta.total || items.length) / limit) || 1}
+                totalItems={meta.total || items.length}
+                pageSize={limit}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                showPageSize={true}
+                showTotal={true}
+                itemLabel="products"
+              />
+            </>
           )}
         </main>
       </div>

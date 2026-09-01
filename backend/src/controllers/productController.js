@@ -123,6 +123,8 @@ async function listProducts(req, res) {
       maxPrice,
       brand,
       availability,
+      active,
+      includeInactive,
       sort
     } = req.query;
 
@@ -134,7 +136,19 @@ async function listProducts(req, res) {
       cacheKey,
       300, // 5 minutes
       async () => {
-        const filter = { active: true };
+        const filter = {};
+
+        // Active status filtering
+        if (active === 'true' || active === true) {
+          filter.active = true;
+        } else if (active === 'false' || active === false) {
+          filter.active = false;
+        } else if (active === 'all' || includeInactive === 'true' || includeInactive === true) {
+          // Do not restrict by active status - return both active and inactive (for admin / full catalog)
+        } else {
+          // Default public catalog: only show active products
+          filter.active = true;
+        }
 
     /* ---- Search ---- */
     const searchText = search || q;
@@ -183,12 +197,13 @@ async function listProducts(req, res) {
     }
 
     /* ---- Pagination ---- */
-    const skip = (Number(page) - 1) * Number(limit);
-    const limitNum = Number(limit);
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 12);
+    const skip = (pageNum - 1) * limitNum;
 
     // Use lean() for faster read-only queries and select only needed fields
     let query = Product.find(filter)
-      .select("name slug description price retailer_price price_bulk min_bulk_qty stock images tags active Category category_id subcategory_id")
+      .select("name slug description price retailer_price price_bulk min_bulk_qty stock images tags active Category category_id subcategory_id createdAt")
       .populate("Category", "name slug")
       .skip(skip)
       .limit(limitNum)
@@ -202,9 +217,16 @@ async function listProducts(req, res) {
           Product.countDocuments(filter)
         ]);
 
+        const totalPages = Math.ceil(total / limitNum) || 1;
+
         return {
           items,
-          meta: { page: Number(page), limit: limitNum, total }
+          meta: {
+            page: pageNum,
+            limit: limitNum,
+            total,
+            totalPages
+          }
         };
       },
       true // Log cache hits/misses

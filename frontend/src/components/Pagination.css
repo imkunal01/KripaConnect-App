@@ -1,0 +1,192 @@
+/* Modern, responsive Pagination component styling */
+
+.kc-pagination-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 0 12px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  width: 100%;
+}
+
+.kc-pagination__info {
+  font-size: 0.92rem;
+  color: var(--text-secondary, #6b7280);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.kc-pagination__highlight {
+  color: var(--text-primary, #111827);
+  font-weight: 750;
+}
+
+.kc-pagination__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-primary, #ffffff);
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.kc-pagination__pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kc-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.kc-pagination__btn:hover:not(:disabled) {
+  background: var(--gray-50, #f9fafb);
+  border-color: var(--border-color, #e5e7eb);
+  color: var(--primary, #FF3D3D);
+  transform: translateY(-1px);
+}
+
+.kc-pagination__btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.kc-pagination__btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.kc-pagination__nav-btn {
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 0 12px;
+  background: var(--gray-50, #f9fafb);
+  border-color: var(--border-color, #e5e7eb);
+  color: var(--text-primary, #111827);
+}
+
+.kc-pagination__nav-btn:hover:not(:disabled) {
+  background: rgba(var(--kc-primary-rgb, 255, 61, 61), 0.08);
+  border-color: rgba(var(--kc-primary-rgb, 255, 61, 61), 0.3);
+  color: var(--primary, #FF3D3D);
+}
+
+.kc-pagination__page-btn.is-active {
+  background: var(--primary, #FF3D3D);
+  color: #ffffff;
+  border-color: var(--primary, #FF3D3D);
+  box-shadow: 0 4px 12px rgba(var(--kc-primary-rgb, 255, 61, 61), 0.35);
+  font-weight: 800;
+}
+
+.kc-pagination__page-btn.is-active:hover {
+  background: var(--primary-dark, #D32F2F);
+  border-color: var(--primary-dark, #D32F2F);
+  color: #ffffff;
+}
+
+.kc-pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 38px;
+  color: var(--text-secondary, #6b7280);
+  font-weight: 800;
+  font-size: 1.1rem;
+  user-select: none;
+}
+
+.kc-pagination__size-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.kc-pagination__size-label {
+  font-weight: 600;
+}
+
+.kc-pagination__select {
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #111827);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.kc-pagination__select:focus {
+  border-color: var(--primary, #FF3D3D);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 768px) {
+  .kc-pagination-container {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 0 8px;
+  }
+
+  .kc-pagination__info {
+    order: 2;
+    font-size: 0.85rem;
+  }
+
+  .kc-pagination__controls {
+    order: 1;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .kc-pagination__nav-label {
+    display: none;
+  }
+
+  .kc-pagination__nav-btn {
+    padding: 0 10px;
+  }
+
+  .kc-pagination__btn {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 6px;
+    font-size: 0.85rem;
+  }
+
+  .kc-pagination__size-selector {
+    order: 3;
+    font-size: 0.85rem;
+  }
+}
