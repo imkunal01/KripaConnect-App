@@ -529,6 +529,112 @@
   line-height: 1.35;
 }
 
+/* ---------------------------------------------------------
+   Sleek 2-Segment Role Selector Pills (Compact & Stable)
+   --------------------------------------------------------- */
+.cyber-role-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cyber-role-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: #F1F5F9;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+}
+
+.cyber-role-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 180ms ease;
+  white-space: nowrap;
+}
+
+.cyber-role-pill:hover {
+  color: #0F172A;
+}
+
+.cyber-role-pill.active {
+  background: #FFFFFF;
+  color: var(--kc-light-primary, #FF3D3D);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.cyber-role-pill.active.role-b2b {
+  color: var(--kc-light-b2b, #2563EB);
+}
+
+.role-pill-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.role-pill-caption {
+  font-size: 0.74rem;
+  color: #64748B;
+  text-align: center;
+  font-weight: 550;
+  line-height: 1.3;
+}
+
+/* ---------------------------------------------------------
+   Compact OTP Pill Button
+   --------------------------------------------------------- */
+.cyber-otp-pill-btn {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 650;
+  border: 1.5px dashed #CBD5E1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 150ms ease;
+}
+
+.cyber-otp-pill-btn:hover {
+  background: #F1F5F9;
+  border-color: #94A3B8;
+  color: #0F172A;
+}
+
+/* Outer layout column and top bar */
+.auth-card-outer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.auth-card-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 /* ==========================================================================
    7. BUTTONS & ACTIONS (Light Theme)
    ========================================================================== */
@@ -1171,40 +1277,224 @@
 }
 
 /* ==========================================================================
-   13. RESPONSIVE BREAKPOINTS
+   13. RESPONSIVE BREAKPOINTS (Mobile-First Viewport Fitting)
+   Ensures Login fits comfortably without scrolling and Signup does not bloat.
    ========================================================================== */
 @media (max-width: 1024px) {
   .auth-studio-wrapper {
     grid-template-columns: 1fr;
-    max-width: 480px;
+    max-width: 460px;
+    min-height: auto;
     gap: 0;
   }
 
   .auth-studio-showcase {
     display: none;
   }
-
-  .auth-card-glass-panel {
-    padding: 28px 22px;
-    border-radius: 20px;
-  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .auth-page-container {
-    padding: 16px 12px;
+    padding: 12px 14px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .auth-studio-wrapper {
+    max-width: 420px;
+    width: 100%;
+  }
+
+  .auth-card-outer-col {
+    gap: 8px;
+  }
+
+  .auth-card-top-nav {
+    margin-bottom: 2px;
+  }
+
+  .auth-back-store-btn {
+    height: 32px !important;
+    font-size: 0.76rem !important;
+    padding: 4px 12px !important;
+  }
+
+  .auth-browse-catalog-link {
+    font-size: 0.76rem !important;
   }
 
   .auth-card-glass-panel {
-    padding: 22px 16px;
-    border-radius: 18px;
+    padding: 20px 18px;
+    gap: 14px;
+    border-radius: 20px;
+    box-shadow: 0 10px 32px -8px rgba(15, 23, 42, 0.08);
+  }
+
+  /* Topbar: Keep emblem and title, hide tag so tabs sit on same line */
+  .auth-panel-topbar {
+    gap: 8px;
+  }
+
+  .brand-emblem {
+    width: 34px;
+    height: 34px;
+    font-size: 1.05rem;
+    border-radius: 9px;
+  }
+
+  .brand-name {
+    font-size: 1.15rem;
+  }
+
+  .brand-tag {
+    display: none;
+  }
+
+  .auth-segmented-tabs {
+    padding: 3px;
+  }
+
+  .auth-segmented-tab {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+
+  /* Header Title & Subtitle */
+  .auth-header-block {
+    gap: 3px;
   }
 
   .auth-header-title {
-    font-size: 1.5rem;
+    font-size: 1.34rem;
+    line-height: 1.18;
   }
 
-  .cyber-role-grid {
-    grid-template-columns: 1fr;
+  .auth-header-subtitle {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  /* Inputs Stack */
+  .auth-form-stack {
+    gap: 11px;
+  }
+
+  .cyber-input-group {
+    gap: 3px;
+  }
+
+  .cyber-input-label {
+    font-size: 0.78rem;
+  }
+
+  .cyber-input {
+    height: 42px;
+    font-size: 0.88rem;
+    padding: 9px 12px 9px 40px;
+    border-radius: 10px;
+  }
+
+  .cyber-input-icon {
+    left: 13px;
+    width: 17px;
+    height: 17px;
+  }
+
+  .cyber-pass-toggle {
+    right: 10px;
+    width: 28px;
+    height: 28px;
+  }
+
+  /* Buttons */
+  .cyber-submit-btn {
+    height: 44px;
+    font-size: 0.92rem;
+    border-radius: 11px;
+    margin-top: 2px;
+  }
+
+  .cyber-google-btn {
+    height: 42px;
+    font-size: 0.88rem;
+    border-radius: 11px;
+  }
+
+  .cyber-form-extras {
+    margin-top: -2px;
+  }
+
+  .cyber-checkbox-label {
+    font-size: 0.76rem;
+  }
+
+  .cyber-forgot-btn {
+    font-size: 0.76rem;
+  }
+
+  .cyber-divider {
+    margin: 0;
+  }
+
+  .cyber-divider span {
+    font-size: 0.72rem;
+    padding: 0 8px;
+  }
+
+  /* Compact Password Meter on Mobile */
+  .cyber-password-meter {
+    padding: 8px 10px;
+    gap: 4px;
+    border-radius: 9px;
+  }
+
+  .meter-rules-grid {
+    display: none;
+  }
+
+  /* Role selector on mobile */
+  .cyber-role-section {
+    gap: 4px;
+  }
+
+  .cyber-role-pills {
+    padding: 3px;
+    gap: 4px;
+  }
+
+  .cyber-role-pill {
+    padding: 7px 8px;
+    font-size: 0.78rem;
+  }
+
+  .role-pill-caption {
+    font-size: 0.72rem;
+  }
+
+  .cyber-legal-text {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    margin: 2px 0 0;
+  }
+}
+
+@media (max-width: 375px) {
+  .auth-card-glass-panel {
+    padding: 16px 14px;
+    gap: 12px;
+  }
+
+  .auth-header-title {
+    font-size: 1.25rem;
+  }
+
+  .cyber-input {
+    height: 40px;
+  }
+
+  .cyber-submit-btn {
+    height: 42px;
   }
 }

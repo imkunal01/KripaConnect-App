@@ -35,12 +35,11 @@ export default function Login() {
       {/* Dual Cyber Studio Layout */}
       <div className="auth-studio-wrapper">
         {/* Left Side: Auth Card Form */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="auth-card-outer-col">
+          <div className="auth-card-top-nav">
             <button
               type="button"
-              className="cyber-secondary-btn"
-              style={{ width: 'auto', padding: '6px 14px', height: '36px', borderRadius: '999px', fontSize: '0.82rem' }}
+              className="cyber-secondary-btn auth-back-store-btn"
               onClick={goBack}
               aria-label="Back to store"
             >
@@ -53,7 +52,7 @@ export default function Login() {
 
             <Link
               to="/"
-              style={{ color: '#94A3B8', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none' }}
+              className="auth-browse-catalog-link"
             >
               Browse Catalog →
             </Link>
