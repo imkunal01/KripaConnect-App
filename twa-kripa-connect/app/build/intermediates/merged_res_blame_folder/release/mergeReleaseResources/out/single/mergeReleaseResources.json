@@ -4,6 +4,10 @@
         "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-mdpi/ic_launcher_adaptive_back.png"
     },
     {
+        "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
         "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/raw_web_app_manifest.json.flat",
         "source": "app.vercel.kripa_connect_app.twa.app-main-28:/raw/web_app_manifest.json"
     },
@@ -22,6 +26,10 @@
     {
         "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-xxxhdpi_ic_launcher_adaptive_back.png.flat",
         "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-xxxhdpi/ic_launcher_adaptive_back.png"
+    },
+    {
+        "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-hdpi/ic_launcher_round.png"
     },
     {
         "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-xxhdpi_ic_launcher_adaptive_fore.png.flat",
@@ -44,8 +52,16 @@
         "source": "app.vercel.kripa_connect_app.twa.app-main-28:/drawable-mdpi/ic_notification_icon.png"
     },
     {
+        "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
         "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/drawable-xhdpi_splash.png.flat",
         "source": "app.vercel.kripa_connect_app.twa.app-main-28:/drawable-xhdpi/splash.png"
+    },
+    {
+        "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
         "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/drawable-xxxhdpi_splash.png.flat",
@@ -56,6 +72,10 @@
         "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-hdpi/ic_launcher.png"
     },
     {
+        "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
         "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-mdpi_ic_launcher.png.flat",
         "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-mdpi/ic_launcher.png"
     },
@@ -64,8 +84,16 @@
         "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-hdpi/ic_launcher_adaptive_fore.png"
     },
     {
+        "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-xxxhdpi/ic_launcher_round.png"
+    },
+    {
         "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/drawable-hdpi_ic_notification_icon.png.flat",
         "source": "app.vercel.kripa_connect_app.twa.app-main-28:/drawable-hdpi/ic_notification_icon.png"
+    },
+    {
+        "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "app.vercel.kripa_connect_app.twa.app-main-28:/mipmap-anydpi-v26/ic_launcher_round.xml"
     },
     {
         "merged": "app.vercel.kripa_connect_app.twa.app-release-27:/mipmap-xhdpi_ic_launcher_adaptive_back.png.flat",

@@ -33,6 +33,10 @@
   position: relative;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
   width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .bk-sk-top-row {
@@ -161,19 +165,21 @@
 }
 
 /* =========================================================
-   2. PRODUCT GRID SKELETON (3-col mobile / 4-5 col desk)
+   2. PRODUCT GRID SKELETON (2-col mobile / 3-5 col desk)
    ========================================================= */
 .bk-sk-product-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
   width: 100%;
+  box-sizing: border-box;
+  grid-column: 1 / -1;
 }
 
-@media (max-width: 400px) {
+@media (min-width: 560px) {
   .bk-sk-product-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
   }
 }
 

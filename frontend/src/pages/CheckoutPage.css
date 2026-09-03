@@ -7,18 +7,30 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 100px;
+  padding-top: 0;
+}
+
+@media (min-width: 769px) {
+  .checkout-page {
+    padding-top: 24px;
+  }
 }
 
 .checkout-container {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 24px 24px 80px;
+  padding: 12px 14px calc(var(--mobile-nav-clearance, 80px) + 30px);
   width: 100%;
   display: grid;
   grid-template-columns: 1.35fr 0.85fr;
   gap: 36px;
   align-items: start;
+}
+
+@media (min-width: 769px) {
+  .checkout-container {
+    padding: 24px 24px 80px;
+  }
 }
 
 @media (max-width: 1024px) {

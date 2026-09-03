@@ -950,6 +950,7 @@ layout support_simple_spinner_dropdown_item
 mipmap ic_launcher
 mipmap ic_launcher_adaptive_back
 mipmap ic_launcher_adaptive_fore
+mipmap ic_launcher_round
 raw web_app_manifest
 string abc_action_bar_home_description
 string abc_action_bar_up_description

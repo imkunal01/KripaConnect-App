@@ -7,7 +7,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 14px;
+  padding-top: 0;
 }
 
 @media (min-width: 769px) {
@@ -19,7 +19,7 @@
 .orders-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 12px 14px 80px;
+  padding: 12px 14px calc(var(--mobile-nav-clearance, 80px) + 24px);
   width: 100%;
 }
 
@@ -429,15 +429,27 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .orders-filter-bar::-webkit-scrollbar {
+  .orders-filter-pills {
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 3px;
+    margin-bottom: 16px;
+    gap: 6px;
+  }
+
+  .orders-filter-pills::-webkit-scrollbar {
     display: none;
   }
 
-  .orders-filter-pill {
-    padding: 8px 14px;
+  .orders-filter-btn {
+    padding: 7px 14px;
     font-size: 0.8rem;
     white-space: nowrap;
-    border-radius: 999px;
+    border-radius: 10px;
+    flex-shrink: 0;
   }
 
   /* Order Cards Mobile */

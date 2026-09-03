@@ -21,13 +21,13 @@
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  padding: 12px 14px;
+  padding: 8px 12px calc(var(--mobile-dock-height, 64px) + 24px);
 }
 
 @media (min-width: 768px) {
   .bk-prod-container {
     max-width: 1100px;
-    padding: 20px 24px;
+    padding: 20px 24px 60px;
   }
 }
 
@@ -40,10 +40,23 @@
   gap: 10px;
   margin-bottom: 12px;
   position: sticky;
-  top: 0;
+  top: 54px;
   background: #faf9f5;
-  padding: 4px 0;
+  padding: 6px 0;
   z-index: 40;
+}
+
+@media (min-width: 769px) {
+  .bk-prod-top-header {
+    top: 68px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bk-prod-back-btn,
+  .bk-prod-cart-link {
+    display: none !important;
+  }
 }
 
 .bk-prod-back-btn {
@@ -176,70 +189,356 @@
 }
 
 /* =========================================================
-   2. FILTER & SORT CHIPS RIBBON (Screenshot 3 style)
+   1. DEDICATED CATEGORY SUGGESTIONS BAR
    ========================================================= */
-.bk-prod-chips-ribbon {
+.bk-prod-category-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
-  -ms-overflow-style: none;
   scrollbar-width: none;
   padding-bottom: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
-.bk-prod-chips-ribbon::-webkit-scrollbar {
+.bk-prod-category-bar::-webkit-scrollbar {
   display: none;
 }
 
-.bk-prod-sort-pill-wrap {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.bk-prod-sort-select {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 9999px;
-  padding: 6px 12px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: #374151;
-  outline: none;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
-.bk-prod-chip {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 9999px;
-  padding: 6px 12px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: #374151;
-  cursor: pointer;
-  flex-shrink: 0;
+.bk-cat-tab {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: #475569;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
   transition: all 0.15s ease;
 }
 
-.bk-prod-chip:hover {
-  background: #f9fafb;
+.bk-cat-tab-icon {
+  font-size: 0.95rem;
+}
+
+.bk-cat-tab:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.bk-cat-tab.is-active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+/* =========================================================
+   2. REFINED FILTER & SORT BAR
+   ========================================================= */
+.bk-prod-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.bk-prod-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Modern Sort Trigger Button */
+.bk-sort-pill-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  color: #0f172a;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  transition: all 0.15s ease;
+}
+
+.bk-sort-pill-trigger:hover {
+  border-color: #FF3D3D;
+  color: #FF3D3D;
+  background: #fff5f5;
+}
+
+.bk-sort-pill-trigger.is-active {
+  background: #FFF1F2;
+  border-color: #FF3D3D;
+  color: #FF3D3D;
+  font-weight: 850;
+  box-shadow: 0 2px 8px rgba(255, 61, 61, 0.2);
+}
+
+.bk-sort-pill-icon {
+  font-size: 0.88rem;
+  color: inherit;
+}
+
+.bk-sort-pill-arrow {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
+.bk-sort-pill-trigger.is-active .bk-sort-pill-arrow {
+  color: #FF3D3D;
+}
+
+/* Quick Filter Chips */
+.bk-quick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: #475569;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: all 0.15s ease;
+}
+
+.bk-quick-chip:hover {
+  background: #f8fafc;
   border-color: #cbd5e1;
 }
 
-.bk-prod-chip.active {
+.bk-quick-chip.is-active {
   background: #FFF1F2;
   border-color: #FF3D3D;
   color: #FF3D3D;
   font-weight: 800;
+  box-shadow: 0 2px 8px rgba(255, 61, 61, 0.15);
+}
+
+.bk-chip-check {
+  font-size: 0.85rem;
+  stroke-width: 3;
+}
+
+/* Clear Reset Chip */
+.bk-quick-chip--clear {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  font-weight: 800;
+}
+
+.bk-quick-chip--clear:hover {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+/* =========================================================
+   3. MODERN SORT BOTTOM-SHEET MODAL
+   ========================================================= */
+.bk-sort-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: sortFadeIn 0.2s ease-out;
+}
+
+@keyframes sortFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.bk-sort-modal-sheet {
+  background: #ffffff;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 24px 24px 0 0;
+  padding: 12px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.25);
+  animation: sortSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 641px) {
+  .bk-sort-modal-overlay {
+    align-items: center;
+    padding: 20px;
+  }
+  .bk-sort-modal-sheet {
+    border-radius: 24px;
+    padding: 20px 24px;
+  }
+}
+
+@keyframes sortSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.bk-sort-modal-handle {
+  width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  margin: 4px auto 14px;
+}
+
+@media (min-width: 641px) {
+  .bk-sort-modal-handle {
+    display: none;
+  }
+}
+
+.bk-sort-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.bk-sort-modal-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bk-sort-modal-title-icon {
+  font-size: 1.15rem;
+  color: #FF3D3D;
+}
+
+.bk-sort-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 850;
+  color: #0f172a;
+}
+
+.bk-sort-modal-close {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bk-sort-modal-close:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.bk-sort-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bk-sort-option-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.bk-sort-option-item:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.bk-sort-option-item.is-selected {
+  background: #FFF1F2;
+  border-color: #FF3D3D;
+}
+
+.bk-sort-option-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bk-sort-option-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.bk-sort-option-item.is-selected .bk-sort-option-title {
+  color: #FF3D3D;
+}
+
+.bk-sort-option-desc {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.bk-sort-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.bk-sort-radio.is-checked {
+  border-color: #FF3D3D;
+  background: #FF3D3D;
+}
+
+.bk-sort-radio-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffffff;
 }
 
 /* =========================================================
@@ -247,14 +546,14 @@
    ========================================================= */
 .bk-prod-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
-@media (max-width: 400px) {
+@media (min-width: 560px) {
   .bk-prod-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
   }
 }
 

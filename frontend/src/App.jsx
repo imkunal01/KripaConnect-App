@@ -1,6 +1,9 @@
 import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import AuthModal from './components/AuthModal.jsx'
+import ApkDownloadModal from './components/ApkDownloadModal.jsx'
+
+const DownloadApp = lazy(() => import('./pages/DownloadApp.jsx'))
 
 const Login = lazy(() => import('./pages/Login.jsx'))
 const Signup = lazy(() => import('./pages/Signup.jsx'))
@@ -30,25 +33,14 @@ const Terms = lazy(() => import('./pages/Terms.jsx'))
 const Refund = lazy(() => import('./pages/Refund.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 
-const AppFallback = () => (
-  <div className="app-fallback" role="status" aria-live="polite" aria-busy="true">
-    <div className="app-fallback__card">
-      <div className="app-fallback__mark" aria-hidden="true">
-        <div className="app-fallback__spinner" />
-      </div>
-      <div className="app-fallback__title"></div>
-      <div className="app-fallback__subtitle">Loading</div>
-      <div className="app-fallback__bar" aria-hidden="true">
-        <div className="app-fallback__barFill" />
-      </div>
-    </div>
-  </div>
-)
+import AppLoader from './components/AppLoader.jsx'
+import ScrollToTop from './components/ScrollToTop.jsx'
 
 function App() {
   return (
-    <Suspense fallback={<AppFallback />}>
+    <Suspense fallback={<AppLoader />}>
       <div>
+        <ScrollToTop />
         <Routes>  
           <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
@@ -77,10 +69,15 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/returns" element={<Refund />} />
+          <Route path="/download" element={<DownloadApp />} />
+          <Route path="/app" element={<Navigate to="/download" replace />} />
+          <Route path="/apk" element={<Navigate to="/download" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         {/* Global Auth Popup Modal (accessible anywhere via openAuthModal) */}
         <AuthModal />
+        {/* Global APK Download Popup Modal */}
+        <ApkDownloadModal />
       </div>
     </Suspense>
   )

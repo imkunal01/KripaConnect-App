@@ -30,9 +30,19 @@ import {
   LuCheck,
   LuArrowRight,
   LuLayoutGrid,
-  LuTruck
+  LuTruck,
+  LuArrowUpDown
 } from 'react-icons/lu'
 import { FaHeart, FaShoppingCart, FaStar } from 'react-icons/fa'
+
+// Curated Sort Options with descriptive labels
+const SORT_OPTIONS = [
+  { value: '', label: 'Popular & Relevant', shortLabel: 'Popular', desc: 'Curated by popularity and trending customer orders' },
+  { value: 'price', label: 'Price: Low to High', shortLabel: 'Price: Low-High', desc: 'Most affordable budget products first' },
+  { value: '-price', label: 'Price: High to Low', shortLabel: 'Price: High-Low', desc: 'Premium flagship & higher capacity models first' },
+  { value: '-sold', label: 'Top Rated & Bestsellers', shortLabel: 'Top Rated', desc: 'Highest reviewed and top selling products' },
+  { value: '-createdAt', label: 'Newest Arrivals', shortLabel: 'Newest', desc: 'Recently added electronics and appliances' }
+]
 
 // Brands for the "Shop by brands" section
 const BRANDS = [
@@ -59,6 +69,7 @@ export default function Products() {
   const [subcategories, setSubcategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [sortModalOpen, setSortModalOpen] = useState(false)
 
   // URL Params
   const search = params.get('search') || ''
@@ -71,6 +82,23 @@ export default function Products() {
   const inStockFilter = params.get('inStock') || ''
 
   const [searchInput, setSearchInput] = useState(search)
+
+  const currentSortObj = useMemo(() => {
+    return SORT_OPTIONS.find(o => o.value === sort) || SORT_OPTIONS[0]
+  }, [sort])
+
+  const hasActiveFilters = Boolean(category || subcategory || sort || minPrice || maxPrice || inStockFilter)
+
+  const handleClearAllFilters = () => {
+    updateParams({
+      category: '',
+      subcategory: '',
+      sort: '',
+      minPrice: '',
+      maxPrice: '',
+      inStock: ''
+    })
+  }
 
   useEffect(() => {
     setSearchInput(search)
@@ -110,7 +138,7 @@ export default function Products() {
       } finally {
         if (isMounted) setLoading(false)
       }
-    }, 250)
+    }, 200)
 
     return () => {
       isMounted = false
@@ -247,7 +275,13 @@ export default function Products() {
             <button
               type="button"
               className="bk-prod-back-btn"
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                if (window.history?.state?.idx > 0) {
+                  navigate(-1)
+                } else {
+                  navigate('/')
+                }
+              }}
               aria-label="Go Back"
             >
               <LuArrowLeft />
@@ -298,39 +332,59 @@ export default function Products() {
           </div>
 
           {/* ========================================================================= */}
-          {/* 2. BLINKIT FILTER & SORT CHIPS RIBBON (Horizontal Scroll)                */}
+          {/* 1. DEDICATED CATEGORY SUGGESTION BAR (Horizontal Scroll Strip)           */}
           {/* ========================================================================= */}
-          <div className="bk-prod-chips-ribbon">
-            {/* Sort Dropdown Pill */}
-            <div className="bk-prod-sort-pill-wrap">
-              <select
-                className="bk-prod-sort-select"
-                value={sort}
-                onChange={(e) => updateParams({ sort: e.target.value })}
-                aria-label="Sort products"
+          <nav className="bk-prod-category-bar" aria-label="Category suggestions">
+            <button
+              type="button"
+              className={`bk-cat-tab ${!category ? 'is-active' : ''}`}
+              onClick={() => updateParams({ category: '', subcategory: '' })}
+            >
+              <LuLayoutGrid className="bk-cat-tab-icon" />
+              <span>All Products</span>
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat._id}
+                type="button"
+                className={`bk-cat-tab ${category === cat._id ? 'is-active' : ''}`}
+                onClick={() => updateParams({ category: category === cat._id ? '' : cat._id, subcategory: '' })}
               >
-                <option value="">Sort: Popular ▾</option>
-                <option value="price">Price: Low to High</option>
-                <option value="-price">Price: High to Low</option>
-                <option value="-sold">Top Rated / Best Selling</option>
-                <option value="-createdAt">Newest Arrivals</option>
-              </select>
-            </div>
+                <span>{cat.name}</span>
+              </button>
+            ))}
+          </nav>
+
+          {/* ========================================================================= */}
+          {/* 2. REFINED SORT & QUICK FILTER BAR                                       */}
+          {/* ========================================================================= */}
+          <div className="bk-prod-filter-bar">
+            {/* Custom Modern Sort Trigger Pill */}
+            <button
+              type="button"
+              className={`bk-sort-pill-trigger ${sort ? 'is-active' : ''}`}
+              onClick={() => setSortModalOpen(true)}
+              aria-label="Sort products"
+            >
+              <LuArrowUpDown className="bk-sort-pill-icon" />
+              <span className="bk-sort-pill-text">{currentSortObj.shortLabel}</span>
+              <LuChevronDown className="bk-sort-pill-arrow" />
+            </button>
 
             {/* In Stock Toggle Chip */}
             <button
               type="button"
-              className={`bk-prod-chip ${inStockFilter === 'true' ? 'active' : ''}`}
+              className={`bk-quick-chip ${inStockFilter === 'true' ? 'is-active' : ''}`}
               onClick={() => updateParams({ inStock: inStockFilter === 'true' ? '' : 'true' })}
             >
               <span>In Stock</span>
-              {inStockFilter === 'true' && <LuCheck />}
+              {inStockFilter === 'true' && <LuCheck className="bk-chip-check" />}
             </button>
 
             {/* Price Filter Chips */}
             <button
               type="button"
-              className={`bk-prod-chip ${maxPrice === '1000' ? 'active' : ''}`}
+              className={`bk-quick-chip ${maxPrice === '1000' ? 'is-active' : ''}`}
               onClick={() => updateParams({ maxPrice: maxPrice === '1000' ? '' : '1000' })}
             >
               Under ₹1,000
@@ -338,7 +392,7 @@ export default function Products() {
 
             <button
               type="button"
-              className={`bk-prod-chip ${minPrice === '1000' && maxPrice === '5000' ? 'active' : ''}`}
+              className={`bk-quick-chip ${minPrice === '1000' && maxPrice === '5000' ? 'is-active' : ''}`}
               onClick={() => {
                 if (minPrice === '1000' && maxPrice === '5000') {
                   updateParams({ minPrice: '', maxPrice: '' })
@@ -350,17 +404,18 @@ export default function Products() {
               ₹1,000 - ₹5,000
             </button>
 
-            {/* Category Filter Pills */}
-            {categories.map((cat) => (
+            {/* Clear Filters Reset Pill */}
+            {hasActiveFilters && (
               <button
-                key={cat._id}
                 type="button"
-                className={`bk-prod-chip ${category === cat._id ? 'active' : ''}`}
-                onClick={() => updateParams({ category: category === cat._id ? '' : cat._id, subcategory: '' })}
+                className="bk-quick-chip bk-quick-chip--clear"
+                onClick={handleClearAllFilters}
+                title="Reset all active filters"
               >
-                {cat.name}
+                <LuX />
+                <span>Reset</span>
               </button>
-            ))}
+            )}
           </div>
 
           {/* ========================================================================= */}
@@ -368,9 +423,7 @@ export default function Products() {
           {/* ========================================================================= */}
           <div className="bk-prod-grid-stage">
             {loading ? (
-              <div className="bk-prod-grid">
-                <ProductGridSkeleton count={12} />
-              </div>
+              <ProductGridSkeleton count={8} />
             ) : displayedItems.length > 0 ? (
               <div className="bk-prod-grid">
                 {displayedItems.map((p) => {
@@ -564,6 +617,62 @@ export default function Products() {
               <LuArrowRight />
             </div>
           </Link>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 6. MODERN SORT BOTTOM SHEET MODAL                                        */}
+      {/* ========================================================================= */}
+      {sortModalOpen && (
+        <div className="bk-sort-modal-overlay" onClick={() => setSortModalOpen(false)}>
+          <div
+            className="bk-sort-modal-sheet"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Sort Options"
+          >
+            <div className="bk-sort-modal-handle" />
+            <div className="bk-sort-modal-header">
+              <div className="bk-sort-modal-header-title">
+                <LuArrowUpDown className="bk-sort-modal-title-icon" />
+                <h3>Sort Products By</h3>
+              </div>
+              <button
+                type="button"
+                className="bk-sort-modal-close"
+                onClick={() => setSortModalOpen(false)}
+                aria-label="Close sorting options"
+              >
+                <LuX />
+              </button>
+            </div>
+
+            <div className="bk-sort-options-list">
+              {SORT_OPTIONS.map((opt) => {
+                const isSelected = (sort || '') === opt.value
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`bk-sort-option-item ${isSelected ? 'is-selected' : ''}`}
+                    onClick={() => {
+                      updateParams({ sort: opt.value })
+                      setSortModalOpen(false)
+                    }}
+                  >
+                    <div className="bk-sort-option-info">
+                      <span className="bk-sort-option-title">{opt.label}</span>
+                      <span className="bk-sort-option-desc">{opt.desc}</span>
+                    </div>
+                    <div className={`bk-sort-radio ${isSelected ? 'is-checked' : ''}`}>
+                      {isSelected && <span className="bk-sort-radio-dot" />}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
 

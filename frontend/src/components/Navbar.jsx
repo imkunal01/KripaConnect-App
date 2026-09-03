@@ -6,7 +6,7 @@ import ShopContext from '../context/ShopContext.jsx'
 import Logo from '../assets/newLogo3.png'
 import './Navbar.css'
 
-// Clean Vector Icons (No Emojis)
+// Clean Vector Icons
 import {
   LuSearch,
   LuHouse,
@@ -15,8 +15,10 @@ import {
   LuShoppingBag,
   LuUser,
   LuBriefcase,
-  LuX
+  LuX,
+  LuArrowLeft
 } from 'react-icons/lu'
+import { FaAndroid } from 'react-icons/fa'
 
 export default function Navbar() {
   const { user, role, openAuthModal } = useAuth()
@@ -40,9 +42,74 @@ export default function Navbar() {
   }
 
   const isActive = (path) => location.pathname === path
+  const isSubpage = location.pathname !== '/'
+  const isAdmin = location.pathname.startsWith('/admin')
 
   return (
     <>
+      {/* =======================
+          MOBILE TOP APP BAR
+      ======================== */}
+      <header className="mobile-top-bar" aria-label="Mobile Header">
+        <div className="mobile-top-bar__inner">
+          <div className="mobile-top-bar__left">
+            {isSubpage ? (
+              <button
+                type="button"
+                className="mobile-top-btn mobile-top-btn--back"
+                onClick={() => {
+                  if (window.history?.state?.idx > 0) {
+                    navigate(-1)
+                  } else {
+                    navigate('/')
+                  }
+                }}
+                aria-label="Go back"
+              >
+                <LuArrowLeft />
+              </button>
+            ) : null}
+
+            <Link to="/" className="mobile-top-logo" aria-label="KripaConnect Home">
+              <img src={Logo} alt="KripaConnect" className="mobile-logo-img" />
+            </Link>
+
+            {role === 'retailer' && mode === 'retailer' && (
+              <span className="mobile-mode-tag">B2B Wholesale</span>
+            )}
+          </div>
+
+          <div className="mobile-top-bar__right">
+            <Link to="/download" className="mobile-top-btn mobile-top-btn--app" aria-label="Download Android App" title="Download App">
+              <FaAndroid className="mobile-app-icon" />
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(true)}
+              className="mobile-top-btn"
+              aria-label="Open search"
+            >
+              <LuSearch />
+            </button>
+
+            <Link to="/favorites" className="mobile-top-btn" aria-label="Wishlist">
+              <div className="dock-icon-wrap">
+                <LuHeart />
+                {favoritesCount > 0 && <span className="dock-badge-dot" />}
+              </div>
+            </Link>
+
+            <Link to="/cart" className="mobile-top-btn mobile-top-btn--cart" aria-label="Shopping Cart">
+              <div className="dock-icon-wrap">
+                <LuShoppingBag />
+                {cartCount > 0 && <span className="dock-badge-count">{cartCount}</span>}
+              </div>
+            </Link>
+          </div>
+        </div>
+      </header>
+
       {/* =======================
           MOBILE SEARCH FULLSCREEN MODAL
       ======================== */}
@@ -72,69 +139,61 @@ export default function Navbar() {
       </div>
 
       {/* =======================
-          MOBILE BOTTOM DOCK (High Utility, Zero Obstruction)
+          MOBILE BOTTOM DOCK (Consistent Across All Store Pages)
       ======================== */}
-      <nav className="mobile-dock" aria-label="Mobile Navigation">
-        <Link to="/" className={`dock-item ${isActive('/') ? 'active' : ''}`} aria-label="Home">
-          <LuHouse />
-          <span className="dock-label">Home</span>
-        </Link>
-        
-        {role === 'retailer' && mode === 'retailer' ? (
-          <Link to="/b2b" className={`dock-item ${isActive('/b2b') ? 'active' : ''}`} aria-label="Wholesale Hub">
-            <LuBriefcase />
-            <span className="dock-label">Wholesale</span>
+      {!isAdmin && (
+        <nav className="mobile-dock" aria-label="Mobile Navigation">
+          <Link to="/" className={`dock-item ${isActive('/') ? 'active' : ''}`} aria-label="Home">
+            <LuHouse />
+            <span className="dock-label">Home</span>
           </Link>
-        ) : (
-          <Link to="/products" className={`dock-item ${isActive('/products') ? 'active' : ''}`} aria-label="Products">
-            <LuLayoutGrid />
-            <span className="dock-label">Categories</span>
+          
+          {role === 'retailer' && mode === 'retailer' ? (
+            <Link to="/b2b" className={`dock-item ${isActive('/b2b') ? 'active' : ''}`} aria-label="Wholesale Hub">
+              <LuBriefcase />
+              <span className="dock-label">Wholesale</span>
+            </Link>
+          ) : (
+            <Link to="/products" className={`dock-item ${isActive('/products') ? 'active' : ''}`} aria-label="Products">
+              <LuLayoutGrid />
+              <span className="dock-label">Products</span>
+            </Link>
+          )}
+          
+          <Link to="/favorites" className={`dock-item ${isActive('/favorites') ? 'active' : ''}`} aria-label="Favorites">
+            <div className="dock-icon-wrap">
+              <LuHeart />
+              {favoritesCount > 0 && <span className="dock-badge-dot" />}
+            </div>
+            <span className="dock-label">Wishlist</span>
           </Link>
-        )}
-        
-        <button 
-          type="button"
-          onClick={() => setMobileSearchOpen(true)} 
-          className="dock-item" 
-          aria-label="Search"
-        >
-          <LuSearch />
-          <span className="dock-label">Search</span>
-        </button>
 
-        <Link to="/favorites" className={`dock-item ${isActive('/favorites') ? 'active' : ''}`} aria-label="Favorites">
-          <div className="dock-icon-wrap">
-            <LuHeart />
-            {favoritesCount > 0 && <span className="dock-badge-dot" />}
-          </div>
-          <span className="dock-label">Wishlist</span>
-        </Link>
-
-        <Link to="/cart" className={`dock-item ${isActive('/cart') ? 'active' : ''}`} aria-label="Cart">
-          <div className="dock-icon-wrap">
-            <LuShoppingBag />
-            {cartCount > 0 && <span className="dock-badge-count">{cartCount}</span>}
-          </div>
-          <span className="dock-label">Cart</span>
-        </Link>
-        
-        {user ? (
-          <Link to="/profile" className={`dock-item ${isActive('/profile') ? 'active' : ''}`} aria-label="My Account">
-            <LuUser />
-            <span className="dock-label">Account</span>
+          <Link to="/cart" className={`dock-item ${isActive('/cart') ? 'active' : ''}`} aria-label="Cart">
+            <div className="dock-icon-wrap">
+              <LuShoppingBag />
+              {cartCount > 0 && <span className="dock-badge-count">{cartCount}</span>}
+            </div>
+            <span className="dock-label">Cart</span>
           </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => openAuthModal('login')}
-            className="dock-item"
-            aria-label="Sign In"
-          >
-            <LuUser />
-            <span className="dock-label">Sign In</span>
-          </button>
-        )}
-      </nav>
+          
+          {user ? (
+            <Link to="/profile" className={`dock-item ${isActive('/profile') ? 'active' : ''}`} aria-label="My Account">
+              <LuUser />
+              <span className="dock-label">Account</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openAuthModal('login')}
+              className="dock-item"
+              aria-label="Sign In"
+            >
+              <LuUser />
+              <span className="dock-label">Account</span>
+            </button>
+          )}
+        </nav>
+      )}
 
       {/* =======================
           DESKTOP HEADER (Clean Red Accent Design)
@@ -167,6 +226,11 @@ export default function Navbar() {
             <nav className="nav-links">
               <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
               <Link to="/products" className={`nav-link ${isActive('/products') ? 'active' : ''}`}>Products</Link>
+              <Link to="/download" className={`nav-link nav-link-app ${isActive('/download') ? 'active' : ''}`}>
+                <FaAndroid className="nav-app-icon" />
+                <span>Get App</span>
+                <span className="nav-app-badge">v3.0</span>
+              </Link>
               {role === 'retailer' && mode === 'retailer' && (
                 <Link to="/b2b" className={`nav-link ${isActive('/b2b') ? 'active' : ''}`}>Wholesale Hub</Link>
               )}
