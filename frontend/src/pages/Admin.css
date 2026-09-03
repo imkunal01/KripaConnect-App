@@ -11,6 +11,15 @@
   color: var(--text-primary, #0f172a);
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+  font-size: 14px;
+}
+
+@media (min-width: 901px) {
+  .adminShell {
+    font-size: 15px;
+  }
 }
 
 /* ---------------------------------------------------------
