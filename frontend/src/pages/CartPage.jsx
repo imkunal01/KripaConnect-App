@@ -332,6 +332,25 @@ export default function CartPage() {
             </aside>
           </div>
         )}
+
+        {/* Mobile Sticky Quick-Checkout Bar */}
+        {cart.length > 0 && (
+          <aside className="cart-mobile-sticky-dock" aria-label="Mobile checkout bar">
+            <div className="cart-mobile-sticky-dock__info">
+              <span className="cart-mobile-sticky-dock__label">Estimated Total</span>
+              <span className="cart-mobile-sticky-dock__price">₹{totals.total.toLocaleString('en-IN')}</span>
+            </div>
+            <button
+              type="button"
+              className="cart-mobile-sticky-dock__btn"
+              disabled={blockers.length > 0}
+              onClick={() => navigate('/checkout')}
+            >
+              <span>Checkout</span>
+              <FiArrowRight />
+            </button>
+          </aside>
+        )}
       </main>
 
       <Footer />

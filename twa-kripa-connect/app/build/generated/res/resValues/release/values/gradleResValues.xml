@@ -6,35 +6,35 @@
     <!-- Value from default config. -->
     <bool name="enableNotification">true</bool>
     <!-- Value from default config. -->
-    <bool name="enableSiteSettingsShortcut">true</bool>
+    <bool name="enableSiteSettingsShortcut">false</bool>
     <!-- Value from default config. -->
     <color name="backgroundColor">#FFFFFF</color>
     <!-- Value from default config. -->
-    <color name="colorPrimary">#E63946</color>
+    <color name="colorPrimary">#FFFFFF</color>
     <!-- Value from default config. -->
     <color name="colorPrimaryDark">#000000</color>
     <!-- Value from default config. -->
-    <color name="navigationColor">#000000</color>
+    <color name="navigationColor">#FFFFFF</color>
     <!-- Value from default config. -->
     <color name="navigationColorDark">#000000</color>
     <!-- Value from default config. -->
-    <color name="navigationDividerColor">#000000</color>
+    <color name="navigationDividerColor">#E2E8F0</color>
     <!-- Value from default config. -->
-    <color name="navigationDividerColorDark">#000000</color>
+    <color name="navigationDividerColorDark">#1E293B</color>
     <!-- Value from default config. -->
     <integer name="splashScreenFadeOutDuration">300</integer>
     <!-- Value from default config. -->
     <string name="appName" translatable="false">KripaConnect</string>
     <!-- Value from default config. -->
-    <string name="fallbackType" translatable="false">customtabs</string>
+    <string name="fallbackType" translatable="false">webview</string>
     <!-- Value from default config. -->
-    <string name="fullScopeUrl" translatable="false">https://kripa-connect-app.vercel.app/</string>
+    <string name="fullScopeUrl" translatable="false">https://kripaconnect.in/</string>
     <!-- Value from default config. -->
     <string name="generatorApp" translatable="false">bubblewrap-cli</string>
     <!-- Value from default config. -->
-    <string name="hostName" translatable="false">kripa-connect-app.vercel.app</string>
+    <string name="hostName" translatable="false">kripaconnect.in</string>
     <!-- Value from default config. -->
-    <string name="launchUrl" translatable="false">https://kripa-connect-app.vercel.app/?source=twa</string>
+    <string name="launchUrl" translatable="false">https://kripaconnect.in/?source=twa</string>
     <!-- Value from default config. -->
     <string name="launcherName" translatable="false">KripaConnect</string>
     <!-- Value from default config. -->
@@ -42,6 +42,6 @@
     <!-- Value from default config. -->
     <string name="providerAuthority" translatable="false">app.vercel.kripa_connect_app.twa.fileprovider</string>
     <!-- Value from default config. -->
-    <string name="webManifestUrl" translatable="false">https://kripa-connect-app.vercel.app/manifest.json</string>
+    <string name="webManifestUrl" translatable="false">https://kripaconnect.in/manifest.json</string>
 
 </resources>

@@ -14,15 +14,112 @@
 }
 
 /* =========================================
+   MOBILE TOP APP BAR (Consistent Across All Pages)
+   ========================================= */
+.mobile-top-bar {
+  display: block;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+
+@media (min-width: 769px) {
+  .mobile-top-bar {
+    display: none;
+  }
+}
+
+.mobile-top-bar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 54px;
+  padding: 0 12px;
+  gap: 10px;
+}
+
+.mobile-top-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mobile-top-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  background: #ffffff;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.mobile-top-btn:active {
+  transform: scale(0.93);
+}
+
+.mobile-top-btn--cart {
+  color: var(--primary-red);
+  background: var(--primary-red-light);
+  border-color: rgba(255, 61, 61, 0.2);
+}
+
+.mobile-top-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mobile-logo-img {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+}
+
+.mobile-mode-tag {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.mobile-top-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* =========================================
    MOBILE BOTTOM DOCK (Floating Pill)
    ========================================= */
 .mobile-dock {
   display: flex;
   position: fixed;
-  bottom: 16px;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 28px);
+  width: calc(100% - 24px);
   max-width: 420px;
   height: 60px;
   background: rgba(255, 255, 255, 0.95);
@@ -404,4 +501,48 @@
 
 .btn-text:hover {
   color: var(--primary-red);
+}
+
+/* =========================================
+   APP DOWNLOAD LINK & BADGE (DESKTOP & MOBILE)
+   ========================================= */
+.nav-link-app {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 5px 10px !important;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.nav-link-app:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.nav-app-icon {
+  font-size: 1rem;
+  color: #10b981;
+}
+
+.nav-app-badge {
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+}
+
+.mobile-top-btn--app {
+  background: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+
+.mobile-app-icon {
+  color: #10b981;
+  font-size: 1.15rem;
 }

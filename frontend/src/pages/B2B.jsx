@@ -306,46 +306,54 @@ export default function B2B() {
         {/* 4 Core KPI Metrics */}
         <section className="b2b-kpi-grid">
           <div className="b2b-kpi-card">
-            <div className="b2b-kpi-icon-wrap is-blue">
-              <FiDollarSign />
+            <div className="b2b-kpi-header">
+              <div className="b2b-kpi-icon-wrap is-blue">
+                <FiDollarSign />
+              </div>
+              <span className="b2b-kpi-badge is-blue">{overview.totalUnits} units</span>
             </div>
             <div className="b2b-kpi-data">
-              <span className="b2b-kpi-label">Total Procurement</span>
+              <span className="b2b-kpi-label">Total Spend</span>
               <div className="b2b-kpi-value">{formatCurrency(overview.totalSpend)}</div>
-              <span className="b2b-kpi-sub">{overview.totalUnits} units purchased</span>
             </div>
           </div>
 
           <div className="b2b-kpi-card">
-            <div className="b2b-kpi-icon-wrap is-green">
-              <FiTrendingUp />
+            <div className="b2b-kpi-header">
+              <div className="b2b-kpi-icon-wrap is-green">
+                <FiTrendingUp />
+              </div>
+              <span className="b2b-kpi-badge is-green">~{overview.savingsRate}% Saved</span>
             </div>
             <div className="b2b-kpi-data">
-              <span className="b2b-kpi-label">Total Margin Profit Saved</span>
+              <span className="b2b-kpi-label">Margin Profit</span>
               <div className="b2b-kpi-value">{formatCurrency(overview.totalSavings)}</div>
-              <span className="b2b-kpi-sub">~{overview.savingsRate}% below retail MRP</span>
             </div>
           </div>
 
           <div className="b2b-kpi-card">
-            <div className="b2b-kpi-icon-wrap is-purple">
-              <FiBox />
+            <div className="b2b-kpi-header">
+              <div className="b2b-kpi-icon-wrap is-purple">
+                <FiBox />
+              </div>
+              <span className="b2b-kpi-badge is-purple">100% On-Time</span>
             </div>
             <div className="b2b-kpi-data">
-              <span className="b2b-kpi-label">Wholesale Consignments</span>
+              <span className="b2b-kpi-label">Bulk Orders</span>
               <div className="b2b-kpi-value">{overview.totalOrders} Orders</div>
-              <span className="b2b-kpi-sub">100% On-Time Fulfillment</span>
             </div>
           </div>
 
           <div className="b2b-kpi-card">
-            <div className="b2b-kpi-icon-wrap is-amber">
-              <FiShield />
+            <div className="b2b-kpi-header">
+              <div className="b2b-kpi-icon-wrap is-amber">
+                <FiShield />
+              </div>
+              <span className="b2b-kpi-badge is-amber">Priority</span>
             </div>
             <div className="b2b-kpi-data">
-              <span className="b2b-kpi-label">Wholesale Tier Status</span>
+              <span className="b2b-kpi-label">Partner Tier</span>
               <div className="b2b-kpi-value">Platinum Tier</div>
-              <span className="b2b-kpi-sub">Priority Dispatch & Warranty</span>
             </div>
           </div>
         </section>
@@ -358,7 +366,8 @@ export default function B2B() {
             onClick={() => setActiveTab('wholesale')}
             role="tab"
           >
-            <FiBox /> Wholesale Catalog & Fast Order
+            <FiBox />
+            <span>Wholesale Catalog</span>
           </button>
           <button
             type="button"
@@ -366,7 +375,8 @@ export default function B2B() {
             onClick={() => setActiveTab('orders')}
             role="tab"
           >
-            <FiTruck /> Consignment Orders ({orders.length})
+            <FiTruck />
+            <span>Orders ({orders.length})</span>
           </button>
           <button
             type="button"
@@ -374,7 +384,8 @@ export default function B2B() {
             onClick={() => setActiveTab('profile')}
             role="tab"
           >
-            <FiUser /> Business & Tax Details
+            <FiUser />
+            <span>Business Details</span>
           </button>
         </nav>
 
@@ -416,7 +427,7 @@ export default function B2B() {
               </div>
             </div>
 
-            {/* Products Table */}
+            {/* Products Table & Mobile Cards */}
             {productsLoading ? (
               <div className="b2b-loading-state">Loading Wholesale Catalog…</div>
             ) : products.length === 0 ? (
@@ -427,6 +438,7 @@ export default function B2B() {
               </div>
             ) : (
               <>
+                {/* 1. Desktop Data Table (>= 769px) */}
                 <div className="b2b-table-container">
                   <table className="b2b-table">
                     <thead>
@@ -539,6 +551,104 @@ export default function B2B() {
                       })}
                     </tbody>
                   </table>
+                </div>
+
+                {/* 2. Mobile Wholesale Cards (< 769px) */}
+                <div className="b2b-mobile-products-list">
+                  {products.map((p) => {
+                    const minBulk = normalizeMinBulkQty(p.min_bulk_qty)
+                    const stock = Number(p.stock) || 0
+                    const inStock = stock > 0
+                    const priceRetail = Number(p.price) || 0
+                    const priceBulk = Number(p.price_bulk || p.retailer_price || p.price) || 0
+                    const margin = priceRetail > priceBulk ? priceRetail - priceBulk : 0
+                    const marginPct = priceRetail > 0 ? Math.round((margin / priceRetail) * 100) : 0
+                    const currentQty = qtyByProductId[p._id] || minBulk
+
+                    return (
+                      <div key={p._id} className="b2b-m-prod-card">
+                        <div className="b2b-m-card-top">
+                          <img
+                            src={p.images?.[0]?.url || 'https://via.placeholder.com/60'}
+                            alt={p.name}
+                            className="b2b-m-card-thumb"
+                          />
+                          <div className="b2b-m-card-info">
+                            <div className="b2b-m-card-badges">
+                              <span className="b2b-cat-badge">{p.Category?.name || 'Electronics'}</span>
+                              {inStock ? (
+                                <span className="b2b-stock-pill in-stock">
+                                  <FiCheck /> {stock} in Hub
+                                </span>
+                              ) : (
+                                <span className="b2b-stock-pill out-stock">Out of Stock</span>
+                              )}
+                            </div>
+                            <Link to={`/product/${p._id}`} className="b2b-m-card-title">
+                              {p.name}
+                            </Link>
+                            <span className="b2b-prod-sku">SKU: {formatShortOrderId(p._id)}</span>
+                          </div>
+                        </div>
+
+                        {/* Price & Margin Matrix */}
+                        <div className="b2b-m-card-pricing">
+                          <div className="b2b-m-price-item">
+                            <span className="b2b-m-price-lbl">Wholesale Rate</span>
+                            <strong className="b2b-m-price-bulk">{formatCurrency(priceBulk)}</strong>
+                          </div>
+                          <div className="b2b-m-price-item">
+                            <span className="b2b-m-price-lbl">Retail MRP</span>
+                            <span className="b2b-m-price-retail">{formatCurrency(priceRetail)}</span>
+                          </div>
+                          <div className="b2b-m-price-item">
+                            <span className="b2b-m-price-lbl">Profit Margin</span>
+                            <span className="b2b-m-margin-pill">+{formatCurrency(margin)} ({marginPct}%)</span>
+                          </div>
+                        </div>
+
+                        {/* Order Stepper & Add Button */}
+                        <div className="b2b-m-card-actions">
+                          <div className="b2b-m-qty-block">
+                            <span className="b2b-m-moq-hint">MOQ: {minBulk} units</span>
+                            <div className="b2b-qty-ctrl">
+                              <button
+                                type="button"
+                                onClick={() => handleQtyChange(p._id, currentQty - 5, minBulk)}
+                                disabled={currentQty <= minBulk}
+                              >
+                                -5
+                              </button>
+                              <input
+                                type="number"
+                                min={minBulk}
+                                max={stock || 999}
+                                value={currentQty}
+                                onChange={(e) => handleQtyChange(p._id, e.target.value, minBulk)}
+                                className="b2b-qty-input"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleQtyChange(p._id, currentQty + 5, minBulk)}
+                                disabled={stock > 0 && currentQty + 5 > stock}
+                              >
+                                +5
+                              </button>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="b2b-m-add-btn"
+                            disabled={!inStock}
+                            onClick={() => handleAddSingleToCart(p)}
+                          >
+                            <FiPlus /> Add {currentQty}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
 
                 {/* Pagination Controls */}

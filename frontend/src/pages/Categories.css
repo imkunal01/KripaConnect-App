@@ -7,7 +7,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 14px;
+  padding-top: 0;
 }
 
 @media (min-width: 769px) {
@@ -19,7 +19,7 @@
 .categories-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 12px 14px 80px;
+  padding: 12px 14px calc(var(--mobile-nav-clearance, 80px) + 24px);
   width: 100%;
 }
 
@@ -92,8 +92,8 @@
 /* Grid */
 .categories-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 20px;
 }
 
 .category-card {

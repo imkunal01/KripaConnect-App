@@ -4,12 +4,12 @@
   "name": "KripaConnect",
   "launcherName": "KripaConnect",
   "display": "standalone",
-  "themeColor": "#E63946",
+  "themeColor": "#FFFFFF",
   "themeColorDark": "#000000",
-  "navigationColor": "#000000",
+  "navigationColor": "#FFFFFF",
   "navigationColorDark": "#000000",
-  "navigationDividerColor": "#000000",
-  "navigationDividerColorDark": "#000000",
+  "navigationDividerColor": "#E2E8F0",
+  "navigationDividerColorDark": "#1E293B",
   "backgroundColor": "#FFFFFF",
   "enableNotifications": true,
   "startUrl": "/?source=twa",
@@ -19,12 +19,12 @@
     "path": "C:\\Users\\Kunal\\Desktop\\Projects\\SKE\\twa-kripa-connect\\android.keystore",
     "alias": "android"
   },
-  "appVersionName": "1",
-  "appVersionCode": 1,
+  "appVersionName": "3.0",
+  "appVersionCode": 3,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://kripaconnect.in/manifest.json",
-  "fallbackType": "customtabs",
+  "fallbackType": "webview",
   "features": {
     "locationDelegation": {
       "enabled": true
@@ -33,18 +33,22 @@
   "alphaDependencies": {
     "enabled": false
   },
-  "enableSiteSettingsShortcut": true,
+  "enableSiteSettingsShortcut": false,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://kripaconnect.in/",
   "minSdkVersion": 21,
   "orientation": "portrait-primary",
-  "fingerprints": [],
+  "fingerprints": [
+    {
+      "value": "93:A4:49:E2:6D:2C:39:5C:30:EF:9D:FA:43:87:52:08:63:71:F5:A9:34:61:D3:9A:FD:8D:55:19:B0:38:EB:17"
+    }
+  ],
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
   "protocolHandlers": [],
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1"
+  "appVersion": "3.0"
 }

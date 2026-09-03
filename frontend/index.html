@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Outfit:wght@400;500;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#E63946" />
+    <meta name="theme-color" content="#FFFFFF" />
     <meta name="description" content="KripaConnect - Premier B2B & B2C E-Commerce platform for consumer electronics, home appliances, and wholesale retail." />
     <link rel="canonical" href="https://kripaconnect.in/" />
     <link rel="manifest" href="/manifest.json" />
@@ -32,7 +32,76 @@
     <title>KripaConnect® - A B2B & B2C Platform</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <style>
+        #initial-loader {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: radial-gradient(circle at 50% 40%, rgba(255, 61, 61, 0.05) 0%, #ffffff 70%);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          z-index: 999999;
+          margin: 0;
+        }
+        .init-logo {
+          position: relative;
+          width: 52px;
+          height: 52px;
+          border-radius: 16px;
+          background: linear-gradient(135deg, #FF3D3D 0%, #d32f2f 100%);
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 900;
+          font-size: 1.55rem;
+          box-shadow: 0 10px 28px -4px rgba(255, 61, 61, 0.45);
+          animation: initFloat 2s ease-in-out infinite;
+        }
+        .init-brand {
+          margin-top: 14px;
+          font-size: 1.02rem;
+          font-weight: 850;
+          color: #0f172a;
+          letter-spacing: -0.02em;
+        }
+        .init-bar {
+          margin-top: 12px;
+          width: 110px;
+          height: 3px;
+          background: #f1f5f9;
+          border-radius: 999px;
+          overflow: hidden;
+          position: relative;
+        }
+        .init-bar-fill {
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 100%;
+          width: 40%;
+          background: linear-gradient(90deg, transparent, #FF3D3D, transparent);
+          border-radius: 999px;
+          animation: initShimmer 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        @keyframes initFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        @keyframes initShimmer {
+          0% { left: -40%; }
+          100% { left: 100%; }
+        }
+      </style>
+      <div id="initial-loader" aria-hidden="true">
+        <div class="init-logo">K</div>
+        <div class="init-brand">KripaConnect</div>
+        <div class="init-bar"><div class="init-bar-fill"></div></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

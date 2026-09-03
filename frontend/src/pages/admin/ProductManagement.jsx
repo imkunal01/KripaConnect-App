@@ -19,6 +19,7 @@ import {
   FiTrash2,
   FiBox,
   FiFilter,
+  FiCheck,
   FiCheckCircle,
   FiEyeOff,
   FiAlertTriangle
@@ -201,6 +202,43 @@ export default function ProductManagement() {
     )
   }
 
+  // Instant Inline Stock Stepper (Zero Friction)
+  async function handleInlineStockChange(productId, delta) {
+    const targetProduct = products.find(p => p._id === productId)
+    if (!targetProduct) return
+    const currentStock = Number(targetProduct.stock) || 0
+    const newStock = Math.max(0, currentStock + delta)
+
+    // Optimistic local update
+    setProducts(prev => prev.map(p => p._id === productId ? { ...p, stock: newStock } : p))
+
+    try {
+      await updateProductAdmin(productId, { stock: newStock }, null, token)
+      toast.success(`Stock: ${newStock} units`, { duration: 1200, id: `stock-${productId}` })
+    } catch (err) {
+      toast.error(err.message || 'Failed to update stock')
+      loadData()
+    }
+  }
+
+  // Instant Inline Active/Inactive Toggle
+  async function handleInlineToggleActive(productId) {
+    const targetProduct = products.find(p => p._id === productId)
+    if (!targetProduct) return
+    const newActive = targetProduct.active === false ? true : false
+
+    // Optimistic local update
+    setProducts(prev => prev.map(p => p._id === productId ? { ...p, active: newActive } : p))
+
+    try {
+      await updateProductAdmin(productId, { active: newActive }, null, token)
+      toast.success(newActive ? 'Product is now Active' : 'Product is now Hidden', { duration: 1200, id: `active-${productId}` })
+    } catch (err) {
+      toast.error(err.message || 'Failed to toggle product status')
+      loadData()
+    }
+  }
+
   return (
     <div className="adminPage">
       {/* Header */}
@@ -290,6 +328,29 @@ export default function ProductManagement() {
           </select>
         </div>
 
+        {/* Category Scroll Pills (Mobile First) */}
+        {categories.length > 0 && (
+          <div className="adminStatusPills" style={{ paddingTop: 2 }}>
+            <button
+              type="button"
+              className={`adminStatusPill ${categoryFilter === 'all' ? 'is-active' : ''}`}
+              onClick={() => setCategoryFilter('all')}
+            >
+              <span>All Categories</span>
+            </button>
+            {categories.map(cat => (
+              <button
+                key={cat._id}
+                type="button"
+                className={`adminStatusPill ${categoryFilter === cat._id ? 'is-active' : ''}`}
+                onClick={() => setCategoryFilter(cat._id)}
+              >
+                <span>{cat.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Status Filter Pills */}
         <div className="adminStatusPills">
           <button
@@ -363,142 +424,141 @@ export default function ProductManagement() {
                           checked={isAllCurrentSelected}
                           onChange={handleToggleSelectPage}
                           className="bulk-row-checkbox"
-                          aria-label="Select all visible products"
+                          aria-label="Select all products on page"
                         />
                       </th>
-                      <th style={{ width: 70 }}>Image</th>
-                      <th>Product Info</th>
+                      <th>Product</th>
                       <th>Category</th>
-                      <th>Selling Price</th>
-                      <th>Retailer (B2B)</th>
-                      <th>Stock Status</th>
+                      <th>Price (₹)</th>
+                      <th>Retailer B2B (₹)</th>
+                      <th>Stock</th>
                       <th>Status</th>
                       <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedProducts.map((product) => {
-                      const isSelected = selectedIds.includes(product._id)
-                      const stockNumber = Number(product.stock) || 0
-                      const isOut = stockNumber === 0
-                      const isLow = stockNumber > 0 && stockNumber < 10
-                      const catName = product.Category?.name || 'Uncategorized'
+                    {paginatedProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="adminEmpty">
+                          <FiBox style={{ fontSize: '2rem', marginBottom: 8, opacity: 0.5 }} />
+                          <div>No products found matching your search or filters.</div>
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedProducts.map((product) => {
+                        const isSelected = selectedIds.includes(product._id)
+                        const stockNumber = Number(product.stock) || 0
 
-                      return (
-                        <tr key={product._id} className={isSelected ? 'is-row-selected' : ''}>
-                          <td style={{ textAlign: 'center' }}>
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleToggleRow(product._id)}
-                              className="bulk-row-checkbox"
-                              aria-label={`Select ${product.name}`}
-                            />
-                          </td>
-                          <td>
-                            <img
-                              src={product.images?.[0]?.url || 'https://via.placeholder.com/60?text=No+Image'}
-                              alt={product.name}
-                              style={{
-                                width: 52,
-                                height: 52,
-                                objectFit: 'cover',
-                                borderRadius: 12,
-                                border: '1px solid var(--border-color)',
-                                background: '#f8fafc'
-                              }}
-                            />
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
-                              {product.name}
-                            </div>
-                            {Array.isArray(product.tags) && product.tags.length > 0 && (
-                              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                                {product.tags.slice(0, 3).map((t) => (
-                                  <span
-                                    key={t}
-                                    style={{
-                                      fontSize: '0.72rem',
-                                      fontWeight: 700,
-                                      padding: '1px 6px',
-                                      borderRadius: 999,
-                                      background: '#f1f5f9',
-                                      color: '#475569'
-                                    }}
-                                  >
-                                    {t}
-                                  </span>
-                                ))}
+                        return (
+                          <tr
+                            key={product._id}
+                            className={isSelected ? 'is-row-selected' : ''}
+                          >
+                            <td style={{ textAlign: 'center' }}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => handleToggleRow(product._id)}
+                                className="bulk-row-checkbox"
+                                aria-label={`Select ${product.name}`}
+                              />
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <img
+                                  src={product.images?.[0]?.url || 'https://via.placeholder.com/50?text=No+Image'}
+                                  alt={product.name}
+                                  className="adminMobileThumb"
+                                  style={{ width: 44, height: 44 }}
+                                />
+                                <div>
+                                  <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>
+                                    {product.name}
+                                  </div>
+                                  <div className="adminHelp" style={{ fontSize: '0.75rem' }}>
+                                    SKU: {product.sku || product._id.slice(-6).toUpperCase()}
+                                  </div>
+                                </div>
                               </div>
-                            )}
-                          </td>
-                          <td style={{ fontWeight: 650, color: 'var(--text-secondary)' }}>
-                            {catName}
-                          </td>
-                          <td style={{ fontWeight: 800 }}>
-                            ₹{product.price?.toLocaleString('en-IN')}
-                          </td>
-                          <td style={{ fontWeight: 700, color: '#2563eb' }}>
-                            {product.retailer_price ? `₹${product.retailer_price.toLocaleString('en-IN')}` : '—'}
-                          </td>
-                          <td>
-                            {isOut ? (
-                              <span style={{ color: 'var(--danger)', fontWeight: 800 }}>
-                                Out of Stock (0)
+                            </td>
+                            <td>
+                              <span className="adminBadge">
+                                {product.Category?.name || 'Uncategorized'}
                               </span>
-                            ) : isLow ? (
-                              <span style={{ color: '#d97706', fontWeight: 800 }}>
-                                Low: {stockNumber} left
-                              </span>
-                            ) : (
-                              <span style={{ color: 'var(--secondary)', fontWeight: 800 }}>
-                                {stockNumber} in stock
-                              </span>
-                            )}
-                          </td>
-                          <td>
-                            <span className={`adminBadge ${product.active !== false ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
-                              {product.active !== false ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <div className="adminActions" style={{ justifyContent: 'flex-end' }}>
+                            </td>
+                            <td style={{ fontWeight: 800 }}>
+                              ₹{product.price?.toLocaleString('en-IN')}
+                            </td>
+                            <td style={{ fontWeight: 800, color: '#2563eb' }}>
+                              ₹{product.retailer_price?.toLocaleString('en-IN') || '—'}
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <div className="adminStockStepper">
+                                  <button
+                                    type="button"
+                                    className="adminStockStepper__btn"
+                                    onClick={() => handleInlineStockChange(product._id, -1)}
+                                    disabled={stockNumber <= 0}
+                                    title="Decrease stock"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="adminStockStepper__val">{stockNumber}</span>
+                                  <button
+                                    type="button"
+                                    className="adminStockStepper__btn"
+                                    onClick={() => handleInlineStockChange(product._id, 1)}
+                                    title="Increase stock"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
                               <button
                                 type="button"
-                                className="adminBtn adminBtnPrimary adminBtn--sm"
-                                onClick={() => handleOpenEditProduct(product)}
-                                title="Edit Product"
+                                className={`adminBadge ${product.active !== false ? 'adminBadge--ok' : 'adminBadge--danger'}`}
+                                onClick={() => handleInlineToggleActive(product._id)}
+                                title="Click to toggle status"
+                                style={{ cursor: 'pointer', border: 'none' }}
                               >
-                                <FiEdit2 />
-                                <span>Edit</span>
+                                {product.active !== false ? <FiCheck /> : <FiEyeOff />}
+                                <span style={{ marginLeft: 4 }}>{product.active !== false ? 'Active' : 'Inactive'}</span>
                               </button>
-                              <button
-                                type="button"
-                                className="adminBtn adminBtnDanger adminBtn--sm"
-                                onClick={() => handleDelete(product._id)}
-                                title="Delete Product"
-                              >
-                                <FiTrash2 />
-                                <span>Delete</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <div className="adminActions">
+                                <button
+                                  type="button"
+                                  className="adminBtn adminBtnPrimary adminBtn--sm"
+                                  onClick={() => handleOpenEditProduct(product)}
+                                  title="Edit Product Details"
+                                >
+                                  <FiEdit2 />
+                                  <span>Edit</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="adminBtn adminBtnDanger adminBtn--sm"
+                                  onClick={() => handleDelete(product._id)}
+                                  title="Delete Product"
+                                >
+                                  <FiTrash2 />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
-              {filteredProducts.length === 0 && (
-                <div className="adminEmpty">
-                  <FiBox style={{ fontSize: '2rem', marginBottom: 8, opacity: 0.5 }} />
-                  <div>No products found matching your search or filters.</div>
-                </div>
-              )}
             </div>
 
-            {/* Mobile Cards View */}
+            {/* Mobile Cards View (Zero Friction) */}
             <div className="adminOnlyMobile">
               {filteredProducts.length === 0 ? (
                 <div className="adminEmpty">
@@ -515,7 +575,15 @@ export default function ProductManagement() {
                       <div
                         key={product._id}
                         className={`adminMobileCard ${isSelected ? 'is-card-selected' : ''}`}
+                        style={{
+                          borderLeft: product.active === false
+                            ? '4px solid #ef4444'
+                            : stockNumber === 0
+                            ? '4px solid #f59e0b'
+                            : '4px solid #10b981'
+                        }}
                       >
+                        {/* Card Header */}
                         <div className="adminMobileCardHeader">
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                             <input
@@ -539,13 +607,23 @@ export default function ProductManagement() {
                               </div>
                             </div>
                           </div>
-                          <span
+
+                          {/* 1-Tap Active Toggle Switch */}
+                          <button
+                            type="button"
                             className={`adminBadge ${product.active !== false ? 'adminBadge--ok' : 'adminBadge--danger'}`}
+                            onClick={() => handleInlineToggleActive(product._id)}
+                            title="Tap to toggle visibility"
+                            style={{ cursor: 'pointer', border: 'none' }}
                           >
-                            {product.active !== false ? 'Active' : 'Inactive'}
-                          </span>
+                            {product.active !== false ? <FiCheck /> : <FiEyeOff />}
+                            <span style={{ marginLeft: 3 }}>
+                              {product.active !== false ? 'Active' : 'Hidden'}
+                            </span>
+                          </button>
                         </div>
 
+                        {/* Card Body */}
                         <div className="adminMobileCardBody">
                           <div className="adminMobileMetaRow">
                             <span className="adminHelp">Selling Price</span>
@@ -553,25 +631,46 @@ export default function ProductManagement() {
                               ₹{product.price?.toLocaleString('en-IN')}
                             </span>
                           </div>
-                          <div className="adminMobileMetaRow">
-                            <span className="adminHelp">Retailer B2B</span>
-                            <span className="adminMobileMetaValue" style={{ color: '#2563eb' }}>
-                              ₹{product.retailer_price?.toLocaleString('en-IN')}
-                            </span>
-                          </div>
-                          <div className="adminMobileMetaRow">
-                            <span className="adminHelp">Inventory</span>
-                            <span
-                              className="adminMobileMetaValue"
-                              style={{
-                                color: stockNumber === 0 ? 'var(--danger)' : stockNumber < 10 ? '#d97706' : 'var(--secondary)'
-                              }}
-                            >
-                              {stockNumber === 0 ? 'Out of stock' : `${stockNumber} units`}
-                            </span>
+                          {product.retailer_price && (
+                            <div className="adminMobileMetaRow">
+                              <span className="adminHelp">Retailer B2B</span>
+                              <span className="adminMobileMetaValue" style={{ color: '#2563eb' }}>
+                                ₹{product.retailer_price?.toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          )}
+                          <div className="adminMobileMetaRow" style={{ alignItems: 'center' }}>
+                            <span className="adminHelp">Stock Level</span>
+                            {/* Instant Inline Stock Stepper */}
+                            <div className="adminStockStepper">
+                              <button
+                                type="button"
+                                className="adminStockStepper__btn"
+                                onClick={() => handleInlineStockChange(product._id, -1)}
+                                disabled={stockNumber <= 0}
+                              >
+                                -
+                              </button>
+                              <span
+                                className="adminStockStepper__val"
+                                style={{
+                                  color: stockNumber === 0 ? '#ef4444' : stockNumber < 10 ? '#d97706' : '#0f172a'
+                                }}
+                              >
+                                {stockNumber}
+                              </span>
+                              <button
+                                type="button"
+                                className="adminStockStepper__btn"
+                                onClick={() => handleInlineStockChange(product._id, 1)}
+                              >
+                                +
+                              </button>
+                            </div>
                           </div>
                         </div>
 
+                        {/* Card Actions */}
                         <div className="adminMobileActions">
                           <button
                             type="button"

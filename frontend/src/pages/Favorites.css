@@ -7,7 +7,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 14px;
+  padding-top: 0;
 }
 
 @media (min-width: 769px) {
@@ -19,7 +19,7 @@
 .favorites-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 12px 14px 80px;
+  padding: 14px 14px calc(var(--mobile-nav-clearance, 80px) + 24px);
   width: 100%;
 }
 
@@ -60,6 +60,7 @@
   color: var(--text-secondary, #64748b);
   font-size: 0.95rem;
   margin: 0;
+  max-width: 600px;
 }
 
 .favorites-count-badge {
@@ -78,14 +79,14 @@
   border: 1px solid var(--border-color, #e2e8f0);
   padding: 70px 24px;
   text-align: center;
-  max-width: 520px;
+  max-width: 500px;
   margin: 40px auto;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 
-.favorites-empty-icon-wrap {
-  width: 72px;
-  height: 72px;
+.favorites-empty-icon {
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   background: rgba(var(--kc-primary-rgb, 255, 61, 61), 0.1);
   color: var(--primary, #FF3D3D);
@@ -125,8 +126,15 @@
 /* Grid */
 .favorites-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .favorites-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
 }
 
 .favorite-card {

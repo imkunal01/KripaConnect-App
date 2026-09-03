@@ -703,4 +703,325 @@
   color: #ffffff;
 }
 
+/* =========================================================
+   Mobile-First High-Velocity Primitives (Zero Friction)
+   ========================================================= */
+
+/* Urgency Action Banners */
+.adminUrgencyBanner {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  border: 1px solid #fecdd3;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 14px rgba(244, 63, 94, 0.08);
+}
+
+.adminUrgencyBanner--warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fde68a;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08);
+}
+
+.adminUrgencyBanner__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.adminUrgencyBanner__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #e11d48;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.adminUrgencyBanner--warning .adminUrgencyBanner__icon {
+  color: #d97706;
+}
+
+.adminUrgencyBanner__text {
+  min-width: 0;
+}
+
+.adminUrgencyBanner__title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #9f1239;
+  line-height: 1.2;
+}
+
+.adminUrgencyBanner--warning .adminUrgencyBanner__title {
+  color: #92400e;
+}
+
+.adminUrgencyBanner__sub {
+  font-size: 0.76rem;
+  color: #be123c;
+  margin-top: 2px;
+}
+
+.adminUrgencyBanner--warning .adminUrgencyBanner__sub {
+  color: #b45309;
+}
+
+.adminUrgencyBanner__btn {
+  padding: 7px 12px;
+  border-radius: 9px;
+  background: #e11d48;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.adminUrgencyBanner--warning .adminUrgencyBanner__btn {
+  background: #d97706;
+}
+
+.adminUrgencyBanner__btn:active {
+  transform: scale(0.95);
+}
+
+/* Quick Connect Action Buttons (WhatsApp, Call, Copy) */
+.adminQuickConnectRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adminQuickBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 750;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: #ffffff;
+  color: var(--text-secondary, #475569);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-decoration: none;
+  min-width: 34px;
+}
+
+.adminQuickBtn:hover {
+  background: var(--gray-50, #f8fafc);
+  color: var(--text-primary, #0f172a);
+  border-color: #cbd5e1;
+}
+
+.adminQuickBtn:active {
+  transform: scale(0.95);
+}
+
+.adminQuickBtn--whatsapp {
+  background: rgba(37, 211, 102, 0.08);
+  border-color: rgba(37, 211, 102, 0.3);
+  color: #16a34a;
+}
+
+.adminQuickBtn--whatsapp:hover {
+  background: #25d366;
+  color: #ffffff;
+  border-color: #25d366;
+}
+
+.adminQuickBtn--call {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #2563eb;
+}
+
+.adminQuickBtn--call:hover {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+/* Inline Stock Stepper */
+.adminStockStepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.adminStockStepper__btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: var(--gray-50, #f8fafc);
+  color: var(--text-primary, #0f172a);
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.adminStockStepper__btn:hover {
+  background: var(--gray-200, #e2e8f0);
+}
+
+.adminStockStepper__btn:active {
+  background: #cbd5e1;
+}
+
+.adminStockStepper__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.adminStockStepper__val {
+  min-width: 44px;
+  padding: 0 8px;
+  text-align: center;
+  font-size: 0.86rem;
+  font-weight: 850;
+  color: var(--text-primary, #0f172a);
+  line-height: 32px;
+}
+
+/* Instant Action Button (Large tap targets) */
+.adminInstantActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 11px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.adminInstantActionBtn:active {
+  transform: scale(0.96);
+}
+
+.adminInstantActionBtn--success {
+  background: #10b981;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.adminInstantActionBtn--success:hover {
+  background: #059669;
+}
+
+.adminInstantActionBtn--primary {
+  background: var(--primary, #FF3D3D);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(255, 61, 61, 0.25);
+}
+
+.adminInstantActionBtn--primary:hover {
+  background: #e62e2e;
+}
+
+.adminInstantActionBtn--danger {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+}
+
+.adminInstantActionBtn--danger:hover {
+  background: #fee2e2;
+}
+
+/* Hub Grid & Tiles */
+.adminHubGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+@media (min-width: 768px) {
+  .adminHubGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+.adminHubTile {
+  background: #ffffff;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 16px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.adminHubTile:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary, #FF3D3D);
+  box-shadow: 0 10px 24px rgba(255, 61, 61, 0.1);
+}
+
+.adminHubTile:active {
+  transform: scale(0.97);
+}
+
+.adminHubTile__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+  background: rgba(var(--kc-primary-rgb, 255, 61, 61), 0.08);
+  color: var(--primary, #FF3D3D);
+}
+
+.adminHubTile__title {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+}
+
+.adminHubTile__desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.35;
+}
+
+
 

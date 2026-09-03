@@ -12,6 +12,20 @@ import NetworkStatus from './components/NetworkStatus.jsx'
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
+// Intercept browser extension or Chrome PerformanceObserver soft-navigation errors
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    if (
+      event?.message &&
+      (event.message.includes('startTime') || event.message.includes('reportAllChanges'))
+    ) {
+      event.stopImmediatePropagation?.();
+      event.preventDefault?.();
+      return true;
+    }
+  });
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={clientId}>

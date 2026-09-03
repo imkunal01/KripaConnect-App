@@ -7,14 +7,26 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 100px;
+  padding-top: 0;
+}
+
+@media (min-width: 769px) {
+  .order-details-page {
+    padding-top: 24px;
+  }
 }
 
 .order-details-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 24px 80px;
+  padding: 12px 14px calc(var(--mobile-nav-clearance, 80px) + 24px);
   width: 100%;
+}
+
+@media (min-width: 769px) {
+  .order-details-container {
+    padding: 24px 24px 80px;
+  }
 }
 
 /* Top Navigation Bar */

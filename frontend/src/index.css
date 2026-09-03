@@ -22,6 +22,12 @@
   --info: #3b82f6;
   --info-light: #eff6ff;
 
+  /* Layout and Mobile Clearance Tokens */
+  --mobile-dock-height: 64px;
+  --mobile-dock-bottom: 14px;
+  --mobile-nav-clearance: calc(var(--mobile-dock-height) + var(--mobile-dock-bottom) + env(safe-area-inset-bottom, 12px));
+  --mobile-top-bar-height: 56px;
+
   /* Neutral Spectrum */
   --gray-50: #f8fafc;
   --gray-100: #f1f5f9;
@@ -139,12 +145,30 @@ textarea,
 /* Prevent fixed mobile navbar/dock from covering page content */
 @media (max-width: 1023px) {
   body {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 0px);
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0px);
+    padding-top: 0;
+    padding-bottom: var(--mobile-nav-clearance);
+  }
+
+  /* Admin pages handle their own layout without customer dock */
+  body:has(.adminShell) {
+    padding-bottom: 0;
   }
 }
 
-
+@media (max-width: 768px) {
+  .favorites-page,
+  .cart-page,
+  .categories-page,
+  .orders-page,
+  .order-details-page,
+  .checkout-page,
+  .profile-page,
+  .static-page,
+  .b2b-page,
+  .pdp-page {
+    padding-top: 0 !important;
+  }
+}
 
 button {
   cursor: pointer;
@@ -255,28 +279,37 @@ a {
   }
 }
 
-/* Native-like press feedback for all interactive elements */
-button:not(:disabled),
-a,
-[role="button"],
-.clickable {
+/* Fluid, non-jittery press feedback for interactive controls */
+.btn-pressable,
+.clickable,
+.dock-item,
+.icon-btn,
+.search-btn-red,
+.btn-primary-red,
+.pdp-btn-cart,
+.pdp-btn-buy,
+.cart-btn-checkout {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.05s ease-out, opacity 0.05s ease-out;
-  will-change: transform, opacity;
+  transition: transform 0.12s var(--ease-spring), opacity 0.12s ease;
+  will-change: transform;
 }
 
-button:not(:disabled):active,
-a:active,
-[role="button"]:active,
-.clickable:active {
-  transform: scale(0.96);
-  opacity: 0.8;
+.btn-pressable:active,
+.clickable:active,
+.dock-item:active,
+.icon-btn:active,
+.search-btn-red:active,
+.btn-primary-red:active,
+.pdp-btn-cart:active,
+.pdp-btn-buy:active,
+.cart-btn-checkout:active {
+  transform: scale(0.97);
 }
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 /* Page transition improvements */

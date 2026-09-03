@@ -1,6 +1,26 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../hooks/useAuth'
-import { getAllUsers, toggleBlockUser, updateUserRole, deleteUser, clearRetailerCooldown } from '../../services/admin'
+import {
+  getAllUsers,
+  toggleBlockUser,
+  updateUserRole,
+  deleteUser,
+  clearRetailerCooldown
+} from '../../services/admin'
+import {
+  FiUsers,
+  FiSearch,
+  FiPhoneCall,
+  FiMessageSquare,
+  FiLock,
+  FiUnlock,
+  FiTrash2,
+  FiShield,
+  FiRefreshCw,
+  FiCheckCircle,
+  FiUser
+} from 'react-icons/fi'
+import toast from 'react-hot-toast'
 
 function getMongoObjectIdTimeMs(id) {
   if (typeof id !== 'string' || id.length < 8) return 0
@@ -29,7 +49,7 @@ export default function UserManagement() {
   const { token } = useAuth()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState('all') // 'all' | 'customer' | 'retailer' | 'blocked'
   const [search, setSearch] = useState('')
 
   useEffect(() => {
@@ -46,341 +66,378 @@ export default function UserManagement() {
       setUsers(sorted)
     } catch (err) {
       console.error(err)
+      toast.error('Failed to load users')
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleToggleBlock(userId) {
+  async function handleToggleBlock(userId, currentBlocked) {
     try {
+      // Optimistic update
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, isBlocked: !currentBlocked } : u))
       await toggleBlockUser(userId, token)
-      await loadUsers()
+      toast.success(currentBlocked ? 'User unblocked' : 'User blocked')
     } catch (err) {
-      alert(err.message || 'Failed to update user')
+      toast.error(err.message || 'Failed to update user')
+      loadUsers()
     }
   }
 
   async function handleRoleChange(userId, newRole) {
     try {
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole } : u))
       await updateUserRole(userId, newRole, token)
-      await loadUsers()
+      toast.success(`Role updated to ${newRole}`)
     } catch (err) {
-      alert(err.message || 'Failed to update role')
+      toast.error(err.message || 'Failed to update role')
+      loadUsers()
     }
   }
 
   async function handleDelete(userId) {
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      try {
-        await deleteUser(userId, token)
-        await loadUsers()
-      } catch (err) {
-        alert(err.message || 'Failed to delete user')
-      }
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return
+    try {
+      await deleteUser(userId, token)
+      setUsers(prev => prev.filter(u => u._id !== userId))
+      toast.success('User deleted successfully')
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete user')
     }
   }
 
   async function handleClearCooldown(userId) {
     try {
       await clearRetailerCooldown(userId, token)
-      await loadUsers()
+      toast.success('Retailer cooldown reset')
+      loadUsers()
     } catch (err) {
-      alert(err.message || 'Failed to clear cooldown')
+      toast.error(err.message || 'Failed to clear cooldown')
     }
   }
 
-  const filteredUsers = users.filter(user => {
-    if (filter === 'customer' && user.role !== 'customer') return false
-    if (filter === 'retailer' && user.role !== 'retailer') return false
-    if (filter === 'admin' && user.role !== 'admin') return false
-    if (filter === 'blocked' && !user.isBlocked) return false
-    if (search) {
-      const s = search.toLowerCase()
-      const matchesName = user.name?.toLowerCase().includes(s)
-      const matchesEmail = user.email?.toLowerCase().includes(s)
-      if (!matchesName && !matchesEmail) return false
-    }
-    return true
-  })
+  // Counts
+  const counts = useMemo(() => {
+    let customer = 0
+    let retailer = 0
+    let blocked = 0
 
-  const retailerRequests = users.filter(user => user.retailerRequestStatus === 'pending' || user.retailerRequestStatus === 'rejected')
+    users.forEach(u => {
+      if (u.role === 'customer') customer++
+      if (u.role === 'retailer') retailer++
+      if (u.isBlocked) blocked++
+    })
 
-  if (loading) return <div className="adminEmpty">Loading…</div>
+    return { total: users.length, customer, retailer, blocked }
+  }, [users])
+
+  // Filtered Users
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      if (filter === 'customer' && user.role !== 'customer') return false
+      if (filter === 'retailer' && user.role !== 'retailer') return false
+      if (filter === 'blocked' && !user.isBlocked) return false
+
+      if (search.trim()) {
+        const s = search.toLowerCase()
+        const matchesName = user.name?.toLowerCase().includes(s)
+        const matchesEmail = user.email?.toLowerCase().includes(s)
+        const matchesPhone = user.phone?.includes(s)
+        if (!matchesName && !matchesEmail && !matchesPhone) return false
+      }
+      return true
+    })
+  }, [users, filter, search])
 
   return (
-    <div className="adminPage">
+    <div className="adminPage adminUserManagement">
+      {/* Header */}
       <div className="adminPageHeader">
         <div>
-          <h1 className="adminPageHeader__title">User Management</h1>
-          <p className="adminPageHeader__subtitle">Manage users, roles, and access control</p>
+          <h1 className="adminPageHeader__title">User Account Control</h1>
+          <p className="adminPageHeader__subtitle">
+            Manage customer accounts, retailer certifications, and access permissions
+          </p>
+        </div>
+        <button
+          type="button"
+          className="adminShortcutBtn"
+          onClick={loadUsers}
+          title="Refresh User List"
+        >
+          <FiRefreshCw className={loading ? 'adminSpin' : ''} />
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      {/* Toolbar */}
+      <div className="adminCard" style={{ marginBottom: 16, padding: '14px 16px' }}>
+        {/* Search */}
+        <div style={{ position: 'relative', marginBottom: 12 }}>
+          <FiSearch
+            style={{
+              position: 'absolute',
+              left: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#94a3b8',
+              fontSize: '1rem'
+            }}
+          />
+          <input
+            type="text"
+            className="adminInput"
+            placeholder="Search by name, email, or phone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ paddingLeft: 38 }}
+          />
+        </div>
+
+        {/* Filter Pills */}
+        <div className="adminStatusPills">
+          <button
+            type="button"
+            className={`adminStatusPill ${filter === 'all' ? 'is-active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            <FiUsers />
+            <span>All Users</span>
+            <span className="adminStatusPillCount">{counts.total}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`adminStatusPill ${filter === 'customer' ? 'is-active' : ''}`}
+            onClick={() => setFilter('customer')}
+          >
+            <FiUser />
+            <span>Customers</span>
+            <span className="adminStatusPillCount">{counts.customer}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`adminStatusPill ${filter === 'retailer' ? 'is-active' : ''}`}
+            onClick={() => setFilter('retailer')}
+          >
+            <FiShield />
+            <span>Retailers</span>
+            <span className="adminStatusPillCount">{counts.retailer}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`adminStatusPill ${filter === 'blocked' ? 'is-active' : ''}`}
+            onClick={() => setFilter('blocked')}
+          >
+            <FiLock />
+            <span>Blocked</span>
+            <span className="adminStatusPillCount">{counts.blocked}</span>
+          </button>
         </div>
       </div>
 
-      <div className="adminCard" style={{ marginBottom: 16 }}>
-        <div className="adminCard__section">
-          <div className="adminFieldRow adminFieldRow--2" style={{ alignItems: 'end' }}>
-            <div>
-              <label className="adminLabel" htmlFor="user-search">Search</label>
-              <input
-                id="user-search"
-                className="adminInput"
-                type="text"
-                placeholder="Search by name or email…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="adminLabel" htmlFor="user-filter">Filter</label>
-              <select
-                id="user-filter"
-                className="adminSelect"
-                value={filter}
-                onChange={e => setFilter(e.target.value)}
-              >
-                <option value="all">All Users</option>
-                <option value="customer">Customers</option>
-                <option value="retailer">Retailers</option>
-                <option value="admin">Admins</option>
-                <option value="blocked">Blocked</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {retailerRequests.length > 0 && (
-        <div className="adminCard" style={{ marginBottom: 16 }}>
-          <div className="adminCard__section">
-            <h2 className="adminPageHeader__title" style={{ fontSize: 20, marginBottom: 8 }}>Retailer Requests</h2>
-            <div className="adminMobileList">
-              {retailerRequests.map(user => (
-                <div key={user._id} className="adminMobileCard">
-                  <div className="adminMobileCardHeader">
-                    <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
-                      {user.profilePhoto ? (
-                        <img className="adminAvatar" src={user.profilePhoto} alt={user.name} />
-                      ) : (
-                        <div className="adminAvatarFallback">{user.name?.charAt(0)?.toUpperCase() || 'U'}</div>
-                      )}
-                      <div>
-                        <div className="adminMobileCardTitle" title={user.name}>{user.name}</div>
-                        <div className="adminMobileCardSub" title={user.email}>{user.email}</div>
-                      </div>
-                    </div>
-                    <span className={`adminBadge ${user.retailerRequestStatus === 'pending' ? 'adminBadge--ok' : 'adminBadge--danger'}`}>
-                      {user.retailerRequestStatus === 'pending' ? 'Pending' : 'Rejected'}
-                    </span>
-                  </div>
-                  <div className="adminMobileCardBody">
-                    <div className="adminMobileMetaRow">
-                      <span className="adminHelp">Requested</span>
-                      <span className="adminMobileMetaValue">{formatDate(user.retailerRequestedAt || user.createdAt)}</span>
-                    </div>
-                    {user.phone && (
-                      <div className="adminMobileMetaRow">
-                        <span className="adminHelp">Phone</span>
-                        <span className="adminMobileMetaValue">{user.phone}</span>
-                      </div>
-                    )}
-                    {user.retailerDetails && (
-                      <div style={{ marginTop: 12, padding: 12, backgroundColor: 'var(--kc-bg-alt)', borderRadius: 6, fontSize: 13 }}>
-                        <div style={{ marginBottom: 4 }}><strong>Shop Name:</strong> {user.retailerDetails.shopName}</div>
-                        <div style={{ marginBottom: 4 }}><strong>Owner:</strong> {user.retailerDetails.ownerName}</div>
-                        <div style={{ marginBottom: 4 }}><strong>Shop Phone:</strong> {user.retailerDetails.phone}</div>
-                        <div style={{ marginBottom: 4 }}><strong>Address:</strong> {user.retailerDetails.shopAddress}</div>
-                        {user.retailerDetails.businessProof && (
-                          <div><strong>Proof:</strong> {user.retailerDetails.businessProof}</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="adminMobileActions" style={{ borderTop: '1px solid var(--kc-border)', paddingTop: 12, marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
-                    <button
-                      type="button"
-                      className="adminBtn adminBtnPrimary adminBtn--sm"
-                      onClick={() => handleRoleChange(user._id, 'retailer')}
-                    >
-                      Approve Retailer
-                    </button>
-                    {user.retailerRequestStatus === 'pending' && (
-                      <button
-                        type="button"
-                        className="adminBtn adminBtn--sm"
-                        onClick={() => handleRoleChange(user._id, 'customer')}
-                      >
-                        Reject Request
-                      </button>
-                    )}
-                    {user.retailerRequestStatus === 'rejected' && user.retailerRequestCooldown && (
-                      <button
-                        type="button"
-                        className="adminBtn adminBtn--sm"
-                        onClick={() => handleClearCooldown(user._id)}
-                      >
-                        Clear Cooldown
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Users List */}
       <div className="adminCard">
+        {/* Desktop Table */}
         <div className="adminOnlyDesktop">
           <div className="adminTableWrap">
             <table className="adminTable">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Joined</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map(user => (
-                <tr key={user._id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      {user.profilePhoto ? (
-                        <img className="adminAvatar" src={user.profilePhoto} alt={user.name} />
-                      ) : (
-                        <div className="adminAvatarFallback">{user.name?.charAt(0)?.toUpperCase() || 'U'}</div>
-                      )}
-                      <div>
-                        <div style={{ fontWeight: 900 }}>{user.name}</div>
-                        {user.phone && (
-                          <div className="adminHelp">{user.phone}</div>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map(user => (
+                  <tr key={user._id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        {user.profilePhoto ? (
+                          <img className="adminAvatar" src={user.profilePhoto} alt={user.name} />
+                        ) : (
+                          <div className="adminAvatarFallback">{user.name?.charAt(0)?.toUpperCase() || 'U'}</div>
                         )}
+                        <div>
+                          <div style={{ fontWeight: 800 }}>{user.name}</div>
+                          {user.phone && <div className="adminHelp">{user.phone}</div>}
+                        </div>
                       </div>
+                    </td>
+                    <td className="adminHelp">{user.email}</td>
+                    <td>
+                      <select
+                        className="adminSelect"
+                        value={user.role}
+                        onChange={e => handleRoleChange(user._id, e.target.value)}
+                        disabled={user.role === 'admin'}
+                        style={{ padding: '6px 10px', fontSize: '0.82rem', fontWeight: 700 }}
+                      >
+                        <option value="customer">Customer</option>
+                        <option value="retailer">Retailer</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </td>
+                    <td>
+                      <span className={`adminBadge ${user.isBlocked ? 'adminBadge--danger' : 'adminBadge--ok'}`}>
+                        {user.isBlocked ? 'Blocked' : 'Active'}
+                      </span>
+                    </td>
+                    <td className="adminHelp">{formatDate(user.createdAt)}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div className="adminActions" style={{ justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className={`adminBtn adminBtn--sm ${user.isBlocked ? 'adminBtnPrimary' : ''}`}
+                          onClick={() => handleToggleBlock(user._id, user.isBlocked)}
+                          disabled={user.role === 'admin'}
+                        >
+                          {user.isBlocked ? <FiUnlock /> : <FiLock />}
+                          <span>{user.isBlocked ? 'Unblock' : 'Block'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="adminBtn adminBtnDanger adminBtn--sm"
+                          onClick={() => handleDelete(user._id)}
+                          disabled={user.role === 'admin'}
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Mobile Cards (Zero Friction) */}
+        <div className="adminOnlyMobile">
+          {filteredUsers.length === 0 ? (
+            <div className="adminEmpty">No users found</div>
+          ) : (
+            <div className="adminMobileList">
+              {filteredUsers.map(user => {
+                const cleanPhone = user.phone ? user.phone.replace(/\D/g, '') : ''
+                const waUrl = cleanPhone
+                  ? `https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`}?text=Hello%20${encodeURIComponent(user.name)},%20greeting%20from%20KripaConnect%20Admin!`
+                  : null
+
+                return (
+                  <div key={user._id} className="adminMobileCard">
+                    <div className="adminMobileCardHeader">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        {user.profilePhoto ? (
+                          <img className="adminAvatar" src={user.profilePhoto} alt={user.name} />
+                        ) : (
+                          <div className="adminAvatarFallback">{user.name?.charAt(0)?.toUpperCase() || 'U'}</div>
+                        )}
+                        <div style={{ minWidth: 0 }}>
+                          <div className="adminMobileCardTitle" title={user.name}>{user.name}</div>
+                          <div className="adminMobileCardSub" title={user.email}>{user.email}</div>
+                        </div>
+                      </div>
+
+                      <span className={`adminBadge ${user.isBlocked ? 'adminBadge--danger' : 'adminBadge--ok'}`}>
+                        {user.isBlocked ? 'Blocked' : 'Active'}
+                      </span>
                     </div>
-                  </td>
-                  <td className="adminHelp">{user.email}</td>
-                  <td>
-                    <select
-                      className="adminSelect"
-                      value={user.role}
-                      onChange={e => handleRoleChange(user._id, e.target.value)}
-                      disabled={user.role === 'admin'}
-                      style={{ opacity: user.role === 'admin' ? 0.7 : 1 }}
-                    >
-                      <option value="customer">Customer</option>
-                      <option value="retailer">Retailer</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </td>
-                  <td>
-                    <span className={`adminBadge ${user.isBlocked ? 'adminBadge--danger' : 'adminBadge--ok'}`}>
-                      {user.isBlocked ? 'Blocked' : 'Active'}
-                    </span>
-                  </td>
-                  <td className="adminHelp">{formatDate(user.createdAt)}</td>
-                  <td>
-                    <div className="adminActions">
+
+                    <div className="adminMobileCardBody">
+                      <div className="adminMobileMetaRow">
+                        <span className="adminHelp">Joined</span>
+                        <span className="adminMobileMetaValue">{formatDate(user.createdAt)}</span>
+                      </div>
+
+                      {user.phone && (
+                        <div className="adminMobileMetaRow" style={{ alignItems: 'center' }}>
+                          <span className="adminHelp">Phone</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span className="adminMobileMetaValue">{user.phone}</span>
+                            {waUrl && (
+                              <a
+                                href={waUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="adminQuickBtn adminQuickBtn--whatsapp"
+                                style={{ height: 26, width: 26, padding: 0 }}
+                                title="WhatsApp"
+                              >
+                                <FiMessageSquare style={{ fontSize: '0.8rem' }} />
+                              </a>
+                            )}
+                            <a
+                              href={`tel:${user.phone}`}
+                              className="adminQuickBtn adminQuickBtn--call"
+                              style={{ height: 26, width: 26, padding: 0 }}
+                              title="Call"
+                            >
+                              <FiPhoneCall style={{ fontSize: '0.8rem' }} />
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      <div style={{ marginTop: 10 }}>
+                        <div className="adminLabel">User Role</div>
+                        <select
+                          className="adminSelect"
+                          value={user.role}
+                          onChange={e => handleRoleChange(user._id, e.target.value)}
+                          disabled={user.role === 'admin'}
+                          style={{ fontSize: '0.84rem', fontWeight: 750 }}
+                        >
+                          <option value="customer">Customer</option>
+                          <option value="retailer">Retailer</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </div>
+
+                      {user.role === 'retailer' && user.retailerCooldownUntil && (
+                        <div style={{ marginTop: 8 }}>
+                          <button
+                            type="button"
+                            className="adminBtn adminBtn--sm"
+                            style={{ width: '100%', fontSize: '0.78rem' }}
+                            onClick={() => handleClearCooldown(user._id)}
+                          >
+                            <FiRefreshCw />
+                            <span>Reset Retailer Cooldown</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="adminMobileActions">
                       <button
                         type="button"
                         className={`adminBtn adminBtn--sm ${user.isBlocked ? 'adminBtnPrimary' : ''}`}
-                        onClick={() => handleToggleBlock(user._id)}
+                        onClick={() => handleToggleBlock(user._id, user.isBlocked)}
+                        disabled={user.role === 'admin'}
                       >
-                        {user.isBlocked ? 'Unblock' : 'Block'}
+                        {user.isBlocked ? <FiUnlock /> : <FiLock />}
+                        <span>{user.isBlocked ? 'Unblock User' : 'Block User'}</span>
                       </button>
                       <button
                         type="button"
                         className="adminBtn adminBtnDanger adminBtn--sm"
                         onClick={() => handleDelete(user._id)}
                         disabled={user.role === 'admin'}
-                        style={{ opacity: user.role === 'admin' ? 0.45 : 1, cursor: user.role === 'admin' ? 'not-allowed' : 'pointer' }}
                       >
-                        Delete
+                        <FiTrash2 />
+                        <span>Delete</span>
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="adminOnlyMobile">
-          {filteredUsers.length === 0 ? (
-            <div className="adminEmpty">No users found</div>
-          ) : (
-            <div className="adminMobileList">
-              {filteredUsers.map(user => (
-                <div key={user._id} className="adminMobileCard">
-                  <div className="adminMobileCardHeader">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                      {user.profilePhoto ? (
-                        <img className="adminAvatar" src={user.profilePhoto} alt={user.name} />
-                      ) : (
-                        <div className="adminAvatarFallback">{user.name?.charAt(0)?.toUpperCase() || 'U'}</div>
-                      )}
-                      <div style={{ minWidth: 0 }}>
-                        <div className="adminMobileCardTitle" title={user.name}>{user.name}</div>
-                        <div className="adminMobileCardSub" title={user.email}>{user.email}</div>
-                      </div>
-                    </div>
-
-                    <span className={`adminBadge ${user.isBlocked ? 'adminBadge--danger' : 'adminBadge--ok'}`}>
-                      {user.isBlocked ? 'Blocked' : 'Active'}
-                    </span>
                   </div>
-
-                  <div className="adminMobileCardBody">
-                    <div className="adminMobileMetaRow">
-                      <span className="adminHelp">Joined</span>
-                      <span className="adminMobileMetaValue">{formatDate(user.createdAt)}</span>
-                    </div>
-                    {user.phone && (
-                      <div className="adminMobileMetaRow">
-                        <span className="adminHelp">Phone</span>
-                        <span className="adminMobileMetaValue">{user.phone}</span>
-                      </div>
-                    )}
-
-                    <div style={{ marginTop: 10 }}>
-                      <div className="adminLabel">Role</div>
-                      <select
-                        className="adminSelect"
-                        value={user.role}
-                        onChange={e => handleRoleChange(user._id, e.target.value)}
-                        disabled={user.role === 'admin'}
-                        style={{ opacity: user.role === 'admin' ? 0.7 : 1 }}
-                      >
-                        <option value="customer">Customer</option>
-                        <option value="retailer">Retailer</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="adminMobileActions">
-                    <button
-                      type="button"
-                      className={`adminBtn adminBtn--sm ${user.isBlocked ? 'adminBtnPrimary' : ''}`}
-                      onClick={() => handleToggleBlock(user._id)}
-                    >
-                      {user.isBlocked ? 'Unblock' : 'Block'}
-                    </button>
-                    <button
-                      type="button"
-                      className="adminBtn adminBtnDanger adminBtn--sm"
-                      onClick={() => handleDelete(user._id)}
-                      disabled={user.role === 'admin'}
-                      style={{ opacity: user.role === 'admin' ? 0.45 : 1, cursor: user.role === 'admin' ? 'not-allowed' : 'pointer' }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -388,4 +445,3 @@ export default function UserManagement() {
     </div>
   )
 }
-

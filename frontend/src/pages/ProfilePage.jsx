@@ -293,7 +293,8 @@ export default function ProfilePage() {
                 className="profile-quick-btn profile-quick-btn--b2b"
                 onClick={() => navigate('/b2b')}
               >
-                <FiBriefcase /> B2B Wholesale Hub
+                <FiBriefcase />
+                <span className="profile-quick-label">Wholesale Hub</span>
               </button>
             )}
             <button
@@ -301,7 +302,8 @@ export default function ProfilePage() {
               className="profile-quick-btn"
               onClick={() => navigate('/orders')}
             >
-              <FiShoppingBag /> My Orders
+              <FiShoppingBag />
+              <span className="profile-quick-label">My Orders</span>
             </button>
             <button
               type="button"
@@ -311,7 +313,8 @@ export default function ProfilePage() {
                 toast.success('Signed out successfully')
               }}
             >
-              <FiLogOut /> Sign Out
+              <FiLogOut />
+              <span className="profile-quick-label">Sign Out</span>
             </button>
           </div>
         </section>

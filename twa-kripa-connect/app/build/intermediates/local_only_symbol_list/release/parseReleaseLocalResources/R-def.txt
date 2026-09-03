@@ -17,6 +17,7 @@ integer splashScreenFadeOutDuration
 mipmap ic_launcher
 mipmap ic_launcher_adaptive_back
 mipmap ic_launcher_adaptive_fore
+mipmap ic_launcher_round
 raw web_app_manifest
 string appName
 string assetStatements

@@ -8,7 +8,7 @@
     <bool name="abc_action_bar_embed_tabs">true</bool>
     <bool name="abc_config_actionMenuItemAllCaps">true</bool>
     <bool name="enableNotification">true</bool>
-    <bool name="enableSiteSettingsShortcut">true</bool>
+    <bool name="enableSiteSettingsShortcut">false</bool>
     <color name="abc_decor_view_status_guard">#ff000000</color>
     <color name="abc_decor_view_status_guard_light">#ffffffff</color>
     <color name="abc_search_url_text_normal">#7fa87f</color>
@@ -37,7 +37,7 @@
     <color name="button_material_light">#ffd6d7d7</color>
     <color name="call_notification_answer_color">#1d873b</color>
     <color name="call_notification_decline_color">#d93025</color>
-    <color name="colorPrimary">#E63946</color>
+    <color name="colorPrimary">#FFFFFF</color>
     <color name="colorPrimaryDark">#000000</color>
     <color name="common_google_signin_btn_text_dark_default">@android:color/white</color>
     <color name="common_google_signin_btn_text_dark_disabled">#1F000000</color>
@@ -69,10 +69,10 @@
     <color name="material_grey_800">#ff424242</color>
     <color name="material_grey_850">#ff303030</color>
     <color name="material_grey_900">#ff212121</color>
-    <color name="navigationColor">#000000</color>
+    <color name="navigationColor">#FFFFFF</color>
     <color name="navigationColorDark">#000000</color>
-    <color name="navigationDividerColor">#000000</color>
-    <color name="navigationDividerColorDark">#000000</color>
+    <color name="navigationDividerColor">#E2E8F0</color>
+    <color name="navigationDividerColorDark">#1E293B</color>
     <color name="notification_action_color_filter">#ffffffff</color>
     <color name="notification_icon_bg_color">#ff9e9e9e</color>
     <color name="primary_dark_material_dark">@android:color/black</color>
@@ -330,10 +330,16 @@
         \"relation\": [\"delegate_permission/common.handle_all_urls\"],
         \"target\": {
             \"namespace\": \"web\",
+            \"site\": \"https://kripaconnect.in\"
+        }
+    },
+    {
+        \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+        \"target\": {
+            \"namespace\": \"web\",
             \"site\": \"https://kripa-connect-app.vercel.app\"
         }
     }]
-    
   </string>
     <string name="call_notification_answer_action">Answer</string>
     <string name="call_notification_answer_video_action">Video</string>
@@ -361,14 +367,14 @@
     <string name="common_signin_button_text">Sign in</string>
     <string name="common_signin_button_text_long">Sign in with Google</string>
     <string name="copy_toast_msg">Link copied to clipboard</string>
-    <string name="fallbackType" translatable="false">customtabs</string>
+    <string name="fallbackType" translatable="false">webview</string>
     <string name="fallback_menu_item_copy_link">Copy link</string>
     <string name="fallback_menu_item_open_in_browser">Open in browser</string>
     <string name="fallback_menu_item_share_link">Share link</string>
-    <string name="fullScopeUrl" translatable="false">https://kripa-connect-app.vercel.app/</string>
+    <string name="fullScopeUrl" translatable="false">https://kripaconnect.in/</string>
     <string name="generatorApp" translatable="false">bubblewrap-cli</string>
-    <string name="hostName" translatable="false">kripa-connect-app.vercel.app</string>
-    <string name="launchUrl" translatable="false">https://kripa-connect-app.vercel.app/?source=twa</string>
+    <string name="hostName" translatable="false">kripaconnect.in</string>
+    <string name="launchUrl" translatable="false">https://kripaconnect.in/?source=twa</string>
     <string name="launcherName" translatable="false">KripaConnect</string>
     <string name="manage_space_no_data_toast">This app holds no browsing data.</string>
     <string name="manage_space_not_supported_toast">This app\'s data is stored in %1$s.</string>
@@ -378,7 +384,7 @@
     <string name="search_menu_title">Search</string>
     <string name="status_bar_notification_info_overflow">999+</string>
     <string name="update_chrome_toast">Please update to Chrome Stable 72 or later.</string>
-    <string name="webManifestUrl" translatable="false">https://kripa-connect-app.vercel.app/manifest.json</string>
+    <string name="webManifestUrl" translatable="false">https://kripaconnect.in/manifest.json</string>
     <style name="AlertDialog.AppCompat" parent="Base.AlertDialog.AppCompat"/>
     <style name="AlertDialog.AppCompat.Light" parent="Base.AlertDialog.AppCompat.Light"/>
     <style name="Animation.AppCompat.Dialog" parent="Base.Animation.AppCompat.Dialog"/>
