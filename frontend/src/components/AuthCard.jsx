@@ -352,16 +352,16 @@ export default function AuthCard({
 
               <button
                 type="button"
-                className="cyber-secondary-btn"
+                className="cyber-otp-pill-btn"
                 onClick={() => {
                   setUseOtp(true)
                   setError('')
                 }}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="17" height="17">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15">
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                 </svg>
-                <span>Passwordless OTP Instant Login</span>
+                <span>Sign In with OTP Instant Code</span>
               </button>
             </form>
           ) : (
@@ -414,32 +414,33 @@ export default function AuthCard({
           {/* Account Role Selector */}
           <div className="cyber-role-section">
             <span className="cyber-input-label">Select Account Tier</span>
-            <div className="cyber-role-grid">
+            <div className="cyber-role-pills" role="radiogroup" aria-label="Account Tier">
               <button
                 type="button"
-                className={`cyber-role-card ${role === 'customer' ? 'active' : ''}`}
+                role="radio"
+                aria-checked={role === 'customer'}
+                className={`cyber-role-pill ${role === 'customer' ? 'active' : ''}`}
                 onClick={() => setRole('customer')}
               >
-                <div className="role-header-row">
-                  <span className="role-badge-pill">Personal</span>
-                  <div className="role-radio-mark">✓</div>
-                </div>
-                <div className="role-title">Customer</div>
-                <div className="role-desc">Personal orders, flash drops & doorstep delivery</div>
+                <span className="role-pill-indicator" />
+                <span className="role-pill-name">Personal Customer</span>
               </button>
 
               <button
                 type="button"
-                className={`cyber-role-card ${role === 'retailer' ? 'active role-b2b' : ''}`}
+                role="radio"
+                aria-checked={role === 'retailer'}
+                className={`cyber-role-pill ${role === 'retailer' ? 'active role-b2b' : ''}`}
                 onClick={() => setRole('retailer')}
               >
-                <div className="role-header-row">
-                  <span className="role-badge-pill b2b">Wholesale</span>
-                  <div className="role-radio-mark">✓</div>
-                </div>
-                <div className="role-title">Retailer B2B</div>
-                <div className="role-desc">Bulk price tiers, automated GST credit & invoice tools</div>
+                <span className="role-pill-indicator" />
+                <span className="role-pill-name">Retailer B2B</span>
               </button>
+            </div>
+            <div className="role-pill-caption">
+              {role === 'customer'
+                ? 'For personal shopping, flash drops & doorstep delivery'
+                : 'Direct wholesale price tiers, bulk margins & GST invoices'}
             </div>
           </div>
 
