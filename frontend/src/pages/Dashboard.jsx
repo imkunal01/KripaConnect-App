@@ -334,9 +334,9 @@ export default function Dashboard() {
                   type="button"
                   className="bk-shot-plus-circle"
                   onClick={(e) => handleAddOne(p, e)}
-                  aria-label={`Add ${p.name}`}
+                  aria-label={`Add ${p.name} to cart`}
                 >
-                  <LuPlus />
+                  <LuPlus aria-hidden="true" />
                 </button>
               ) : (
                 <div className="bk-shot-stepper">
@@ -344,18 +344,18 @@ export default function Dashboard() {
                     type="button"
                     className="bk-shot-step-btn"
                     onClick={(e) => handleDecrement(p, cartQty, e)}
-                    aria-label="Decrease"
+                    aria-label={`Decrease quantity for ${p.name}`}
                   >
-                    <LuMinus />
+                    <LuMinus aria-hidden="true" />
                   </button>
                   <span className="bk-shot-step-count">{cartQty}</span>
                   <button
                     type="button"
                     className="bk-shot-step-btn"
                     onClick={(e) => handleIncrement(p, cartQty, e)}
-                    aria-label="Increase"
+                    aria-label={`Increase quantity for ${p.name}`}
                   >
-                    <LuPlus />
+                    <LuPlus aria-hidden="true" />
                   </button>
                 </div>
               )}

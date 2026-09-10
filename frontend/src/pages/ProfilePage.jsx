@@ -255,8 +255,9 @@ export default function ProfilePage() {
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingPhoto}
               title="Change Profile Photo"
+              aria-label="Change profile photo"
             >
-              <FiCamera />
+              <FiCamera aria-hidden="true" />
             </button>
             <input
               type="file"
@@ -622,16 +623,18 @@ export default function ProfilePage() {
                           className="profile-addr-action-btn"
                           onClick={() => handleOpenEditAddress(addr)}
                           title="Edit address"
+                          aria-label="Edit address"
                         >
-                          <FiEdit2 />
+                          <FiEdit2 aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           className="profile-addr-action-btn is-delete"
                           onClick={() => handleDeleteAddress(addr._id)}
                           title="Delete address"
+                          aria-label="Delete address"
                         >
-                          <FiTrash2 />
+                          <FiTrash2 aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -775,6 +778,7 @@ export default function ProfilePage() {
                 type="button"
                 className="profile-modal-close-btn"
                 onClick={() => setAddressModalOpen(false)}
+                aria-label="Close address modal"
               >
                 ✕
               </button>

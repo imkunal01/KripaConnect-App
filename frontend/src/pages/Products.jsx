@@ -516,10 +516,10 @@ export default function Products() {
                                 type="button"
                                 className="bk-item-add-btn"
                                 onClick={(e) => handleAddOne(p, e)}
-                                aria-label={`Add ${p.name}`}
+                                aria-label={`Add ${p.name} to cart`}
                               >
                                 <span>ADD</span>
-                                <LuPlus className="bk-item-plus-icon" />
+                                <LuPlus className="bk-item-plus-icon" aria-hidden="true" />
                               </button>
                             ) : (
                               <div className="bk-item-stepper">
@@ -527,18 +527,18 @@ export default function Products() {
                                   type="button"
                                   className="bk-item-step-btn"
                                   onClick={(e) => handleDecrement(p, cartQty, e)}
-                                  aria-label="Decrease"
+                                  aria-label={`Decrease quantity for ${p.name}`}
                                 >
-                                  <LuMinus />
+                                  <LuMinus aria-hidden="true" />
                                 </button>
                                 <span className="bk-item-step-count">{cartQty}</span>
                                 <button
                                   type="button"
                                   className="bk-item-step-btn"
                                   onClick={(e) => handleIncrement(p, cartQty, e)}
-                                  aria-label="Increase"
+                                  aria-label={`Increase quantity for ${p.name}`}
                                 >
-                                  <LuPlus />
+                                  <LuPlus aria-hidden="true" />
                                 </button>
                               </div>
                             )}
