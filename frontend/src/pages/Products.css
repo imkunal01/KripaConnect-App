@@ -126,6 +126,31 @@
   padding: 4px;
 }
 
+.bk-prod-ai-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12));
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 9999px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.bk-prod-ai-btn:hover {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #ffffff;
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
 .bk-prod-cart-link {
   position: relative;
   background: #ffffff;
@@ -1048,3 +1073,4 @@
   padding: 6px 12px;
   border-radius: 8px;
 }
+

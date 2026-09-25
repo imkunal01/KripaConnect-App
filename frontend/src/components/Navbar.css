@@ -378,6 +378,74 @@
   background: var(--primary-red-hover);
 }
 
+/* Desk AI Search Button */
+.desk-ai-search-btn {
+  position: absolute;
+  right: 44px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12));
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 8px;
+  height: 30px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.desk-ai-search-btn:hover {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #ffffff;
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
+/* Mobile Top AI Button */
+.mobile-top-btn--ai {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.mobile-top-btn--ai:hover {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+}
+
+/* Mobile Search Modal AI Banner */
+.mobile-ai-search-banner-btn {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08));
+  border: 1px dashed rgba(99, 102, 241, 0.35);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #4338ca;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mobile-ai-search-banner-btn:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+  border-style: solid;
+}
+
+.mobile-ai-sparkle-ico {
+  color: #6366f1;
+  font-size: 1rem;
+}
+
+
 /* Right Desktop Actions */
 .desk-actions {
   display: flex;

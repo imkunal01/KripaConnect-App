@@ -9,6 +9,7 @@ import { usePurchaseMode } from '../hooks/usePurchaseMode.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import SEO from '../components/SEO.jsx'
+import { getSmartRecommendations } from '../services/recommendations'
 import { ProductGridSkeleton } from '../components/SkeletonLoader.jsx'
 import toast from 'react-hot-toast'
 import './Products.css'
@@ -121,20 +122,43 @@ export default function Products() {
     const t = setTimeout(async () => {
       setLoading(true)
       try {
-        const data = await listProducts({
-          search,
-          category,
-          subcategory,
-          sort,
-          minPrice,
-          maxPrice,
-          limit: 48
-        })
-        if (!isMounted) return
-        setItems(data?.items || data || [])
+        if (search && search.trim().length > 0) {
+          const smartData = await getSmartRecommendations(search.trim(), 48)
+          if (!isMounted) return
+
+          if (smartData && Array.isArray(smartData.products)) {
+            setItems(smartData.products)
+          } else {
+            // Fallback to standard product list
+            const data = await listProducts({
+              search,
+              category,
+              subcategory,
+              sort,
+              minPrice,
+              maxPrice,
+              limit: 48
+            })
+            if (!isMounted) return
+            setItems(data?.items || data || [])
+          }
+        } else {
+          const data = await listProducts({
+            category,
+            subcategory,
+            sort,
+            minPrice,
+            maxPrice,
+            limit: 48
+          })
+          if (!isMounted) return
+          setItems(data?.items || data || [])
+        }
       } catch (err) {
         console.error('Failed to load products:', err)
-        if (isMounted) setItems([])
+        if (isMounted) {
+          setItems([])
+        }
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -250,8 +274,21 @@ export default function Products() {
     if (inStockFilter === 'true') {
       list = list.filter(p => (p.stock || 0) > 0)
     }
+    if (minPrice) {
+      list = list.filter(p => Number(p.price || 0) >= Number(minPrice))
+    }
+    if (maxPrice) {
+      list = list.filter(p => Number(p.price || 0) <= Number(maxPrice))
+    }
+    if (sort === 'price') {
+      list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0))
+    } else if (sort === '-price') {
+      list.sort((a, b) => Number(b.price || 0) - Number(a.price || 0))
+    } else if (sort === '-sold') {
+      list.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+    }
     return list
-  }, [items, inStockFilter])
+  }, [items, inStockFilter, minPrice, maxPrice, sort])
 
   const selectedCategoryObj = categories.find(c => c._id === category)
 
@@ -552,8 +589,10 @@ export default function Products() {
             ) : (
               <div className="bk-prod-empty">
                 <LuPackage className="bk-prod-empty-ico" />
-                <h3>No products found</h3>
-                <p>Try searching for another keyword or clear active filters.</p>
+                <h3>{search ? `No products found for "${search}"` : 'No products found'}</h3>
+                <p>
+                  We couldn't find any matching products. Try searching for fans, lights, switches, or appliances.
+                </p>
                 <button
                   type="button"
                   className="bk-prod-clear-all-btn"
@@ -562,7 +601,7 @@ export default function Products() {
                     setParams(new URLSearchParams())
                   }}
                 >
-                  Clear All Filters
+                  Browse All Products
                 </button>
               </div>
             )}

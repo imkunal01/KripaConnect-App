@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getProduct, listProducts } from '../services/products'
+import { getSimilarProductRecommendations } from '../services/recommendations'
 import { listProductReviews, createProductReview } from '../services/reviews'
 import ShopContext from '../context/ShopContext.jsx'
 import QuantitySelector from '../components/QuantitySelector.jsx'
@@ -96,6 +97,22 @@ export default function ProductDetails() {
 
     const loadRelated = async () => {
       setRelatedLoading(true)
+      try {
+        // 1. Try smart semantic recommendation first
+        const smartItems = await getSimilarProductRecommendations(product._id, 8)
+        if (Array.isArray(smartItems) && smartItems.length > 0) {
+          const filtered = smartItems.filter(p => (p._id || p.id) !== product._id)
+          if (filtered.length > 0) {
+            setRelatedItems(filtered)
+            setRelatedLoading(false)
+            return
+          }
+        }
+      } catch {
+        // Continue to traditional fallback
+      }
+
+      // 2. Traditional category/subcategory fallback
       try {
         const data = await listProducts({
           ...(subId ? { subcategory: subId } : catId ? { category: catId } : {}),
