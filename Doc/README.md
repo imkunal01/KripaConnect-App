@@ -133,6 +133,7 @@ The repository includes convenient validation scripts in `backend/scripts/`:
 | `npm run test:razorpay` | Validates Razorpay API credentials and attempts a mock order creation. |
 | `npm run test:email` | Sends a test email via SendGrid to verify API key and sender identity. |
 | `npm run check:payment` | Queries Razorpay for payment status of a given payment ID. |
+| **API Testing Suite** | Comprehensive Postman collection: [`KripaConnect_API_Postman_Collection.json`](file:///c:/Users/Kunal/Desktop/Projects/SKE/KripaConnect_API_Postman_Collection.json) (See [Doc/API_TESTING_GUIDE.md](file:///c:/Users/Kunal/Desktop/Projects/SKE/Doc/API_TESTING_GUIDE.md)). |
 
 ---
 
