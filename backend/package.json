@@ -7,7 +7,8 @@
     "test:razorpay": "node scripts/testRazorpay.js",
     "test:email": "node scripts/testSendgridEmail.js",
     "seed": "node scripts/seedData.js",
-    "check:payment": "node scripts/checkPaymentStatus.js"
+    "check:payment": "node scripts/checkPaymentStatus.js",
+    "generate:postman": "node scripts/generatePostmanCollection.js"
   },
   "keywords": [],
   "author": "",

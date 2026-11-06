@@ -223,15 +223,15 @@ export default function AuthCard({
           {mode === 'login'
             ? (title || 'Welcome Back')
             : mode === 'signup'
-            ? 'Create New Account'
-            : 'Recover Your Access'}
+              ? 'Create New Account'
+              : 'Recover Your Access'}
         </h2>
         <p className="auth-header-subtitle">
           {mode === 'login'
             ? (description || 'Enter your credentials to access electronics orders & live logistics.')
             : mode === 'signup'
-            ? 'Choose your account tier and unlock direct wholesale B2B pricing.'
-            : 'Provide your registered email to receive an instant recovery link.'}
+              ? 'Choose your account tier and unlock direct wholesale B2B pricing.'
+              : 'Provide your registered email to receive an instant recovery link.'}
         </p>
       </div>
 
@@ -323,7 +323,6 @@ export default function AuthCard({
                   />
                   <span>Keep me signed in</span>
                 </label>
-
                 <button
                   type="button"
                   className="cyber-forgot-btn"

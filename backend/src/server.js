@@ -195,6 +195,7 @@ app.use("/api/retailer", require("./routes/retailerRoutes"));
 app.use("/api/favorites", require("./routes/favoriteRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
+app.use("/api/recommend", require("./routes/recommendationRoutes"));
 
 /* =========================
    DYNAMIC SITEMAP (SEO)

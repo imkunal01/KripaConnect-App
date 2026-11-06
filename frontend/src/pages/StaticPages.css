@@ -83,6 +83,41 @@
   margin: 0 0 16px 0;
 }
 
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 16px;
+}
+
+.list span {
+  display: block;
+  font-size: 0.95rem;
+  color: #334155;
+  line-height: 1.65;
+  padding-left: 18px;
+  position: relative;
+}
+
+.list span::before {
+  content: "•";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  color: var(--kc-primary, #FF3D3D);
+  font-weight: 800;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.subheading {
+  font-size: 1.08rem;
+  font-weight: 750;
+  color: var(--text-primary, #0f172a);
+  margin: 20px 0 10px 0;
+}
+
 .grid-two {
   display: grid;
   grid-template-columns: 1fr 1fr;

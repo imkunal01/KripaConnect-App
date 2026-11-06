@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getProduct, listProducts } from '../services/products'
+import { getSimilarProductRecommendations } from '../services/recommendations'
 import { listProductReviews, createProductReview } from '../services/reviews'
 import ShopContext from '../context/ShopContext.jsx'
 import QuantitySelector from '../components/QuantitySelector.jsx'
@@ -97,6 +98,22 @@ export default function ProductDetails() {
     const loadRelated = async () => {
       setRelatedLoading(true)
       try {
+        // 1. Try smart semantic recommendation first
+        const smartItems = await getSimilarProductRecommendations(product._id, 8)
+        if (Array.isArray(smartItems) && smartItems.length > 0) {
+          const filtered = smartItems.filter(p => (p._id || p.id) !== product._id)
+          if (filtered.length > 0) {
+            setRelatedItems(filtered)
+            setRelatedLoading(false)
+            return
+          }
+        }
+      } catch {
+        // Continue to traditional fallback
+      }
+
+      // 2. Traditional category/subcategory fallback
+      try {
         const data = await listProducts({
           ...(subId ? { subcategory: subId } : catId ? { category: catId } : {}),
           limit: 8,
@@ -157,8 +174,8 @@ export default function ProductDetails() {
 
   // Calculated Ratings
   const avgRating = useMemo(() => {
-    if (!reviews.length) return 5.0
-    const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0)
+    if (!reviews.length) return null
+    const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0)
     return (sum / reviews.length).toFixed(1)
   }, [reviews])
 
@@ -299,15 +316,37 @@ export default function ProductDetails() {
 
             {/* Ratings Summary */}
             <div className="pdp-rating-summary">
-              <div className="pdp-stars">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <FaStar key={star} className={star <= Math.round(avgRating) ? 'star-filled' : 'star-empty'} />
-                ))}
-              </div>
-              <span className="pdp-rating-number">{avgRating}</span>
-              <span className="pdp-review-count">
-                ({reviews.length} {reviews.length === 1 ? 'verified review' : 'verified reviews'})
-              </span>
+              {reviews.length > 0 ? (
+                <>
+                  <div className="pdp-stars">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <FaStar key={star} className={star <= Math.round(Number(avgRating)) ? 'star-filled' : 'star-empty'} />
+                    ))}
+                  </div>
+                  <span className="pdp-rating-number">{avgRating}</span>
+                  <span className="pdp-review-count">
+                    ({reviews.length} {reviews.length === 1 ? 'verified review' : 'verified reviews'})
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="pdp-stars">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <FaStar key={star} className="star-empty" />
+                    ))}
+                  </div>
+                  <span className="pdp-rating-number" style={{ color: 'var(--text-secondary, #64748b)', fontWeight: 500 }}>
+                    No reviews yet
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('reviews')}
+                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--kc-primary, #FF3D3D)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Be the first to review
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Pricing Section */}

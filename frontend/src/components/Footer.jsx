@@ -99,6 +99,8 @@ export default function Footer() {
               <li><Link to="/faq">Frequently Asked Questions</Link></li>
               <li><Link to="/contact">Contact Support</Link></li>
               <li><Link to="/returns">Returns & Refunds</Link></li>
+              <li><Link to="/privacy">Privacy Policy</Link></li>
+              <li><Link to="/terms">Terms & Conditions</Link></li>
               <li><Link to="/about">About KripaConnect</Link></li>
             </ul>
           </div>
